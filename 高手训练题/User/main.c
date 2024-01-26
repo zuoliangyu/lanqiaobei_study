@@ -23,14 +23,6 @@ bit ring_flag;													  // 蜂鸣器
 
 /* 时间 */
 uchar ucRtc[3] = {0x23, 0x59, 0x55};
-uchar set_ucRtc[3]; // 设置时间
-uchar old_ucRtc[3]; // 保存上一次的时间
-uchar alRtc[3] = {0, 0, 0};
-uchar set_alRtc[3];	   // 设置闹钟
-uchar old_alRtc[3];	   // 保存上一次的闹钟
-uchar set_time_two[2]; // 两位暂存
-uchar time_index;
-uchar alarm_index;
 uint time_1s;
 uint time_500ms;
 uint time_700ms;
@@ -215,10 +207,13 @@ void Seg_Proc()
 		{
 			uchar dis_value;
 			uint temperature_value;
+			uchar light_value;
 			dis_value = Ut_Wave_Data() % 100;
 			temperature_value = rd_temperature() * 10;
+			light_value = Ad_Read(0x41);
 			Seg_Buf[0] = dis_value / 10;
 			Seg_Buf[1] = dis_value % 10;
+			Seg_Buf[2] = (light_value > 50) ? 1 : 0;
 			Seg_Buf[3] = 11;
 			Seg_Buf[4] = temperature_value / 100;
 			Seg_Buf[5] = (temperature_value % 100) / 10;
@@ -239,7 +234,6 @@ void Seg_Proc()
 		}
 		break;
 	case 2: // 时钟/闹钟设置
-		uchar temp_time[3];
 
 		break;
 	}
