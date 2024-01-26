@@ -1,0 +1,354 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 17:54:29 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* 变量声明区 */
+   3          uchar Key_Slow_Down;                 // 按键减速专用变量
+   4          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
+   5          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // 数码管小数点数据存放数组
+   6          uchar Seg_Pos;                     // 数码管扫描专用变量
+   7          uint Seg_Slow_Down;                  // 数码管减速专用变量
+   8          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // Led显示数据存放数组
+   9          uchar Uart_Slow_Down;                // 串口减速专用变量
+  10          uchar Uart_Recv[10];                 // 串口接收数据储存数组 默认10个字节 若接收数据较长 可更改最大字节数
+  11          uchar Uart_Recv_Index;                 // 串口接收数组指针
+  12          uchar Uart_Send[10];                 // 串口接收数据储存数组 默认10个字节 若发送数据较长 可更改最大字节数
+  13          
+  14          /* 界面 */
+  15          uchar Seg_show_mode; // 0 初始界面 1时钟界面 2信息显示界面 3 时钟设置界面 4闹钟设置界面
+  16          
+  17          /*密码*/
+  18          idata uchar Password_set[8] = {1, 2, 3, 4, 5, 6, 7, 8};       // 初始的默认密码
+  19          idata uchar Password_input[8] = {11, 11, 11, 11, 11, 11, 11, 11}; // 密码，最初为没有输入的状态
+  20          uchar Password_input_index;                     // 密码输入的指针
+  21          bit wring_flag;                           // 密码错误标志
+  22          bit ring_flag;                            // 蜂鸣器
+  23          
+  24          /* 时间 */
+  25          uchar ucRtc[3] = {0x23, 0x59, 0x55};
+  26          uint time_1s;
+  27          uint time_500ms;
+  28          bit skip_flag;
+  29          bit time_interval_flag;
+  30          bit massage_show_flag;
+  31          bit massage_show_time_flag;
+  32          
+  33          // LED和Seg初始化
+  34          void Init_Seg_Led()
+  35          {
+  36   1        uchar i;
+  37   1        for (i = 0; i < 8; i++)
+  38   1        {
+  39   2          Seg_Buf[i] = 0;
+  40   2          Seg_Point[i] = 0;
+  41   2          ucLed[i] = 0;
+  42   2        }
+  43   1      }
+  44          void go_next_mode()
+  45          {
+  46   1        Init_Seg_Led();
+  47   1      }
+  48          /* 键盘处理函数 */
+  49          void Key_Proc()
+  50          {
+  51   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
+  52   1        uchar i, j;
+  53   1        if (Key_Slow_Down)
+  54   1          return;
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 17:54:29 PAGE 2   
+
+  55   1        Key_Slow_Down = 1; // 键盘减速程序
+  56   1      
+  57   1        Key_Val = Key_Read();           // 实时读取键码值
+  58   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 捕捉按键下降沿
+  59   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键上降沿
+  60   1        Key_Old = Key_Val;              // 辅助扫描变量
+  61   1        switch (Seg_show_mode)
+  62   1        {
+  63   2        case 0: // 登录界面
+  64   2          if (Password_input_index < 8 && Key_Down)
+  65   2          {
+  66   3            // 0 1 2 3 4 5 6 7 8 9
+  67   3            uchar key_mapping[] = {4, 8, 12, 16, 9, 13, 17, 10, 14, 18};
+  68   3            for (i = 0; i < 10; i++)
+  69   3            {
+  70   4              if (Key_Down == key_mapping[i])
+  71   4              {
+  72   5                break;
+  73   5              }
+  74   4            }
+  75   3            // 按下的不是最后一个，那么就是其他的按键，这里不做处理
+  76   3            if (i == 10 && Key_Down != 18)
+  77   3            {
+  78   4            }
+  79   3            else
+  80   3            {
+  81   4              Password_input[Password_input_index] = i;
+  82   4              Password_input_index++;
+  83   4            }
+  84   3          }
+  85   2          // 按下确认
+  86   2          if (Key_Down == 7)
+  87   2          {
+  88   3            for (i = 0; i < 8; i++)
+  89   3            {
+  90   4              if (Password_set[i] != Password_input[i])
+  91   4              {
+  92   5                // 报警
+  93   5                wring_flag = 1;
+  94   5                ring_flag = 1;
+  95   5                // 清空输入内容
+  96   5                for (j = 0; j < 8; j++)
+  97   5                {
+  98   6                  Password_input[j] = 11;
+  99   6                }
+ 100   5                break;
+ 101   5              }
+ 102   4            }
+ 103   3            if (i == 8)
+ 104   3            {
+ 105   4              // 密码正确
+ 106   4              wring_flag = 0;
+ 107   4              ring_flag = 0;
+ 108   4              Seg_show_mode++; // 到达下一个界面
+ 109   4            }
+ 110   3          }
+ 111   2          // 按下删除
+ 112   2          if (Key_Down == 6)
+ 113   2          {
+ 114   3            if (Password_input_index == 8)
+ 115   3              Password_input_index = 7;
+ 116   3            Password_input[Password_input_index] = 11;
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 17:54:29 PAGE 3   
+
+ 117   3            if (Password_input_index > 0 && Password_input_index < 7)
+ 118   3              Password_input_index--;
+ 119   3          }
+ 120   2          // 跳过密码
+ 121   2          if (Key_Old == 5)
+ 122   2          {
+ 123   3            skip_flag = 1;
+ 124   3            if (time_1s == 1000)
+ 125   3            {
+ 126   4              Seg_show_mode++; // 跳转到下一个界面
+ 127   4            }
+ 128   3          }
+ 129   2          else
+ 130   2          {
+ 131   3            time_1s = skip_flag = 0; // 重置长按时间
+ 132   3          }
+ 133   2          break;
+ 134   2      
+ 135   2        case 1:
+ 136   2          /* 主界面 */
+ 137   2          // 信息显示按钮,长按1s进入信息显示界面，松手回到时钟界面
+ 138   2          if (Key_Old == 7)
+ 139   2          {
+ 140   3            massage_show_time_flag = 1;
+ 141   3          }
+ 142   2          if (Key_Up == 7)
+ 143   2          {
+ 144   3            Init_Seg_Led();
+ 145   3            massage_show_time_flag = massage_show_flag = 0;
+ 146   3          }
+ 147   2          break;
+ 148   2        }
+ 149   1      }
+ 150          
+ 151          /* 信息处理函数 */
+ 152          void Seg_Proc()
+ 153          {
+ 154   1        uchar i;
+ 155   1        if (Seg_Slow_Down)
+ 156   1          return;
+ 157   1        Seg_Slow_Down = 1; // 数码管减速程序
+ 158   1        switch (Seg_show_mode)
+ 159   1        {
+ 160   2        case 0:
+ 161   2          /* 密码输入 */
+ 162   2          if (Password_input_index)
+ 163   2          {
+ 164   3            for (i = 0; i < Password_input_index; i++)
+ 165   3            {
+ 166   4              Seg_Buf[7 - i] = Password_input[Password_input_index - i - 1];
+ 167   4            }
+ 168   3            for (i = Password_input_index; i < 8; i++)
+ 169   3            {
+ 170   4              Seg_Buf[7 - i] = 11;
+ 171   4            }
+ 172   3          }
+ 173   2          else
+ 174   2          {
+ 175   3            // 没有密码输入
+ 176   3            for (i = 0; i < 8; i++)
+ 177   3            {
+ 178   4              Seg_Buf[i] = 11;
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 17:54:29 PAGE 4   
+
+ 179   4            }
+ 180   3          }
+ 181   2          break;
+ 182   2        case 1:
+ 183   2          if (massage_show_flag)
+ 184   2          {
+ 185   3            uchar dis_value;
+ 186   3            uint temperature_value;
+ 187   3            dis_value = Ut_Wave_Data() % 100;
+ 188   3            temperature_value = (uint)rd_temperature();
+ 189   3            Seg_Buf[0] = dis_value / 10;
+ 190   3            Seg_Buf[1] = dis_value % 10;
+ 191   3            Seg_Buf[3] = 11;
+ 192   3            Seg_Buf[4] = temperature_value / 100;
+ 193   3            Seg_Buf[5] = (temperature_value % 100) / 10;
+ 194   3            Seg_Buf[6] = temperature_value % 10;
+ 195   3            Seg_Point[5] = 1;
+ 196   3            Seg_Buf[7] = 12; // C
+ 197   3          }
+ 198   2          else
+ 199   2          {
+ 200   3            Read_Rtc(ucRtc);
+ 201   3            Seg_Buf[0] = ucRtc[0] / 16;
+ 202   3            Seg_Buf[1] = ucRtc[0] % 16;
+ 203   3            Seg_Buf[2] = Seg_Buf[5] = (time_interval_flag) ? 11 : 10;
+ 204   3            Seg_Buf[3] = ucRtc[1] / 16;
+ 205   3            Seg_Buf[4] = ucRtc[1] % 16;
+ 206   3            Seg_Buf[6] = ucRtc[2] / 16;
+ 207   3            Seg_Buf[7] = ucRtc[2] % 16;
+ 208   3          }
+ 209   2          break;
+ 210   2        }
+ 211   1      }
+ 212          
+ 213          /* 其他显示函数 */
+ 214          void Led_Proc()
+ 215          {
+ 216   1        Beep(ring_flag);
+ 217   1      }
+ 218          
+ 219          /* 串口处理函数 */
+ 220          void Uart_Proc()
+ 221          {
+ 222   1        if (Uart_Slow_Down)
+ 223   1          return;
+ 224   1        Uart_Slow_Down = 1; // 串口减速程序
+ 225   1      }
+ 226          
+ 227          /* 定时器0中断初始化函数 */
+ 228          void Timer0Init(void) // 1毫秒@12.000MHz
+ 229          {
+ 230   1        AUXR &= 0x7F; // 定时器时钟12T模式
+ 231   1        TMOD &= 0xF0; // 设置定时器模式
+ 232   1        TL0 = 0x18;   // 设置定时初始值
+ 233   1        TH0 = 0xFC;   // 设置定时初始值
+ 234   1        TF0 = 0;    // 清除TF0标志
+ 235   1        TR0 = 1;    // 定时器0开始计时
+ 236   1        ET0 = 1;    // 定时器中断0打开
+ 237   1        EA = 1;     // 总中断打开
+ 238   1      }
+ 239          
+ 240          /* 定时器0中断服务函数 */
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 17:54:29 PAGE 5   
+
+ 241          void Timer0Server() interrupt 1
+ 242          {
+ 243   1        if (++Key_Slow_Down == 10)
+ 244   1          Key_Slow_Down = 0; // 键盘减速专用
+ 245   1        if (++Seg_Slow_Down == 500)
+ 246   1          Seg_Slow_Down = 0; // 数码管减速专用
+ 247   1        if (++Uart_Slow_Down == 200)
+ 248   1          Uart_Slow_Down = 0; // 串口减速专用
+ 249   1        if (++Seg_Pos == 8)
+ 250   1          Seg_Pos = 0; // 数码管显示专用
+ 251   1        // 触发跳过
+ 252   1        if (skip_flag)
+ 253   1        {
+ 254   2          // 长按1s
+ 255   2          time_1s = (++time_1s < 1000) ? time_1s : 1000;
+ 256   2        }
+ 257   1        if (++time_500ms == 500)
+ 258   1        {
+ 259   2          time_500ms = 0;
+ 260   2          time_interval_flag = ~time_interval_flag;
+ 261   2        }
+ 262   1        if (massage_show_time_flag)
+ 263   1        {
+ 264   2          time_1s = (++time_1s < 1000) ? time_1s : 1000;
+ 265   2          if (time_1s == 1000)
+ 266   2          {
+ 267   3            massage_show_flag = 1;
+ 268   3          }
+ 269   2        }
+ 270   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 271   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 272   1      }
+ 273          
+ 274          /* 串口1中断服务函数 */
+ 275          void Uart1Server() interrupt 4
+ 276          {
+ 277   1        if (RI == 1) // 串口接收数据
+ 278   1        {
+ 279   2          Uart_Recv[Uart_Recv_Index] = SBUF;
+ 280   2          Uart_Recv_Index++;
+ 281   2          RI = 0;
+ 282   2        }
+ 283   1      }
+ 284          void Delay750ms() //@12MHz
+ 285          {
+ 286   1        unsigned char i, j, k;
+ 287   1      
+ 288   1        _nop_();
+ 289   1        _nop_();
+ 290   1        i = 35;
+ 291   1        j = 51;
+ 292   1        k = 182;
+ 293   1        do
+ 294   1        {
+ 295   2          do
+ 296   2          {
+ 297   3            while (--k)
+ 298   3              ;
+ 299   3          } while (--j);
+ 300   2        } while (--i);
+ 301   1      }
+ 302          
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 17:54:29 PAGE 6   
+
+ 303          /* Main */
+ 304          void main()
+ 305          {
+ 306   1        // 如果有温度读取的话
+ 307   1        rd_temperature();
+ 308   1        Delay750ms();
+ 309   1        Set_Rtc(ucRtc); // 设置初始时间
+ 310   1        System_Init();
+ 311   1        Timer0Init();
+ 312   1        UartInit();
+ 313   1        while (1)
+ 314   1        {
+ 315   2          Key_Proc();
+ 316   2          Seg_Proc();
+ 317   2          Led_Proc();
+ 318   2          Uart_Proc();
+ 319   2        }
+ 320   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    998    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     63      15
+   IDATA SIZE       =     16    ----
+   BIT SIZE         =      6    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
