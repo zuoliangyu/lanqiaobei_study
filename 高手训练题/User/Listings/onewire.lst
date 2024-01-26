@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   ONEWIRE                                                           01/26/2024 21:15:46 PAGE 1   
+C51 COMPILER V9.59.0.0   ONEWIRE                                                           01/26/2024 22:06:56 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ONEWIRE
@@ -62,7 +62,7 @@ line level    source
   52   1          bit initflag = 0;
   53   1      
   54   1          DQ = 1;
-C51 COMPILER V9.59.0.0   ONEWIRE                                                           01/26/2024 21:15:46 PAGE 2   
+C51 COMPILER V9.59.0.0   ONEWIRE                                                           01/26/2024 22:06:56 PAGE 2   
 
   55   1          Delay_OneWire(12);
   56   1          DQ = 0;
