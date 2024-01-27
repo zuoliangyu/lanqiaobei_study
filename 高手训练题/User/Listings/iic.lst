@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   IIC                                                               01/26/2024 22:24:55 PAGE 1   
+C51 COMPILER V9.59.0.0   IIC                                                               01/27/2024 10:56:40 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE IIC
@@ -62,7 +62,7 @@ line level    source
   52          //µÈ´ýÓ¦´ð
   53          bit IIC_WaitAck(void)
   54          {
-C51 COMPILER V9.59.0.0   IIC                                                               01/26/2024 22:24:55 PAGE 2   
+C51 COMPILER V9.59.0.0   IIC                                                               01/27/2024 10:56:40 PAGE 2   
 
   55   1          bit ackbit;
   56   1        
@@ -126,7 +126,7 @@ line level    source
  114   1        IIC_Stop();
  115   1        return temp;
  116   1      }
-C51 COMPILER V9.59.0.0   IIC                                                               01/26/2024 22:24:55 PAGE 3   
+C51 COMPILER V9.59.0.0   IIC                                                               01/27/2024 10:56:40 PAGE 3   
 
  117          
  118          void E2PROM_Write(unsigned char* EEPROM_String, unsigned char addr, unsigned char num)
@@ -190,7 +190,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----      10
-C51 COMPILER V9.59.0.0   IIC                                                               01/26/2024 22:24:55 PAGE 4   
+C51 COMPILER V9.59.0.0   IIC                                                               01/27/2024 10:56:40 PAGE 4   
 
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----       2

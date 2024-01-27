@@ -1,70 +1,86 @@
 /* 头文件声明区 */
-#include <main.h> //单片机寄存器专用头文件
+#include "main.h"
 
 /* 变量声明区 */
 
-unsigned char Key_Slow_Down;										  // 按键减速专用变量
-unsigned int Uart_Slow_Down;										  // 按键减速专用变量
-idata unsigned char Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};	  // 数码管显示数据存放数组
-idata unsigned char Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};		  // 数码管小数点数据存放数组
-unsigned char Seg_Pos;												  // 数码管扫描专用变量
-unsigned int Seg_Slow_Down;											  // 数码管减速专用变量
-idata unsigned char ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};			  // Led显示数据存放数组
-unsigned char Seg_Disp_Mode;										  // 模式界面 0-系统初始界面 1-主界面 时钟  信息
-unsigned char Pass_Word[8] = {1, 2, 3, 4, 5, 6, 7, 8};				  // 初始密码
-idata unsigned char Pass_Input[8] = {11, 11, 11, 11, 11, 11, 11, 11}; // 密码输入
-unsigned char Pass_Input_Index;										  // 密码输入指针
-unsigned int Timer_3000Ms;											  // 长按计时
-bit Key_Flag;														  // 计时标志位
-idata unsigned char Clock_Crl[3] = {23, 59, 55};					  // 时钟
-unsigned int Timer_500Ms;											  // 时钟间隔符闪烁
-bit Seg_Star_Flag;													  // 闪烁标志位
-unsigned char ultrasonic;											  // 超声波测距
-unsigned char ultrasonic_Ture;										  // 超声波测距
-float AD_Output;													  // AD输出
-float Temp;															  // 温度
-bit Sun_Flag;														  // 是否有光标志位
-unsigned int Timer_2000Ms;											  // 长按计时
-bit Key_Flag1;														  // 计时标志位
-idata unsigned char Uart_Recv[10];									  // 串口接收数组
-unsigned char Uart_Recv_Index;										  // 串口接收数组指针
-unsigned int Syt_Flag;												  // 系统计时
-bit Time_Syt_Flag;													  // 系统计时开始标志位
-bit Uart_Enable_Flag;												  // 串口使能标志位
-idata unsigned char Clock_Set[6] = {2, 3, 5, 9, 5, 5};				  // 时钟设置
-unsigned char Clock_Set_Index;
-idata unsigned char Alarm[3] = {0, 0, 0};			   // 初始闹钟
-idata unsigned char Alarm_Set[6] = {0, 0, 0, 0, 0, 0}; // 闹钟设置
-unsigned int Timer_700Ms;							   // 时钟设置闹钟设置计时
-bit Seg_Star_Flag2;									   // 闪烁标志位
-bit Alarm_Enable_Flag;								   // 闹钟使能标志位
-unsigned char Key_Input_Flag;						   // 输入十位个位标志位
-idata unsigned char Clock[3];						   // 设置时钟保存
-idata unsigned char E2PROM_Alarm[3];				   // 闹钟保存
-float AD_Rb2_Output;								   // Rb2输出
-unsigned char Term_Led;								   // 周期
-unsigned char Led_Lever;							   // 等级
-unsigned char Led_Pos;								   // LED扫描
-float DA_Output;									   // DA输出
-unsigned char Timer_Count;							   // 串口时间计数
-
+uchar Key_Slow_Down;										  // 按键减速专用变量
+uint Uart_Slow_Down;										  // 按键减速专用变量
+idata uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};	  // 数码管显示数据存放数组
+idata uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};		  // 数码管小数点数据存放数组
+uchar Seg_Pos;												  // 数码管扫描专用变量
+uint Seg_Slow_Down;											  // 数码管减速专用变量
+idata uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};			  // Led显示数据存放数组
+uchar Seg_Disp_Mode;										  // 模式界面 0-系统初始界面 1-主界面 时钟  信息
+uchar Pass_Word[8] = {1, 2, 3, 4, 5, 6, 7, 8};				  // 初始密码
+idata uchar Pass_Input[8] = {11, 11, 11, 11, 11, 11, 11, 11}; // 密码输入
+uchar Pass_Input_Index;										  // 密码输入指针
+uint Timer_3000Ms;											  // 长按计时
+bit Key_Flag;												  // 计时标志位
+idata uchar Clock_Crl[3] = {23, 59, 55};					  // 时钟
+uint Timer_500Ms;											  // 时钟间隔符闪烁
+bit Seg_Star_Flag;											  // 闪烁标志位
+uchar ultrasonic;											  // 超声波测距
+uchar ultrasonic_Ture;										  // 超声波测距
+float AD_Output;											  // AD输出
+float Temp;													  // 温度
+bit Sun_Flag;												  // 是否有光标志位
+uint Timer_2000Ms;											  // 长按计时
+bit Key_Flag1;												  // 计时标志位
+idata uchar Uart_Recv[10];									  // 串口接收数组
+uchar Uart_Recv_Index;										  // 串口接收数组指针
+uint Syt_Flag;												  // 系统计时
+bit Time_Syt_Flag;											  // 系统计时开始标志位
+bit Uart_Enable_Flag;										  // 串口使能标志位
+idata uchar Clock_Set[6] = {2, 3, 5, 9, 5, 5};				  // 时钟设置
+uchar Clock_Set_Index;
+idata uchar Alarm[3] = {0, 0, 0};			   // 初始闹钟
+idata uchar Alarm_Set[6] = {0, 0, 0, 0, 0, 0}; // 闹钟设置
+uint Timer_700Ms;							   // 时钟设置闹钟设置计时
+bit Seg_Star_Flag2;							   // 闪烁标志位
+bit Alarm_Enable_Flag;						   // 闹钟使能标志位
+uchar Key_Input_Flag;						   // 输入十位个位标志位
+idata uchar Clock[3];						   // 设置时钟保存
+idata uchar E2PROM_Alarm[3];				   // 闹钟保存
+float AD_Rb2_Output;						   // Rb2输出
+uchar Term_Led;								   // 周期
+uchar Led_Lever;							   // 等级
+uchar Led_Pos;								   // LED扫描
+float DA_Output;							   // DA输出
+uchar Timer_Count;							   // 串口时间计数
 // 键盘映射
-uchar Key_to_num(uchar Key_Down)
+uchar key_to_num(uchar key)
 {
-	uchar key_num[10] = {4, 8, 12, 16, 9, 13, 17, 10, 14, 18};
-	uchar i;
-	for (i = 0; i < 10; i++)
-		if (Key_Down == key_num[i])
-			return i;
-	// 当按下的按键是没有用的按键的时候
-	if (i == 10 && Key_Down != key_num[9])
+	switch (key)
+	{
+	case 4:
+		return 0;
+	case 8:
+		return 1;
+	case 12:
+		return 2;
+	case 16:
+		return 3;
+	case 9:
+		return 4;
+	case 13:
+		return 5;
+	case 17:
+		return 6;
+	case 10:
+		return 7;
+	case 14:
+		return 8;
+	case 18:
+		return 9;
+	default:
 		return 100;
+	}
 }
 /* 键盘处理函数 */
 void Key_Proc()
 {
 	static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
-	unsigned char i;
+	uchar i;
 	if (Key_Slow_Down)
 		return;
 	Key_Slow_Down = 1; // 键盘减速程序
@@ -77,12 +93,12 @@ void Key_Proc()
 	/*初始界面按键 密码输入*/
 	if (Seg_Disp_Mode == 0 && Pass_Input_Index < 8)
 	{
-		uchar input_value;
-		input_value = Key_to_num(Key_Down);
-		// 输入有效
-		if (input_value != 100)
+		uchar input_data;
+		input_data = key_to_num(Key_Down);
+		// 有效输入
+		if (input_data < 100)
 		{
-			Pass_Input[Pass_Input_Index] = input_value;
+			Pass_Input[Pass_Input_Index] = input_data;
 			Pass_Input_Index++;
 		}
 	}
@@ -348,7 +364,7 @@ void Seg_Proc()
 		break;
 	case 400: // 温度
 		Seg_Slow_Down += 1;
-		Temp = rd_temperature();
+		Temp = Read_t();
 		break;
 	}
 
@@ -680,7 +696,7 @@ void Uart1Server() interrupt 4
 void main()
 {
 
-	while (rd_temperature() == 85)
+	while (Read_t() == 85)
 		;
 	System_Init();
 	Timer0Init();
