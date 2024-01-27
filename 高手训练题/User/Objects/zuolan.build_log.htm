@@ -24,6 +24,7 @@ Project File Date:  01/26/2024
 <h2>Output:</h2>
 Rebuild target 'zuolan'
 compiling main.c...
+main.c(62): warning C291: not every exit path returns a value
 compiling Led.c...
 compiling Seg.c...
 compiling Key.c...
@@ -34,23 +35,9 @@ compiling iic.c...
 compiling onewire.c...
 compiling ultrasound.c...
 linking...
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_RELAY?LED
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_PUTCHAR?UART
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_DA_WRITE?IIC
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_EEPROM_WRITE?IIC
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_EEPROM_READ?IIC
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?START_CONVERT?ONEWIRE
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?READ_TEMPERTURE?ONEWIRE
-Program Size: data=148.1 xdata=0 code=4017
+Program Size: data=185.1 xdata=0 code=7840
 creating hex file from ".\Objects\zuolan"...
-".\Objects\zuolan" - 0 Error(s), 7 Warning(s).
+".\Objects\zuolan" - 0 Error(s), 1 Warning(s).
 </pre>
 </body>
 </html>

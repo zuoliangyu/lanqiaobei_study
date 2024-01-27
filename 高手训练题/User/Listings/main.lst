@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -8,447 +8,761 @@ COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE 
 
 line level    source
 
-   1          #include "main.h"
-   2          /* ±äÁ¿ÉùÃ÷Çø */
-   3          uchar Key_Slow_Down;                 // °´¼ü¼õËÙ×¨ÓÃ±äÁ¿
-   4          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // ÊıÂë¹ÜÏÔÊ¾Êı¾İ´æ·ÅÊı×é
-   5          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // ÊıÂë¹ÜĞ¡ÊıµãÊı¾İ´æ·ÅÊı×é
-   6          uchar Seg_Pos;                     // ÊıÂë¹ÜÉ¨Ãè×¨ÓÃ±äÁ¿
-   7          uint Seg_Slow_Down;                  // ÊıÂë¹Ü¼õËÙ×¨ÓÃ±äÁ¿
-   8          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // LedÏÔÊ¾Êı¾İ´æ·ÅÊı×é
-   9          uchar Uart_Slow_Down;                // ´®¿Ú¼õËÙ×¨ÓÃ±äÁ¿
-  10          uchar Uart_Recv[10];                 // ´®¿Ú½ÓÊÕÊı¾İ´¢´æÊı×é Ä¬ÈÏ10¸ö×Ö½Ú Èô½ÓÊÕÊı¾İ½Ï³¤ ¿É¸ü¸Ä×î´ó×Ö½ÚÊı
-  11          uchar Uart_Recv_Index;                 // ´®¿Ú½ÓÊÕÊı×éÖ¸Õë
-  12          uchar Uart_Send[10];                 // ´®¿Ú½ÓÊÕÊı¾İ´¢´æÊı×é Ä¬ÈÏ10¸ö×Ö½Ú Èô·¢ËÍÊı¾İ½Ï³¤ ¿É¸ü¸Ä×î´ó×Ö½ÚÊı
-  13          
-  14          /* ½çÃæ */
-  15          uchar Seg_show_mode; // 0 ³õÊ¼½çÃæ 1Ê±ÖÓ½çÃæ 2ĞÅÏ¢ÏÔÊ¾½çÃæ 3 Ê±ÖÓÉèÖÃ½çÃæ 4ÄÖÖÓÉèÖÃ½çÃæ
-  16          
-  17          /*ÃÜÂë*/
-  18          idata uchar Password_set[8] = {1, 2, 3, 4, 5, 6, 7, 8};       // ³õÊ¼µÄÄ¬ÈÏÃÜÂë
-  19          idata uchar Password_input[8] = {11, 11, 11, 11, 11, 11, 11, 11}; // ÃÜÂë£¬×î³õÎªÃ»ÓĞÊäÈëµÄ×´Ì¬
-  20          idata uchar Password_input_index;                 // ÃÜÂëÊäÈëµÄÖ¸Õë
-  21          bit wring_flag;                           // ÃÜÂë´íÎó±êÖ¾
-  22          bit ring_flag;                            // ·äÃùÆ÷
-  23          
-  24          /* Ê±¼ä */
-  25          idata uchar ucRtc[3][3] = {0x12, 0x59, 0x55,
-  26                     0x12, 0x59, 0x55,  // ÉèÖÃµÄÊ±¼ä
-  27                     0x12, 0x59, 0x55}; // ÉèÖÃµÄÄÖÖÓ
-  28          idata uchar two_arr[2];         // ÁÙÊ±µÄÊı¾İ
-  29          idata uchar set_time_index;
-  30          
-  31          uint time_1s;
-  32          uint time_500ms;
-  33          uint time_700ms;
-  34          bit skip_flag;        // Ìø¹ıµÄ±êÖ¾
-  35          bit time_interval_flag;   // Ê±¼äÏÔÊ¾ÖĞ¼ä¼ä¸ô·ûÉÁË¸
-  36          bit time_set_interval_flag; // ÉèÖÃ½çÃæÊ±¼äÖĞ¼ä¼ä¸ôÉÁË¸
-  37          bit massage_show_flag;    // 0ÏÔÊ¾Ê±¼ä£¬1ÏÔÊ¾ĞÅÏ¢
-  38          bit massage_show_time_flag; // ¿ªÆô³¤°´Ê±¼ä->ĞÅÏ¢Ìø×ª¼ÆÊ±
-  39          bit alarm_open;       // ÄÖÖÓ¿ªÆô
-  40          
-  41          // LEDºÍSeg³õÊ¼»¯
-  42          void Init_Seg_Led()
-  43          {
-  44   1        uchar i;
-  45   1        for (i = 0; i < 8; i++)
-  46   1        {
-  47   2          Seg_Buf[i] = 0;
-  48   2          Seg_Point[i] = 0;
-  49   2          ucLed[i] = 0;
-  50   2        }
-  51   1      }
-  52          // ×Ô¶¨ÒåµÄ·µ»Ø¶ÔÓ¦µÄ¼üÅÌ
-  53          uchar key_data(uchar Key_Down)
-  54          {
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 2   
+   1          /* å¤´æ–‡ä»¶å£°æ˜åŒº */
+   2          #include <main.h> //å•ç‰‡æœºå¯„å­˜å™¨ä¸“ç”¨å¤´æ–‡ä»¶
+   3          
+   4          /* å˜é‡å£°æ˜åŒº */
+   5          
+   6          unsigned char Key_Slow_Down;                      // æŒ‰é”®å‡é€Ÿä¸“ç”¨å˜é‡
+   7          unsigned int Uart_Slow_Down;                      // æŒ‰é”®å‡é€Ÿä¸“ç”¨å˜é‡
+   8          idata unsigned char Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};    // æ•°ç ç®¡æ˜¾ç¤ºæ•°æ®å­˜æ”¾æ•°ç»„
+   9          idata unsigned char Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // æ•°ç ç®¡å°æ•°ç‚¹æ•°æ®å­˜æ”¾æ•°ç»„
+  10          unsigned char Seg_Pos;                          // æ•°ç ç®¡æ‰«æä¸“ç”¨å˜é‡
+  11          unsigned int Seg_Slow_Down;                       // æ•°ç ç®¡å‡é€Ÿä¸“ç”¨å˜é‡
+  12          idata unsigned char ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};        // Ledæ˜¾ç¤ºæ•°æ®å­˜æ”¾æ•°ç»„
+  13          unsigned char Seg_Disp_Mode;                      // æ¨¡å¼ç•Œé¢ 0-ç³»ç»Ÿåˆå§‹ç•Œé¢ 1-ä¸»ç•Œé¢ æ—¶é’Ÿ  ä¿¡æ¯
+  14          unsigned char Pass_Word[8] = {1, 2, 3, 4, 5, 6, 7, 8};          // åˆå§‹å¯†ç 
+  15          idata unsigned char Pass_Input[8] = {11, 11, 11, 11, 11, 11, 11, 11}; // å¯†ç è¾“å…¥
+  16          unsigned char Pass_Input_Index;                     // å¯†ç è¾“å…¥æŒ‡é’ˆ
+  17          unsigned int Timer_3000Ms;                        // é•¿æŒ‰è®¡æ—¶
+  18          bit Key_Flag;                             // è®¡æ—¶æ ‡å¿—ä½
+  19          idata unsigned char Clock_Crl[3] = {23, 59, 55};            // æ—¶é’Ÿ
+  20          unsigned int Timer_500Ms;                       // æ—¶é’Ÿé—´éš”ç¬¦é—ªçƒ
+  21          bit Seg_Star_Flag;                            // é—ªçƒæ ‡å¿—ä½
+  22          unsigned char ultrasonic;                       // è¶…å£°æ³¢æµ‹è·
+  23          unsigned char ultrasonic_Ture;                      // è¶…å£°æ³¢æµ‹è·
+  24          float AD_Output;                            // ADè¾“å‡º
+  25          float Temp;                               // æ¸©åº¦
+  26          bit Sun_Flag;                             // æ˜¯å¦æœ‰å…‰æ ‡å¿—ä½
+  27          unsigned int Timer_2000Ms;                        // é•¿æŒ‰è®¡æ—¶
+  28          bit Key_Flag1;                              // è®¡æ—¶æ ‡å¿—ä½
+  29          idata unsigned char Uart_Recv[10];                    // ä¸²å£æ¥æ”¶æ•°ç»„
+  30          unsigned char Uart_Recv_Index;                      // ä¸²å£æ¥æ”¶æ•°ç»„æŒ‡é’ˆ
+  31          unsigned int Syt_Flag;                          // ç³»ç»Ÿè®¡æ—¶
+  32          bit Time_Syt_Flag;                            // ç³»ç»Ÿè®¡æ—¶å¼€å§‹æ ‡å¿—ä½
+  33          bit Uart_Enable_Flag;                         // ä¸²å£ä½¿èƒ½æ ‡å¿—ä½
+  34          idata unsigned char Clock_Set[6] = {2, 3, 5, 9, 5, 5};          // æ—¶é’Ÿè®¾ç½®
+  35          unsigned char Clock_Set_Index;
+  36          idata unsigned char Alarm[3] = {0, 0, 0};        // åˆå§‹é—¹é’Ÿ
+  37          idata unsigned char Alarm_Set[6] = {0, 0, 0, 0, 0, 0}; // é—¹é’Ÿè®¾ç½®
+  38          unsigned int Timer_700Ms;                // æ—¶é’Ÿè®¾ç½®é—¹é’Ÿè®¾ç½®è®¡æ—¶
+  39          bit Seg_Star_Flag2;                    // é—ªçƒæ ‡å¿—ä½
+  40          bit Alarm_Enable_Flag;                   // é—¹é’Ÿä½¿èƒ½æ ‡å¿—ä½
+  41          unsigned char Key_Input_Flag;              // è¾“å…¥åä½ä¸ªä½æ ‡å¿—ä½
+  42          idata unsigned char Clock[3];              // è®¾ç½®æ—¶é’Ÿä¿å­˜
+  43          idata unsigned char E2PROM_Alarm[3];           // é—¹é’Ÿä¿å­˜
+  44          float AD_Rb2_Output;                   // Rb2è¾“å‡º
+  45          unsigned char Term_Led;                  // å‘¨æœŸ
+  46          unsigned char Led_Lever;                 // ç­‰çº§
+  47          unsigned char Led_Pos;                   // LEDæ‰«æ
+  48          float DA_Output;                     // DAè¾“å‡º
+  49          unsigned char Timer_Count;                 // ä¸²å£æ—¶é—´è®¡æ•°
+  50          
+  51          // é”®ç›˜æ˜ å°„
+  52          uchar Key_to_num(uchar Key_Down)
+  53          {
+  54   1        uchar key_num[10] = {4, 8, 12, 16, 9, 13, 17, 10, 14, 18};
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 2   
 
   55   1        uchar i;
-  56   1        // 0 1 2 3 4 5 6 7 8 9
-  57   1        uchar key_mapping[] = {4, 8, 12, 16, 9, 13, 17, 10, 14, 18};
-  58   1        for (i = 0; i < 10; i++)
-  59   1        {
-  60   2          if (Key_Down == key_mapping[i])
-  61   2          {
-  62   3            break;
-  63   3          }
-  64   2        }
-  65   1        // °´ÏÂµÄ²»ÊÇ×îºóÒ»¸ö£¬ÄÇÃ´¾ÍÊÇÆäËûµÄ°´¼ü£¬ÕâÀï²»×ö´¦Àí
-  66   1        if (i == 10 && Key_Down != 18)
-  67   1        {
-  68   2          i = -1;
-  69   2        }
-  70   1        return i;
-  71   1      }
-  72          /* ¼üÅÌ´¦Àíº¯Êı */
-  73          void Key_Proc()
-  74          {
-  75   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // °´¼ü×¨ÓÃ±äÁ¿
-  76   1        uchar i, j;
-  77   1        uchar input_data;
-  78   1        if (Key_Slow_Down)
-  79   1          return;
-  80   1        Key_Slow_Down = 1; // ¼üÅÌ¼õËÙ³ÌĞò
-  81   1      
-  82   1        Key_Val = Key_Read();           // ÊµÊ±¶ÁÈ¡¼üÂëÖµ
-  83   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // ²¶×½°´¼üÏÂ½µÑØ
-  84   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // ²¶×½°´¼üÉÏ½µÑØ
-  85   1        Key_Old = Key_Val;              // ¸¨ÖúÉ¨Ãè±äÁ¿
-  86   1        switch (Seg_show_mode)
-  87   1        {
-  88   2        case 0: // µÇÂ¼½çÃæ
-  89   2          input_data = key_data(Key_Down);
-  90   2          if (Password_input_index < 8 && (input_data != -1))
-  91   2          {
-  92   3            Password_input[Password_input_index] = input_data;
-  93   3            Password_input_index++;
-  94   3          }
-  95   2          // °´ÏÂÈ·ÈÏ
-  96   2          if (Key_Down == 7)
-  97   2          {
-  98   3            for (i = 0; i < 8; i++)
+  56   1        for (i = 0; i < 10; i++)
+  57   1          if (Key_Down == key_num[i])
+  58   1            return i;
+  59   1        // å½“æŒ‰ä¸‹çš„æŒ‰é”®æ˜¯æ²¡æœ‰ç”¨çš„æŒ‰é”®çš„æ—¶å€™
+  60   1        if (i == 10 && Key_Down != key_num[9])
+  61   1          return 100;
+  62   1      }
+  63          /* é”®ç›˜å¤„ç†å‡½æ•° */
+  64          void Key_Proc()
+  65          {
+  66   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // æŒ‰é”®ä¸“ç”¨å˜é‡
+  67   1        unsigned char i;
+  68   1        if (Key_Slow_Down)
+  69   1          return;
+  70   1        Key_Slow_Down = 1; // é”®ç›˜å‡é€Ÿç¨‹åº
+  71   1      
+  72   1        Key_Val = Key_Read();           // å®æ—¶è¯»å–é”®ç å€¼
+  73   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // æ•æ‰æŒ‰é”®ä¸‹é™æ²¿
+  74   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // æ•æ‰æŒ‰é”®ä¸Šé™æ²¿
+  75   1        Key_Old = Key_Val;              // è¾…åŠ©æ‰«æå˜é‡
+  76   1      
+  77   1        /*åˆå§‹ç•Œé¢æŒ‰é”® å¯†ç è¾“å…¥*/
+  78   1        if (Seg_Disp_Mode == 0 && Pass_Input_Index < 8)
+  79   1        {
+  80   2          uchar input_value;
+  81   2          input_value = Key_to_num(Key_Down);
+  82   2          // è¾“å…¥æœ‰æ•ˆ
+  83   2          if (input_value != 100)
+  84   2          {
+  85   3            Pass_Input[Pass_Input_Index] = input_value;
+  86   3            Pass_Input_Index++;
+  87   3          }
+  88   2        }
+  89   1        if (Seg_Disp_Mode == 0)
+  90   1        {
+  91   2          // é•¿æŒ‰ è·³è¿‡å¯†ç è¾“å…¥
+  92   2          if (Key_Down == 5)
+  93   2            Key_Flag = 1;
+  94   2          if (Timer_3000Ms >= 3000) // åˆ¤å®šä¸ºé•¿æŒ‰
+  95   2          {
+  96   3            if (Key_Old == 5)
+  97   3              Seg_Disp_Mode = 1; // è¿›å…¥ä¸»ç•Œé¢
+  98   3            if (Key_Up == 5)
   99   3            {
- 100   4              if (Password_set[i] != Password_input[i])
- 101   4              {
- 102   5                // ±¨¾¯
- 103   5                wring_flag = 1;
- 104   5                ring_flag = 1;
- 105   5                // Çå¿ÕÊäÈëÄÚÈİ
- 106   5                for (j = 0; j < 8; j++)
- 107   5                {
- 108   6                  Password_input[j] = 11;
- 109   6                }
- 110   5                break;
- 111   5              }
- 112   4            }
- 113   3            if (i == 8)
- 114   3            {
- 115   4              // ÃÜÂëÕıÈ·
- 116   4              wring_flag = 0;
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 3   
+ 100   4              Timer_3000Ms = Key_Flag = 0;
+ 101   4            }
+ 102   3          }
+ 103   2          else
+ 104   2          {
+ 105   3            if (Key_Up == 5)
+ 106   3              Timer_3000Ms = Key_Flag = 0;
+ 107   3          }
+ 108   2          switch (Key_Down)
+ 109   2          {
+ 110   3          case 7:                        // ç¡®è®¤
+ 111   3            if (Pass_Input_Index == 8 && Seg_Disp_Mode == 0) // å¯†ç è¾“å®Œ
+ 112   3            {
+ 113   4              i = 0;
+ 114   4              while (Pass_Input[i] == Pass_Word[i]) // å¾ªç¯åˆ¤æ–­
+ 115   4              {
+ 116   5                i++;
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 3   
 
- 117   4              ring_flag = 0;
- 118   4              Seg_show_mode++; // µ½´ïÏÂÒ»¸ö½çÃæ
- 119   4            }
- 120   3          }
- 121   2          // °´ÏÂÉ¾³ı
- 122   2          if (Key_Down == 6)
- 123   2          {
- 124   3            if (Password_input_index == 8)
- 125   3              Password_input_index = 7;
- 126   3            Password_input[Password_input_index] = 11;
- 127   3            if (Password_input_index > 0 && Password_input_index < 7)
- 128   3              Password_input_index--;
- 129   3          }
- 130   2          // Ìø¹ıÃÜÂë
- 131   2          if (Key_Old == 5)
- 132   2          {
- 133   3            skip_flag = 1;
- 134   3            if (time_1s == 1000)
- 135   3            {
- 136   4              Seg_show_mode++; // Ìø×ªµ½ÏÂÒ»¸ö½çÃæ
- 137   4            }
- 138   3          }
- 139   2          else
- 140   2          {
- 141   3            time_1s = skip_flag = 0; // ÖØÖÃ³¤°´Ê±¼ä
+ 117   5                if (i == 8)
+ 118   5                  break; // é˜²æ­¢å¾ªç¯è¶Šç•Œåˆ¤æ–­
+ 119   5              }
+ 120   4              if (i == 8) // å¯†ç è¾“å…¥æ­£ç¡®
+ 121   4              {
+ 122   5                Seg_Disp_Mode = 1; // è¿›å…¥ä¸»ç•Œé¢
+ 123   5                Pass_Input_Index = 0;
+ 124   5                Beep(0);
+ 125   5              }
+ 126   4              else
+ 127   4              {
+ 128   5                Pass_Input_Index = 0;
+ 129   5                for (i = 0; i < 8; i++)
+ 130   5                  Pass_Input[i] = 11; // è¾“å…¥å†…å®¹æ¸…ç©º
+ 131   5                Beep(1);
+ 132   5              }
+ 133   4            }
+ 134   3            break;
+ 135   3          case 6: // åˆ é™¤
+ 136   3            if (Pass_Input_Index != 0)
+ 137   3            {
+ 138   4              Pass_Input_Index--;
+ 139   4              Seg_Buf[7 - Pass_Input_Index] = 11;
+ 140   4            }
+ 141   3            break;
  142   3          }
- 143   2          break;
- 144   2      
- 145   2        case 1:
- 146   2          /* Ö÷½çÃæ */
- 147   2          // ĞÅÏ¢ÏÔÊ¾°´Å¥,³¤°´1s½øÈëĞÅÏ¢ÏÔÊ¾½çÃæ£¬ËÉÊÖ»Øµ½Ê±ÖÓ½çÃæ
- 148   2          if (Key_Old == 7)
- 149   2          {
- 150   3            massage_show_time_flag = 1;
- 151   3          }
- 152   2          if (Key_Up == 7)
- 153   2          {
- 154   3            Init_Seg_Led();
- 155   3            massage_show_time_flag = massage_show_flag = 0;
- 156   3          }
- 157   2          // ¿ªÆô/¹Ø±ÕÄÖÖÓ
- 158   2          if (Key_Down == 4)
- 159   2          {
- 160   3            alarm_open = ~alarm_open;
- 161   3          }
- 162   2          // ½øÈëÉèÖÃ½çÃæ
- 163   2          if (Key_Down == 6)
- 164   2          {
- 165   3            Seg_show_mode++;
- 166   3            Init_Seg_Led();
- 167   3          }
- 168   2          break;
- 169   2        case 2:
- 170   2          /* Ê±ÖÓÉèÖÃ½çÃæ */
- 171   2          switch (Key_Down)
- 172   2          {
- 173   3          case 11:
- 174   3            /* ÉèÖÃĞ¡Ê±£¬½«Ô­±¾µÄÊı¾İ½øĞĞ´æ´¢ */
- 175   3            two_arr[0] = ucRtc[1][0] / 16;
- 176   3            two_arr[1] = ucRtc[1][0] % 16;
- 177   3            set_time_index = 1;
+ 143   2        }
+ 144   1        /*ç³»ç»Ÿä¸»ç•Œé¢æŒ‰é”®*/
+ 145   1        if ((Seg_Disp_Mode == 1 || Seg_Disp_Mode == 2) && (Uart_Enable_Flag == 0)) // æ—¶é’Ÿ è¶…å£°æ³¢æ¸©åº¦
+ 146   1        {
+ 147   2          // é•¿æŒ‰ä¿¡æ¯æ˜¾ç¤ºæŒ‰é”®å¯è¿›å…¥ä¿¡æ¯æ˜¾ç¤ºç•Œé¢ æ¾æ‰‹åè¿” å›æ—¶é’Ÿæ˜¾ç¤ºç•Œé¢
+ 148   2          if (Key_Down == 7)
+ 149   2            Key_Flag1 = 1;
+ 150   2          if (Timer_2000Ms > 2000) // åˆ¤å®šä¸ºé•¿æŒ‰
+ 151   2          {
+ 152   3            if (Key_Old == 7)
+ 153   3              Seg_Disp_Mode = 2;
+ 154   3            if (Key_Up == 7) // æ•æ‰åˆ°ä¸Šå‡æ²¿
+ 155   3            {
+ 156   4              Seg_Disp_Mode = 1;
+ 157   4              Timer_2000Ms = Key_Flag1 = 0; // å¤ä½ï¼Œä¾¿äºä¸‹æ¬¡
+ 158   4            }
+ 159   3          }
+ 160   2          else
+ 161   2          {
+ 162   3            if (Key_Up == 7)          // æ•æ‰åˆ°ä¸Šå‡æ²¿
+ 163   3              Timer_2000Ms = Key_Flag1 = 0; // å¤ä½ï¼Œä¾¿äºä¸‹æ¬¡
+ 164   3          }
+ 165   2      
+ 166   2          switch (Key_Down)
+ 167   2          {
+ 168   3          case 11: // ä¸²å£å¼€
+ 169   3            Uart_Enable_Flag = 1;
+ 170   3            break;
+ 171   3          case 6: // æ—¶é’Ÿè®¾ç½®ç•Œé¢
+ 172   3            for (i = 0; i < 3; i++)
+ 173   3            {
+ 174   4              Clock_Set[i * 2] = Clock_Crl[i] / 10;
+ 175   4              Clock_Set[i * 2 + 1] = Clock_Crl[i] % 10;
+ 176   4            }
+ 177   3            Seg_Disp_Mode = 3;
  178   3            break;
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 4   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 4   
 
- 179   3          case 15:
- 180   3            /* ÉèÖÃ·ÖÖÓ£¬½«Ô­±¾µÄÊı¾İ½øĞĞ´æ´¢ */
- 181   3            two_arr[0] = ucRtc[1][1] / 16;
- 182   3            two_arr[1] = ucRtc[1][1] % 16;
- 183   3            set_time_index = 2;
+ 179   3          case 5: // é—¹é’Ÿè®¾ç½®
+ 180   3            Seg_Disp_Mode = 4;
+ 181   3            break;
+ 182   3          case 4: // é—¹é’Ÿä½¿èƒ½
+ 183   3            Alarm_Enable_Flag = 1;
  184   3            break;
- 185   3          case 19:
- 186   3            /* ÉèÖÃÃëÖÓ£¬½«Ô­±¾µÄÊı¾İ½øĞĞ´æ´¢ */
- 187   3            two_arr[0] = ucRtc[1][2] / 16;
- 188   3            two_arr[1] = ucRtc[1][2] % 16;
- 189   3            set_time_index = 3;
- 190   3            break;
- 191   3          }
- 192   2      
- 193   2          break;
- 194   2        }
- 195   1      }
- 196          
- 197          /* ĞÅÏ¢´¦Àíº¯Êı */
- 198          void Seg_Proc()
- 199          {
- 200   1        uchar i;
- 201   1        if (Seg_Slow_Down)
- 202   1          return;
- 203   1        Seg_Slow_Down = 1; // ÊıÂë¹Ü¼õËÙ³ÌĞò
- 204   1        switch (Seg_show_mode)
- 205   1        {
- 206   2        case 0:
- 207   2          /* ÃÜÂëÊäÈë */
- 208   2          if (Password_input_index)
- 209   2          {
- 210   3            for (i = 0; i < Password_input_index; i++)
- 211   3            {
- 212   4              Seg_Buf[7 - i] = Password_input[Password_input_index - i - 1];
- 213   4            }
- 214   3            for (i = Password_input_index; i < 8; i++)
- 215   3            {
- 216   4              Seg_Buf[7 - i] = 11;
+ 185   3          }
+ 186   2        }
+ 187   1      
+ 188   1        /*æ—¶é’Ÿè®¾ç½®é—¹é’Ÿè®¾ç½®æŒ‰é”®*/
+ 189   1        if ((Seg_Disp_Mode == 3 || Seg_Disp_Mode == 4) && (Uart_Enable_Flag == 0))
+ 190   1        {
+ 191   2          switch (Key_Down)
+ 192   2          {
+ 193   3          case 11: // å°æ—¶è®¾ç½®
+ 194   3            Key_Input_Flag = 0;
+ 195   3            Clock_Set_Index = 0;
+ 196   3            break;
+ 197   3          case 15: // åˆ†é’Ÿè®¾ç½®
+ 198   3            Key_Input_Flag = 2;
+ 199   3            Clock_Set_Index = 2;
+ 200   3            break;
+ 201   3          case 19: // ç§’é’Ÿè®¾ç½®
+ 202   3            Key_Input_Flag = 4;
+ 203   3            Clock_Set_Index = 4;
+ 204   3            break;
+ 205   3          case 7:           // ç¡®è®¤ä¿å­˜ ä¿å­˜åˆ° EEPROM å†…
+ 206   3            if (Seg_Disp_Mode == 3) // æ—¶é’Ÿ
+ 207   3            {
+ 208   4              Clock[0] = (Clock_Set[0] * 10 + Clock_Set[1]);
+ 209   4              Clock[1] = (Clock_Set[2] * 10 + Clock_Set[3]);
+ 210   4              Clock[2] = (Clock_Set[4] * 10 + Clock_Set[5]);
+ 211   4              if (Clock[0] < 23 && Clock[1] < 59 && Clock[2] < 59) // æ•°æ®åˆç†
+ 212   4              {
+ 213   5                Set_Rtc(Clock); // ä¿å­˜
+ 214   5                E2PROM_Read(Clock, 8, 3);
+ 215   5                Seg_Disp_Mode = 1;
+ 216   5              }
  217   4            }
- 218   3          }
- 219   2          else
- 220   2          {
- 221   3            // Ã»ÓĞÃÜÂëÊäÈë
- 222   3            for (i = 0; i < 8; i++)
- 223   3            {
- 224   4              Seg_Buf[i] = 11;
- 225   4            }
- 226   3          }
- 227   2          break;
- 228   2        case 1:
- 229   2          if (massage_show_flag)
- 230   2          {
- 231   3            uchar dis_value;
- 232   3            uint temperature_value;
- 233   3            uchar light_value;
- 234   3            dis_value = Ut_Wave_Data() % 100;
- 235   3            temperature_value = rd_temperature() * 10;
- 236   3            light_value = Ad_Read(0x41);
- 237   3            Seg_Buf[0] = dis_value / 10;
- 238   3            Seg_Buf[1] = dis_value % 10;
- 239   3            Seg_Buf[2] = (light_value > 50) ? 1 : 0;
- 240   3            Seg_Buf[3] = 11;
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 5   
+ 218   3            if (Seg_Disp_Mode == 4) // é—¹é’Ÿ
+ 219   3            {
+ 220   4              E2PROM_Alarm[0] = (Alarm_Set[0] * 10 + Alarm_Set[1]);
+ 221   4              E2PROM_Alarm[1] = (Alarm_Set[2] * 10 + Alarm_Set[3]);
+ 222   4              E2PROM_Alarm[2] = (Alarm_Set[4] * 10 + Alarm_Set[5]);
+ 223   4              if (E2PROM_Alarm[0] < 23 && E2PROM_Alarm[1] < 59 && E2PROM_Alarm[2] < 59) // æ•°æ®åˆç†
+ 224   4              {
+ 225   5                E2PROM_Read(E2PROM_Alarm, 0, 3);
+ 226   5                Seg_Disp_Mode = 1;
+ 227   5              }
+ 228   4            }
+ 229   3            break;
+ 230   3          case 6: // å–æ¶ˆä¿å­˜
+ 231   3            if (Seg_Disp_Mode == 3)
+ 232   3            {
+ 233   4              Set_Rtc(Clock_Crl); // ä¿å­˜åŸæ¥å€¼
+ 234   4            }
+ 235   3            if (Seg_Disp_Mode == 4)
+ 236   3            {
+ 237   4              E2PROM_Alarm[0] = E2PROM_Alarm[1] = E2PROM_Alarm[2] = 0;
+ 238   4            }
+ 239   3            break;
+ 240   3          case 5: // ä¸²å£
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 5   
 
- 241   3            Seg_Buf[4] = temperature_value / 100;
- 242   3            Seg_Buf[5] = (temperature_value % 100) / 10;
- 243   3            Seg_Buf[6] = temperature_value % 10;
- 244   3            Seg_Point[5] = 1;
- 245   3            Seg_Buf[7] = 12; // C
- 246   3          }
- 247   2          else
- 248   2          {
- 249   3            Read_Rtc(ucRtc[0]);
- 250   3            Seg_Buf[0] = ucRtc[0][0] / 16;
- 251   3            Seg_Buf[1] = ucRtc[0][0] % 16;
- 252   3            Seg_Buf[2] = Seg_Buf[5] = (time_interval_flag) ? 11 : 10;
- 253   3            Seg_Buf[3] = ucRtc[0][1] / 16;
- 254   3            Seg_Buf[4] = ucRtc[0][1] % 16;
- 255   3            Seg_Buf[6] = ucRtc[0][2] / 16;
- 256   3            Seg_Buf[7] = ucRtc[0][2] % 16;
- 257   3          }
- 258   2          break;
- 259   2        case 2: // Ê±ÖÓÉèÖÃ
- 260   2          Seg_Buf[2] = Seg_Buf[5] = (time_700ms) ? 11 : 10;
- 261   2          switch (set_time_index)
- 262   2          {
- 263   3          case 0:
- 264   3            /* »¹Ã»ÓĞ¿ªÊ¼ÉèÖÃÈÎºÎ¶«Î÷ */
- 265   3            Seg_Buf[0] = ucRtc[1][0] / 16;
- 266   3            Seg_Buf[1] = ucRtc[1][0] % 16;
- 267   3            Seg_Buf[3] = ucRtc[1][1] / 16;
- 268   3            Seg_Buf[4] = ucRtc[1][1] % 16;
- 269   3            Seg_Buf[6] = ucRtc[1][2] / 16;
- 270   3            Seg_Buf[7] = ucRtc[1][2] % 16;
- 271   3            break;
- 272   3          case 1:
- 273   3            /* ¿ªÊ¼ÉèÖÃĞ¡Ê±£¨Ğ¡Ê±ÉÁË¸£© */
- 274   3            Seg_Buf[0] = (time_interval_flag) ? 10 : ucRtc[1][0] / 16;
- 275   3            Seg_Buf[1] = (time_interval_flag) ? 10 : ucRtc[1][0] % 16;
- 276   3            Seg_Buf[3] = ucRtc[1][1] / 16;
- 277   3            Seg_Buf[4] = ucRtc[1][1] % 16;
- 278   3            Seg_Buf[6] = ucRtc[1][2] / 16;
- 279   3            Seg_Buf[7] = ucRtc[1][2] % 16;
- 280   3            break;
- 281   3          case 2:
- 282   3            /* ¿ªÊ¼ÉèÖÃ·ÖÖÓ£¨·ÖÖÓÉÁË¸£©*/
- 283   3            Seg_Buf[0] = ucRtc[1][0] / 16;
- 284   3            Seg_Buf[1] = ucRtc[1][0] % 16;
- 285   3            Seg_Buf[3] = (time_interval_flag) ? 10 : ucRtc[1][2] / 16;
- 286   3            Seg_Buf[4] = (time_interval_flag) ? 10 : ucRtc[1][2] % 16;
- 287   3            Seg_Buf[6] = ucRtc[1][2] / 16;
- 288   3            Seg_Buf[7] = ucRtc[1][2] % 16;
- 289   3            break;
- 290   3          case 3:
- 291   3            /* ¿ªÊ¼ÉèÖÃÃë£¨ÃëÉÁË¸£©*/
- 292   3            Seg_Buf[0] = ucRtc[1][0] / 16;
- 293   3            Seg_Buf[1] = ucRtc[1][0] % 16;
- 294   3            Seg_Buf[3] = ucRtc[1][2] / 16;
- 295   3            Seg_Buf[4] = ucRtc[1][2] % 16;
- 296   3            Seg_Buf[6] = (time_interval_flag) ? 10 : ucRtc[1][2] / 16;
- 297   3            Seg_Buf[7] = (time_interval_flag) ? 10 : ucRtc[1][2] % 16;
- 298   3            break;
- 299   3          }
- 300   2          break;
- 301   2        }
- 302   1      }
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 6   
+ 241   3            Uart_Enable_Flag = 1;
+ 242   3            break;
+ 243   3          }
+ 244   2          if (Clock_Set_Index < (Key_Input_Flag + 2)) // è¾“å…¥ä¸¤ä¸ªä¹‹åä¸èƒ½å†è¾“
+ 245   2          {
+ 246   3            switch (Key_Down) // æ—¶é—´è¾“å…¥
+ 247   3            {
+ 248   4            case 4:
+ 249   4              if (Seg_Disp_Mode == 3)
+ 250   4                Clock_Set[Clock_Set_Index] = 0;
+ 251   4              else if (Seg_Disp_Mode == 4)
+ 252   4                Alarm_Set[Clock_Set_Index] = 0;
+ 253   4              Clock_Set_Index++;
+ 254   4              break;
+ 255   4            case 8:
+ 256   4              if (Seg_Disp_Mode == 3)
+ 257   4                Clock_Set[Clock_Set_Index] = 1;
+ 258   4              else if (Seg_Disp_Mode == 4)
+ 259   4                Alarm_Set[Clock_Set_Index] = 1;
+ 260   4              Clock_Set_Index++;
+ 261   4              break;
+ 262   4            case 12:
+ 263   4              if (Seg_Disp_Mode == 3)
+ 264   4                Clock_Set[Clock_Set_Index] = 2;
+ 265   4              else if (Seg_Disp_Mode == 4)
+ 266   4                Alarm_Set[Clock_Set_Index] = 2;
+ 267   4              Clock_Set_Index++;
+ 268   4              break;
+ 269   4            case 16:
+ 270   4              if (Seg_Disp_Mode == 3)
+ 271   4                Clock_Set[Clock_Set_Index] = 3;
+ 272   4              else if (Seg_Disp_Mode == 4)
+ 273   4                Alarm_Set[Clock_Set_Index] = 3;
+ 274   4              Clock_Set_Index++;
+ 275   4              break;
+ 276   4            case 9:
+ 277   4              if (Seg_Disp_Mode == 3)
+ 278   4                Clock_Set[Clock_Set_Index] = 4;
+ 279   4              else if (Seg_Disp_Mode == 4)
+ 280   4                Alarm_Set[Clock_Set_Index] = 4;
+ 281   4              Clock_Set_Index++;
+ 282   4              break;
+ 283   4            case 13:
+ 284   4              if (Seg_Disp_Mode == 3)
+ 285   4                Clock_Set[Clock_Set_Index] = 5;
+ 286   4              else if (Seg_Disp_Mode == 4)
+ 287   4                Alarm_Set[Clock_Set_Index] = 5;
+ 288   4              Clock_Set_Index++;
+ 289   4              break;
+ 290   4            case 17:
+ 291   4              if (Seg_Disp_Mode == 3)
+ 292   4                Clock_Set[Clock_Set_Index] = 6;
+ 293   4              else if (Seg_Disp_Mode == 4)
+ 294   4                Alarm_Set[Clock_Set_Index] = 6;
+ 295   4              Clock_Set_Index++;
+ 296   4              break;
+ 297   4            case 10:
+ 298   4              if (Seg_Disp_Mode == 3)
+ 299   4                Clock_Set[Clock_Set_Index] = 7;
+ 300   4              else if (Seg_Disp_Mode == 4)
+ 301   4                Alarm_Set[Clock_Set_Index] = 7;
+ 302   4              Clock_Set_Index++;
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 6   
 
- 303          
- 304          /* ÆäËûÏÔÊ¾º¯Êı */
- 305          void Led_Proc()
- 306          {
- 307   1        Beep(ring_flag);
- 308   1      }
- 309          
- 310          /* ´®¿Ú´¦Àíº¯Êı */
- 311          void Uart_Proc()
- 312          {
- 313   1        if (Uart_Slow_Down)
- 314   1          return;
- 315   1        Uart_Slow_Down = 1; // ´®¿Ú¼õËÙ³ÌĞò
- 316   1      }
- 317          
- 318          /* ¶¨Ê±Æ÷0ÖĞ¶Ï³õÊ¼»¯º¯Êı */
- 319          void Timer0Init(void) // 1ºÁÃë@12.000MHz
- 320          {
- 321   1        AUXR &= 0x7F; // ¶¨Ê±Æ÷Ê±ÖÓ12TÄ£Ê½
- 322   1        TMOD &= 0xF0; // ÉèÖÃ¶¨Ê±Æ÷Ä£Ê½
- 323   1        TL0 = 0x18;   // ÉèÖÃ¶¨Ê±³õÊ¼Öµ
- 324   1        TH0 = 0xFC;   // ÉèÖÃ¶¨Ê±³õÊ¼Öµ
- 325   1        TF0 = 0;    // Çå³ıTF0±êÖ¾
- 326   1        TR0 = 1;    // ¶¨Ê±Æ÷0¿ªÊ¼¼ÆÊ±
- 327   1        ET0 = 1;    // ¶¨Ê±Æ÷ÖĞ¶Ï0´ò¿ª
- 328   1        EA = 1;     // ×ÜÖĞ¶Ï´ò¿ª
- 329   1      }
- 330          
- 331          /* ¶¨Ê±Æ÷0ÖĞ¶Ï·şÎñº¯Êı */
- 332          void Timer0Server() interrupt 1
- 333          {
- 334   1        if (++Key_Slow_Down == 10)
- 335   1          Key_Slow_Down = 0; // ¼üÅÌ¼õËÙ×¨ÓÃ
- 336   1        if (++Seg_Slow_Down == 500)
- 337   1          Seg_Slow_Down = 0; // ÊıÂë¹Ü¼õËÙ×¨ÓÃ
- 338   1        if (++Uart_Slow_Down == 200)
- 339   1          Uart_Slow_Down = 0; // ´®¿Ú¼õËÙ×¨ÓÃ
- 340   1        if (++Seg_Pos == 8)
- 341   1          Seg_Pos = 0; // ÊıÂë¹ÜÏÔÊ¾×¨ÓÃ
- 342   1        // ´¥·¢Ìø¹ı
- 343   1        if (skip_flag)
- 344   1        {
- 345   2          // ³¤°´1s
- 346   2          time_1s = (++time_1s < 1000) ? time_1s : 1000;
- 347   2        }
- 348   1        if (++time_500ms == 500)
- 349   1        {
- 350   2          time_500ms = 0;
- 351   2          time_interval_flag = ~time_interval_flag;
- 352   2        }
- 353   1        if (++time_700ms == 700)
- 354   1        {
- 355   2          time_700ms = 0;
- 356   2          time_set_interval_flag = ~time_set_interval_flag;
- 357   2        }
- 358   1        if (massage_show_time_flag)
- 359   1        {
- 360   2          time_1s = (++time_1s < 1000) ? time_1s : 1000;
- 361   2          if (time_1s == 1000)
- 362   2          {
- 363   3            massage_show_flag = 1;
- 364   3          }
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 7   
+ 303   4              break;
+ 304   4            case 14:
+ 305   4              if (Seg_Disp_Mode == 3)
+ 306   4                Clock_Set[Clock_Set_Index] = 8;
+ 307   4              else if (Seg_Disp_Mode == 4)
+ 308   4                Alarm_Set[Clock_Set_Index] = 8;
+ 309   4              Clock_Set_Index++;
+ 310   4              break;
+ 311   4            case 18:
+ 312   4              if (Seg_Disp_Mode == 3)
+ 313   4                Clock_Set[Clock_Set_Index] = 9;
+ 314   4              else if (Seg_Disp_Mode == 4)
+ 315   4                Alarm_Set[Clock_Set_Index] = 9;
+ 316   4              Clock_Set_Index++;
+ 317   4              break;
+ 318   4            }
+ 319   3          }
+ 320   2        }
+ 321   1      }
+ 322          
+ 323          /* ä¿¡æ¯å¤„ç†å‡½æ•° */
+ 324          void Seg_Proc()
+ 325          {
+ 326   1        unsigned char i;
+ 327   1        //  if(Seg_Slow_Down) return;
+ 328   1        //  Seg_Slow_Down = 1;//æ•°ç ç®¡å‡é€Ÿç¨‹åº
+ 329   1      
+ 330   1        switch (Seg_Slow_Down)
+ 331   1        {
+ 332   2        case 100: // æ—¶é’Ÿè¯»å–
+ 333   2          Seg_Slow_Down += 1;
+ 334   2          Read_Rtc(Clock_Crl);
+ 335   2          break;
+ 336   2        case 200: // è¶…å£°æ³¢
+ 337   2          Seg_Slow_Down += 1;
+ 338   2          ultrasonic = Ut_Wave_Data();
+ 339   2          if ((ultrasonic_Ture - ultrasonic < 10) || (ultrasonic - ultrasonic_Ture < 10))
+ 340   2            ultrasonic_Ture = ultrasonic;
+ 341   2          break;
+ 342   2        case 300: // AD
+ 343   2          Seg_Slow_Down += 1;
+ 344   2          AD_Output = Ad_Read(0x43);        // å…‰æ•ç”µé˜»
+ 345   2          AD_Rb2_Output = Ad_Read(0x41) / 51.0; // ç”µä½å™¨è¾“å‡º
+ 346   2          Da_Write(DA_Output);          // DAè¾“å‡º
+ 347   2          Sun_Flag = (AD_Output > 100);
+ 348   2          break;
+ 349   2        case 400: // æ¸©åº¦
+ 350   2          Seg_Slow_Down += 1;
+ 351   2          Temp = Read_t();
+ 352   2          break;
+ 353   2        }
+ 354   1      
+ 355   1        Seg_Point[5] = (Seg_Disp_Mode == 2);
+ 356   1        switch (Seg_Disp_Mode)
+ 357   1        {
+ 358   2        case 0: // ç³»ç»Ÿåˆå§‹ç•Œé¢
+ 359   2          if (Pass_Input_Index != 0)
+ 360   2          {
+ 361   3            for (i = 0; i < Pass_Input_Index; i++)
+ 362   3              Seg_Buf[7 - i] = Pass_Input[Pass_Input_Index - i - 1];
+ 363   3          }
+ 364   2          else
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 7   
 
- 365   2        }
- 366   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
- 367   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
- 368   1      }
- 369          
- 370          /* ´®¿Ú1ÖĞ¶Ï·şÎñº¯Êı */
- 371          void Uart1Server() interrupt 4
- 372          {
- 373   1        if (RI == 1) // ´®¿Ú½ÓÊÕÊı¾İ
- 374   1        {
- 375   2          Uart_Recv[Uart_Recv_Index] = SBUF;
- 376   2          Uart_Recv_Index++;
- 377   2          RI = 0;
- 378   2        }
- 379   1      }
- 380          void Delay750ms() //@12MHz
- 381          {
- 382   1        unsigned char i, j, k;
- 383   1      
- 384   1        _nop_();
- 385   1        _nop_();
- 386   1        i = 35;
- 387   1        j = 51;
- 388   1        k = 182;
- 389   1        do
- 390   1        {
- 391   2          do
- 392   2          {
- 393   3            while (--k)
- 394   3              ;
- 395   3          } while (--j);
- 396   2        } while (--i);
- 397   1      }
- 398          
- 399          /* Main */
- 400          void main()
- 401          {
- 402   1        // Èç¹ûÓĞÎÂ¶È¶ÁÈ¡µÄ»°
- 403   1        rd_temperature();
- 404   1        Delay750ms();
- 405   1        Set_Rtc(ucRtc[0]); // ÉèÖÃ³õÊ¼Ê±¼ä
- 406   1        System_Init();
- 407   1        Timer0Init();
- 408   1        UartInit();
- 409   1        while (1)
- 410   1        {
- 411   2          Key_Proc();
- 412   2          Seg_Proc();
- 413   2          Led_Proc();
- 414   2          Uart_Proc();
- 415   2        }
- 416   1      }
+ 365   2          {
+ 366   3            for (i = 0; i < 8; i++)
+ 367   3              Seg_Buf[i] = 11;
+ 368   3          }
+ 369   2          break;
+ 370   2        case 1: // ä¸»ç•Œé¢
+ 371   2          for (i = 0; i < 3; i++)
+ 372   2          {
+ 373   3            Seg_Buf[i * 2 + i] = Clock_Crl[i] / 10;
+ 374   3            Seg_Buf[i * 2 + i + 1] = Clock_Crl[i] % 10;
+ 375   3          }
+ 376   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag ? 10 : 11;
+ 377   2          break;
+ 378   2        case 2: // è¶…å£°æ³¢ å…‰ æ¸©åº¦
+ 379   2          Seg_Buf[0] = ultrasonic_Ture / 10;
+ 380   2          Seg_Buf[1] = ultrasonic_Ture % 10;
+ 381   2          Seg_Buf[2] = (unsigned char)Sun_Flag;
+ 382   2          Seg_Buf[3] = 11;
+ 383   2          Seg_Buf[4] = (unsigned char)Temp / 10;
+ 384   2          Seg_Buf[5] = (unsigned char)Temp % 10;
+ 385   2          Seg_Buf[6] = (unsigned int)(Temp * 10) % 10;
+ 386   2          Seg_Buf[7] = 12;
+ 387   2          break;
+ 388   2        case 3: // æ—¶é’Ÿè®¾ç½®
+ 389   2          Seg_Buf[0] = Clock_Set[0];
+ 390   2          Seg_Buf[1] = Clock_Set[1];
+ 391   2          Seg_Buf[3] = Clock_Set[2];
+ 392   2          Seg_Buf[4] = Clock_Set[3];
+ 393   2          Seg_Buf[6] = Clock_Set[4];
+ 394   2          Seg_Buf[7] = Clock_Set[5];
+ 395   2      
+ 396   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag2 ? 10 : 11;
+ 397   2          break;
+ 398   2        case 4: // é—¹é’Ÿè®¾ç½®
+ 399   2          Seg_Buf[0] = Alarm_Set[0];
+ 400   2          Seg_Buf[1] = Alarm_Set[1];
+ 401   2          Seg_Buf[3] = Alarm_Set[2];
+ 402   2          Seg_Buf[4] = Alarm_Set[3];
+ 403   2          Seg_Buf[6] = Alarm_Set[4];
+ 404   2          Seg_Buf[7] = Alarm_Set[5];
+ 405   2      
+ 406   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag2 ? 10 : 11;
+ 407   2          break;
+ 408   2        }
+ 409   1      }
+ 410          
+ 411          /* å…¶ä»–æ˜¾ç¤ºå‡½æ•° */
+ 412          void Led_Proc()
+ 413          {
+ 414   1      
+ 415   1        ucLed[0] = (Seg_Disp_Mode == 0);
+ 416   1        ucLed[1] = (Seg_Disp_Mode == 1);
+ 417   1        ucLed[2] = (Seg_Disp_Mode == 3);
+ 418   1        ucLed[3] = (Seg_Disp_Mode == 4);
+ 419   1        ucLed[4] = (Seg_Disp_Mode == 2);
+ 420   1      
+ 421   1        Led_Lever = ((AD_Rb2_Output) * 2.0);
+ 422   1        // DA
+ 423   1        DA_Output = (Sun_Flag ? 1 : 5);
+ 424   1      }
+ 425          
+ 426          /*ä¸²å£*/
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 8   
+
+ 427          void Uart_Sent_Proc()
+ 428          {
+ 429   1        if (Uart_Slow_Down)
+ 430   1          return;
+ 431   1        Uart_Slow_Down = 1;
+ 432   1        // æ¯åˆ°ä¸€ä¸ªæ•´ç‚¹åå•ç‰‡æœºå‘ä¸Šä½æœºå‘é€æŒ‡ä»¤
+ 433   1        if (Clock_Crl[1] == 0 && Clock_Crl[2] == 0) // æ•´ç‚¹
+ 434   1        {
+ 435   2          printf("Time = %d:%d:%d", (unsigned int)Clock_Crl[0], (unsigned int)Clock_Crl[1], (unsigned int)Clock_Cr
+             -l[2]);
+ 436   2        }
+ 437   1      
+ 438   1        if (Seg_Disp_Mode == 1) // æ—¶é’Ÿæ˜¾ç¤ºç•Œé¢
+ 439   1        {
+ 440   2          if (Timer_Count == 2) // åœ¨æ—¶é’Ÿæ˜¾ç¤ºç•Œé¢æ—¶æ¯é—´éš”ä¸‰ç§’å•ç‰‡æœºå‘ä¸Šä½æœºå‘é€æŒ‡ä»¤
+ 441   2            printf("%d:%d-%dCM_%dC", (unsigned int)Clock_Crl[0], (unsigned int)Clock_Crl[1], (unsigned int)ultrason
+             -ic_Ture, (unsigned int)Temp);
+ 442   2        }
+ 443   1      }
+ 444          
+ 445          /*ä¸²å£å¤„ç†å‡½æ•°*/
+ 446          void Uart_Proc()
+ 447          {
+ 448   1        unsigned char a; // Forå¾ªç¯
+ 449   1        unsigned char i; // whileå¾ªç¯
+ 450   1        if (Uart_Recv_Index == 0)
+ 451   1          return;
+ 452   1        if (Syt_Flag >= 10)
+ 453   1        {
+ 454   2          Syt_Flag = Time_Syt_Flag = 0; // å¤ä½
+ 455   2          if (Uart_Enable_Flag)     // ä¸²å£å¼€å§‹ä½¿èƒ½
+ 456   2          {
+ 457   3            if ((Seg_Disp_Mode == 1 || Seg_Disp_Mode == 2))
+ 458   3            {
+ 459   4              if (Uart_Recv_Index == 4) // ä¸»ç•Œé¢ä¸²å£åŠŸèƒ½
+ 460   4              {
+ 461   5                if (Uart_Recv[0] == 'D' && Uart_Recv[1] == 'I' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'P') // ä¿¡æ
+             -¯æ˜¾ç¤º
+ 462   5                {
+ 463   6                  Seg_Disp_Mode = 2; // ä¿¡æ¯æ˜¾ç¤ºç•Œé¢
+ 464   6                }
+ 465   5                if (Uart_Recv[0] == 'C' && Uart_Recv[1] == 'K' && Uart_Recv[2] == 'G' && Uart_Recv[3] == 'B') // ä¸²å
+             -£å…³
+ 466   5                {
+ 467   6                  Uart_Enable_Flag = 0; // å…³é—­ä¸²å£åŠŸèƒ½
+ 468   6                  Seg_Disp_Mode = 1;
+ 469   6                }
+ 470   5                if (Uart_Recv[0] == 'S' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'Z') // æ—¶é
+             -’Ÿè®¾ç½®
+ 471   5                {
+ 472   6                  Seg_Disp_Mode = 3; // æ—¶é’Ÿè®¾ç½®ç•Œé¢
+ 473   6                }
+ 474   5                if (Uart_Recv[0] == 'N' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'Z') // é—¹é
+             -’Ÿè®¾ç½®
+ 475   5                {
+ 476   6                  Seg_Disp_Mode = 4; // é—¹é’Ÿè®¾ç½®ç•Œé¢
+ 477   6                }
+ 478   5                if (Uart_Recv[0] == 'N' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'K' && Uart_Recv[3] == 'G') // é—¹é
+             -’Ÿè®¾ç½®
+ 479   5                {
+ 480   6                  Alarm_Enable_Flag = 1; // é—¹é’Ÿä½¿èƒ½
+ 481   6                }
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 9   
+
+ 482   5              }
+ 483   4            }
+ 484   3            if ((Seg_Disp_Mode == 3 || Seg_Disp_Mode == 4))
+ 485   3            {
+ 486   4              if (Uart_Recv_Index == 6) // æ—¶é’Ÿé—¹é’Ÿè®¾ç½®
+ 487   4              {
+ 488   5                // å°æ—¶è®¾ç½®ï¼šHSetXX
+ 489   5                if (Uart_Recv[0] == 'H' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // é—¹é
+             -’Ÿè®¾ç½®
+ 490   5                {
+ 491   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
+             -9'))) // 0-9
+ 492   6                  {
+ 493   7                    if (Seg_Disp_Mode == 3) // æ—¶é’Ÿè®¾ç½®
+ 494   7                    {
+ 495   8                      Clock_Set[0] = Uart_Recv[4] - 48;
+ 496   8                      Clock_Set[1] = Uart_Recv[5] - 48;
+ 497   8                    }
+ 498   7                    else // é—¹é’Ÿè®¾ç½®
+ 499   7                    {
+ 500   8                      Alarm_Set[0] = Uart_Recv[4] - 48;
+ 501   8                      Alarm_Set[1] = Uart_Recv[5] - 48;
+ 502   8                    }
+ 503   7                  }
+ 504   6                }
+ 505   5                // åˆ†é’Ÿè®¾ç½®ï¼šMSetXX
+ 506   5                if (Uart_Recv[0] == 'M' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // é—¹é
+             -’Ÿè®¾ç½®
+ 507   5                {
+ 508   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
+             -9'))) // 0-9
+ 509   6                  {
+ 510   7                    if (Seg_Disp_Mode == 3)
+ 511   7                    {
+ 512   8                      Clock_Set[2] = Uart_Recv[4] - 48;
+ 513   8                      Clock_Set[3] = Uart_Recv[5] - 48;
+ 514   8                    }
+ 515   7                    else
+ 516   7                    {
+ 517   8                      Alarm_Set[2] = Uart_Recv[4] - 48;
+ 518   8                      Alarm_Set[3] = Uart_Recv[5] - 48;
+ 519   8                    }
+ 520   7                  }
+ 521   6                }
+ 522   5                // ç§’é’Ÿè®¾ç½®ï¼šSSetXX
+ 523   5                if (Uart_Recv[0] == 'S' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // é—¹é
+             -’Ÿè®¾ç½®
+ 524   5                {
+ 525   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
+             -9'))) // 0-9
+ 526   6                  {
+ 527   7                    if (Seg_Disp_Mode == 3)
+ 528   7                    {
+ 529   8                      Clock_Set[4] = Uart_Recv[4] - 48;
+ 530   8                      Clock_Set[5] = Uart_Recv[5] - 48;
+ 531   8                    }
+ 532   7                    else
+ 533   7                    {
+ 534   8                      Alarm_Set[4] = Uart_Recv[4] - 48;
+ 535   8                      Alarm_Set[5] = Uart_Recv[5] - 48;
+ 536   8                    }
+ 537   7                  }
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 10  
+
+ 538   6                }
+ 539   5              }
+ 540   4              if (Uart_Recv_Index == 4) // å…³é—­ä¸²å£
+ 541   4              {
+ 542   5                if (Uart_Recv[0] == 'C' && Uart_Recv[1] == 'K' && Uart_Recv[2] == 'G' && Uart_Recv[3] == 'B') // ä¸²å
+             -£å…³
+ 543   5                  Uart_Enable_Flag = 0;
+ 544   5              }
+ 545   4            }
+ 546   3          }
+ 547   2          if (Seg_Disp_Mode == 1) // åœ¨æ—¶é’Ÿæ˜¾ç¤ºç•Œé¢æ—¶ä¸Šä½æœºå¯å‘é€ä¿®æ”¹å¯†ç æŒ‡ä»¤
+ 548   2          {
+ 549   3            if (Uart_Recv_Index == 10)
+ 550   3            {
+ 551   4              if (Uart_Recv[0] == 'X' && Uart_Recv[1] == 'G')
+ 552   4              {
+ 553   5                i = 2;
+ 554   5                while (((Uart_Recv[i] >= '0') && (Uart_Recv[4] <= '9')))
+ 555   5                {
+ 556   6                  i++;
+ 557   6                  if (i == 8)
+ 558   6                    break;
+ 559   6                }
+ 560   5                if (i == 8)
+ 561   5                {
+ 562   6                  for (a = 0; a < 8; a++)
+ 563   6                  {
+ 564   7                    Pass_Word[a] = Uart_Recv[a + 2] - 48;
+ 565   7                    Seg_Disp_Mode = 0;
+ 566   7                  }
+ 567   6                }
+ 568   5              }
+ 569   4            }
+ 570   3          }
+ 571   2          memset(Uart_Recv, 0, Uart_Recv_Index);
+ 572   2          Uart_Recv_Index = 0;
+ 573   2        }
+ 574   1      }
+ 575          /*å®šæ—¶å™¨1ä¸­æ–­åˆå§‹åŒ–å‡½æ•°*/
+ 576          void Timer1_Init(void) // 125å¾®ç§’@12.000MHz
+ 577          {
+ 578   1        AUXR &= 0xBF; // å®šæ—¶å™¨æ—¶é’Ÿ12Tæ¨¡å¼
+ 579   1        TMOD &= 0x0F; // è®¾ç½®å®šæ—¶å™¨æ¨¡å¼
+ 580   1        TL1 = 0x83;   // è®¾ç½®å®šæ—¶åˆå§‹å€¼
+ 581   1        TH1 = 0xFF;   // è®¾ç½®å®šæ—¶åˆå§‹å€¼
+ 582   1        TF1 = 0;    // æ¸…é™¤TF1æ ‡å¿—
+ 583   1        TR1 = 1;    // å®šæ—¶å™¨1å¼€å§‹è®¡æ—¶
+ 584   1        ET1 = 1;    // å®šæ—¶å™¨ä¸­æ–­1æ‰“å¼€
+ 585   1      }
+ 586          
+ 587          /* å®šæ—¶å™¨0ä¸­æ–­åˆå§‹åŒ–å‡½æ•° */
+ 588          void Timer0Init(void) // 1æ¯«ç§’@12.000MHz
+ 589          {
+ 590   1        AUXR &= 0x7F; // å®šæ—¶å™¨æ—¶é’Ÿ12Tæ¨¡å¼
+ 591   1        TMOD &= 0xF0; // è®¾ç½®å®šæ—¶å™¨æ¨¡å¼
+ 592   1        TL0 = 0x18;   // è®¾ç½®å®šæ—¶åˆå§‹å€¼
+ 593   1        TH0 = 0xFC;   // è®¾ç½®å®šæ—¶åˆå§‹å€¼
+ 594   1        TF0 = 0;    // æ¸…é™¤TF0æ ‡å¿—
+ 595   1        TR0 = 1;    // å®šæ—¶å™¨0å¼€å§‹è®¡æ—¶
+ 596   1        ET0 = 1;    // å®šæ—¶å™¨ä¸­æ–­0æ‰“å¼€
+ 597   1        EA = 1;     // æ€»ä¸­æ–­æ‰“å¼€
+ 598   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 11  
+
+ 599          
+ 600          /* å®šæ—¶å™¨0ä¸­æ–­æœåŠ¡å‡½æ•° */
+ 601          void Timer0Server() interrupt 1
+ 602          {
+ 603   1        if (++Uart_Slow_Down == 1000)
+ 604   1        {
+ 605   2          Uart_Slow_Down = 0;
+ 606   2          if (++Timer_Count == 3)
+ 607   2            Timer_Count = 0;
+ 608   2        }
+ 609   1        if (++Key_Slow_Down == 10)
+ 610   1          Key_Slow_Down = 0; // é”®ç›˜å‡é€Ÿä¸“ç”¨
+ 611   1        if (++Seg_Slow_Down == 500)
+ 612   1          Seg_Slow_Down = 0; // æ•°ç ç®¡å‡é€Ÿä¸“ç”¨
+ 613   1        if (++Seg_Pos == 8)
+ 614   1          Seg_Pos = 0; // æ•°ç ç®¡æ˜¾ç¤ºä¸“ç”¨
+ 615   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 616   1      
+ 617   1        if (Key_Flag == 1)
+ 618   1        {
+ 619   2          if (++Timer_3000Ms == 4000) // é•¿æŒ‰
+ 620   2          {
+ 621   3            Timer_3000Ms = 4000;
+ 622   3          }
+ 623   2        }
+ 624   1      
+ 625   1        if (++Timer_500Ms == 500) // æ—¶é—´é—´éš”ç¬¦é—ªçƒ
+ 626   1        {
+ 627   2          Timer_500Ms = 0;
+ 628   2          Seg_Star_Flag ^= 1;
+ 629   2        }
+ 630   1      
+ 631   1        if (++Timer_700Ms == 700) // æ—¶é—´é—¹é’Ÿè®¾ç½®é—´éš”ç¬¦
+ 632   1        {
+ 633   2          Timer_700Ms = 0;
+ 634   2          Seg_Star_Flag2 ^= 1;
+ 635   2        }
+ 636   1      
+ 637   1        if (Key_Flag1)
+ 638   1        {
+ 639   2          if (++Timer_2000Ms == 3000) // é•¿æŒ‰
+ 640   2            Timer_2000Ms = 3000;
+ 641   2        }
+ 642   1      
+ 643   1        // ä¸²å£
+ 644   1        if (Time_Syt_Flag)
+ 645   1          Syt_Flag++;
+ 646   1      
+ 647   1        // ledäº®åº¦ç­‰çº§
+ 648   1        if (++Term_Led == 10)
+ 649   1          Term_Led = 0;
+ 650   1      }
+ 651          
+ 652          /*å®šæ—¶å™¨1æœåŠ¡å‡½æ•°*/
+ 653          void Timer1Server() interrupt 3
+ 654          {
+ 655   1        if (++Led_Pos == 8)
+ 656   1          Led_Pos = 0;
+ 657   1      
+ 658   1        if (Term_Led <= Led_Lever)
+ 659   1          Led_Disp(Led_Pos, ucLed[Led_Pos]);
+ 660   1        else
+C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:24:55 PAGE 12  
+
+ 661   1          Led_Disp(Led_Pos, 0);
+ 662   1      }
+ 663          
+ 664          /*ä¸²å£*/
+ 665          void Uart1Server() interrupt 4
+ 666          {
+ 667   1        if (RI == 1) // å¼€å§‹æ¥å—æ•°æ®
+ 668   1        {
+ 669   2          Time_Syt_Flag = 1;
+ 670   2          Syt_Flag = 0;
+ 671   2          Uart_Recv[Uart_Recv_Index] = SBUF;
+ 672   2          Uart_Recv_Index++;
+ 673   2          RI = 0;
+ 674   2        }
+ 675   1        if (Uart_Recv_Index > 10)
+ 676   1          Uart_Recv_Index = 0;
+ 677   1      }
+ 678          
+ 679          /* Main */
+ 680          void main()
+ 681          {
+ 682   1      
+ 683   1        while (Read_t() == 85)
+ 684   1          ;
+ 685   1        System_Init();
+ 686   1        Timer0Init();
+ 687   1        Set_Rtc(Clock_Crl);
+ 688   1        UartInit();
+ 689   1        E2PROM_Write(E2PROM_Alarm, 0, 3);
+ 690   1        Alarm[0] = E2PROM_Alarm[0];
+ 691   1        Alarm[1] = E2PROM_Alarm[1];
+ 692   1        Alarm[2] = E2PROM_Alarm[2];
+ 693   1        E2PROM_Write(Clock, 8, 3);
+ 694   1        Clock_Crl[0] = Clock[0];
+ 695   1        Clock_Crl[1] = Clock[1];
+ 696   1        Clock_Crl[2] = Clock[2];
+ 697   1      
+ 698   1        Timer1_Init();
+ 699   1        while (1)
+ 700   1        {
+ 701   2          Uart_Sent_Proc();
+ 702   2          Key_Proc();
+ 703   2          Seg_Proc();
+ 704   2          Led_Proc();
+ 705   2          Uart_Proc();
+ 706   2        }
+ 707   1      }
+*** WARNING C291 IN LINE 62 OF main.c: not every exit path returns a value
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1378    ----
-   CONSTANT SIZE    =     10    ----
+   CODE SIZE        =   3125    ----
+   CONSTANT SIZE    =     41    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     61      16
-   IDATA SIZE       =     29    ----
+   DATA SIZE        =     55      14
+   IDATA SIZE       =     66    ----
    BIT SIZE         =      8    ----
-C51 COMPILER V9.59.0.0   MAIN                                                              01/26/2024 22:06:55 PAGE 8   
-
 END OF MODULE INFORMATION.
 
 
-C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

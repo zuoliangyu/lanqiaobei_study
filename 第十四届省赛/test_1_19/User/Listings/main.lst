@@ -1,0 +1,360 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              01/20/2024 11:10:24 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /* 头文件声明区 */
+   2          #include <STC15F2K60S2.H> //单片机寄存器专用头文件
+   3          #include <Init.h>         //初始化底层驱动专用头文件
+   4          #include <Led.h>          //Led底层驱动专用头文件
+   5          #include <Key.h>          //按键底层驱动专用头文件
+   6          #include <Seg.h>          //数码管底层驱动专用头文件
+   7          #include <stdio.h>        //标准库底层驱动专用头文件
+   8          #include <iic.h>          //数模转换底层驱动
+   9          #include "onewire.h"      //温度传感器驱动
+  10          #include "ds1302.h"       //时钟底层驱动
+  11          
+  12          /* 变量声明区 */
+  13          idata unsigned char Key_Val, Key_Down, Key_Old, Key_Up;              // 按键专用变量
+  14          idata unsigned char Key_Slow_Down;                                   // 按键减速专用变量
+  15          idata unsigned char Seg_Buf[8]   = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
+  16          idata unsigned char Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};         // 数码管小数点数据存放数组
+  17          idata unsigned char Seg_Pos;                                         // 数码管扫描专用变量
+  18          idata unsigned char Seg_Slow_Down;                                   // 数码管减速专用变量
+  19          idata unsigned char ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};             // Led显示数据存放数组
+  20          
+  21          idata unsigned short time_3s      = 0;                  // 3s计时
+  22          idata unsigned short time_2s      = 0;                  // 2s计时
+  23          idata unsigned short time_1s      = 0;                  // 1s计时
+  24          idata unsigned char ucRtc[3]      = {0x23, 0x11, 0x59}; // 设置时钟的上电初始状态
+  25          idata unsigned char Seg_show_mode = 0;                  // 数码管显示的模式
+  26          // 0显示时分秒，1显示C温度，2显示H湿度，3显示F触发次数+采集的时分，4显示P温度参数
+  27          idata unsigned char show_flag      = 0; // 时间->回显->参数----->温湿度采集显示
+  28          idata unsigned char re_show_flag   = 0; // 温度->湿度->时间
+  29          idata unsigned char light_flag     = 0; // 1是从光照变为黑暗
+  30          idata unsigned char temp_show_flag = 0; // 记录到达温湿度采集的上一刻的显示
+  31          
+  32          /*温度界面*/
+  33          idata float max_temperature           = 0; // 最大温度
+  34           idata float sum_temperature           = 0; // 总温度
+  35           idata unsigned char index_temperature = 0; // 温度计序号
+  36             idata float temp_temperature;
+  37            
+  38            idata  float aver_temperature;
+  39             
+  40          /*湿度界面*/
+  41          idata unsigned short count_f       = 0; // 频率计数
+  42          idata unsigned short dat_f         = 0; // 1s的频率
+  43          idata float max_humidity           = 0; // 最大湿度
+  44          idata float sum_humidity           = 0; // 总湿度
+  45          idata unsigned char index_humidity = 0; // 湿度计序号
+  46           idata float temp_humidity;
+  47           idata float aver_humidity;
+  48          /*参数界面*/
+  49          idata unsigned char temperature_ref = 30; // 参考温度
+  50                                                    /*触发次数+时间显示*/
+  51          idata unsigned char triggers_number = 0;  // 触发次数
+  52          
+  53          /* 键盘处理函数 */
+  54          void Key_Proc() // 10ms扫描一次
+C51 COMPILER V9.59.0.0   MAIN                                                              01/20/2024 11:10:24 PAGE 2   
+
+  55          {
+  56   1          if (Key_Slow_Down) return;
+  57   1          Key_Slow_Down = 1;                              // 键盘减速程序
+  58   1          Key_Val       = Key_Read();                     // 实时读取键码值
+  59   1          Key_Down      = Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键下降沿
+  60   1          Key_Up        = ~Key_Val & (Key_Old ^ Key_Val); // 捕捉按键上降沿
+  61   1          Key_Old       = Key_Val;                        // 辅助扫描变量
+  62   1          // 按下了9，且处于时间回显
+  63   1          if (Key_Val == 9 && re_show_flag == 2) {
+  64   2              time_2s++;
+  65   2              triggers_number = 0;
+  66   2          } else {
+  67   2              time_2s = 0;
+  68   2          }
+  69   1          // 长按2s
+  70   1          if (time_2s >= 100) {
+  71   2              triggers_number = 0;
+  72   2          }
+  73   1          // 如果经历了一次温度采集
+  74   1          if (temp_show_flag != 0) {
+  75   2              show_flag      = temp_show_flag;
+  76   2              temp_show_flag = 0;
+  77   2          }
+  78   1          // 按下界面按钮
+  79   1          if (Key_Down == 4) {
+  80   2              show_flag++;
+  81   2              if (show_flag >= 3) {
+  82   3                  show_flag = 0;
+  83   3              }
+  84   2              if (show_flag == 0) {
+  85   3                  re_show_flag = 0;
+  86   3              }
+  87   2          }
+  88   1          if (Key_Down == 5 && show_flag == 1) {
+  89   2              re_show_flag++;
+  90   2              if (re_show_flag >= 3) {
+  91   3                  re_show_flag = 0;
+  92   3              }
+  93   2          }
+  94   1          if (Key_Down == 8 && show_flag == 2) {
+  95   2              temperature_ref++;
+  96   2              if (temperature_ref >= 100) {
+  97   3                  temperature_ref = 0;
+  98   3              }
+  99   2          }
+ 100   1          if (Key_Down == 9 && show_flag == 2) {
+ 101   2              temperature_ref--;
+ 102   2              if (temperature_ref < 0) {
+ 103   3                  temperature_ref = 99;
+ 104   3              }
+ 105   2          }
+ 106   1      
+ 107   1          if (light_flag) {
+ 108   2              temp_show_flag = show_flag;
+ 109   2              time_3s        = 0;   // 从现在开始记录3s
+ 110   2              show_flag      = 100; // 这个时候触发采集，我们进入温湿度界面
+ 111   2              light_flag     = 0;
+ 112   2          }
+ 113   1      }
+ 114          /* 信息处理函数 */
+ 115          void Seg_Proc()
+ 116          {
+C51 COMPILER V9.59.0.0   MAIN                                                              01/20/2024 11:10:24 PAGE 3   
+
+ 117   1          unsigned char int_temp_temperature; // 整数部分温度
+ 118   1          unsigned char int_temp_humidity;    // 整数部分湿度
+ 119   1      
+ 120   1          if (Seg_Slow_Down) return;
+ 121   1          Seg_Slow_Down = 1; // 数码管减速程序
+ 122   1      
+ 123   1          /*数码管读取时间*/
+ 124   1          Read_Rtc(ucRtc); // 读取DS1302里面的时间
+ 125   1      
+ 126   1          /*数码管读取温度并处理*/
+ 127   1          temp_temperature = rd_temperature();
+ 128   1          index_temperature++;
+ 129   1          // 我们这里为了防止芯片读取最初的那个85°
+ 130   1          if (temp_temperature == 85) {
+ 131   2              temp_temperature = 0;
+ 132   2              index_temperature--;
+ 133   2          }
+ 134   1          sum_temperature += temp_temperature;
+ 135   1          aver_temperature = sum_temperature / index_temperature; // 计算平均温度
+ 136   1          if (max_temperature < temp_temperature) {
+ 137   2              max_temperature = temp_temperature;
+ 138   2          }
+ 139   1          int_temp_temperature = temp_temperature * 10;
+ 140   1      
+ 141   1          /*数码管读取湿度并处理*/
+ 142   1          if (dat_f < 200 || dat_f > 2000) {
+ 143   2              temp_humidity = 0; // 无效数据
+ 144   2          } else {
+ 145   2              temp_humidity = dat_f * 2 / 45;
+ 146   2              if (max_humidity < temp_humidity) {
+ 147   3                  max_humidity = temp_humidity;
+ 148   3              }
+ 149   2              index_humidity++;
+ 150   2              sum_humidity += temp_humidity;
+ 151   2              aver_humidity        = sum_humidity / index_humidity;
+ 152   2              int_temp_temperature = temp_humidity * 10;
+ 153   2          }
+ 154   1          /*数码管读取光暗数值并处理*/
+ 155   1          // triggers_number++;
+ 156   1          if (triggers_number >= 100) {
+ 157   2              triggers_number = 0;
+ 158   2          }
+ 159   1          /*数码管显示*/
+ 160   1          switch (Seg_show_mode) // 数码管显示模式
+ 161   1          {
+ 162   2              case 0:
+ 163   2                  Seg_Buf[0] = ucRtc[0] / 16;
+ 164   2                  Seg_Buf[1] = ucRtc[0] % 16;
+ 165   2                  Seg_Buf[3] = ucRtc[1] / 16;
+ 166   2                  Seg_Buf[4] = ucRtc[1] % 16;
+ 167   2                  Seg_Buf[6] = ucRtc[2] / 16;
+ 168   2                  Seg_Buf[7] = ucRtc[2] % 16;
+ 169   2                  Seg_Buf[2] = Seg_Buf[5] = 12; //-
+ 170   2                  Seg_Point[6]            = 0;
+ 171   2                  break;
+ 172   2              case 1:
+ 173   2                  Seg_Buf[0]   = 13; // C
+ 174   2                  Seg_Buf[1]   = 10;
+ 175   2                  Seg_Buf[2]   = (int)max_temperature / 10;
+ 176   2                  Seg_Buf[3]   = (int)max_temperature % 10;
+ 177   2                  Seg_Buf[4]   = 12; //-
+ 178   2                  Seg_Buf[5]   = int_temp_temperature / 100;
+C51 COMPILER V9.59.0.0   MAIN                                                              01/20/2024 11:10:24 PAGE 4   
+
+ 179   2                  Seg_Buf[6]   = int_temp_temperature % 100 / 10;
+ 180   2                  Seg_Point[6] = 1;
+ 181   2                  Seg_Buf[7]   = int_temp_temperature % 10;
+ 182   2                  break;
+ 183   2              case 2:
+ 184   2                  Seg_Buf[0]   = 14; // H
+ 185   2                  Seg_Buf[1]   = 10;
+ 186   2                  Seg_Buf[2]   = (int)max_humidity / 10;
+ 187   2                  Seg_Buf[3]   = (int)max_humidity % 10;
+ 188   2                  Seg_Buf[4]   = 12; //-
+ 189   2                  Seg_Buf[5]   = int_temp_humidity / 100;
+ 190   2                  Seg_Buf[6]   = int_temp_humidity % 100 / 10;
+ 191   2                  Seg_Point[6] = 1;
+ 192   2                  Seg_Buf[7]   = int_temp_humidity % 10;
+ 193   2                  break;
+ 194   2              case 3:
+ 195   2                  Seg_Buf[0] = 15; // F
+ 196   2                  Seg_Buf[1] = triggers_number / 10;
+ 197   2                  Seg_Buf[2] = triggers_number % 10;
+ 198   2                  if (triggers_number == 0) {
+ 199   3                      Seg_Buf[3] = Seg_Buf[4] = Seg_Buf[5] = Seg_Buf[6] = Seg_Buf[7] = 10; // 灭
+ 200   3                  } else {
+ 201   3                      Seg_Buf[3] = ucRtc[0] / 16;
+ 202   3                      Seg_Buf[4] = ucRtc[0] % 16;
+ 203   3                      Seg_Buf[6] = ucRtc[1] / 16;
+ 204   3                      Seg_Buf[7] = ucRtc[1] % 16;
+ 205   3                  }
+ 206   2                  Seg_Buf[5]   = 12; //-
+ 207   2                  Seg_Point[6] = 0;
+ 208   2                  break;
+ 209   2              case 4:
+ 210   2                  Seg_Buf[0]   = 16; // P
+ 211   2                  Seg_Point[6] = 0;
+ 212   2                  Seg_Buf[6]   = temperature_ref / 10;
+ 213   2                  Seg_Buf[7]   = temperature_ref % 10;
+ 214   2                  Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = Seg_Buf[5] = 10; // 灭
+ 215   2                  break;
+ 216   2              case 5:
+ 217   2                  Seg_Buf[0] = 17; // E
+ 218   2                  Seg_Buf[3] = (int)temp_temperature / 10;
+ 219   2                  Seg_Buf[4] = (int)temp_temperature % 10;
+ 220   2                  Seg_Buf[5] = 12;              //-
+ 221   2                  Seg_Buf[1] = Seg_Buf[2] = 10; // 灭
+ 222   2                  break;
+ 223   2              default:
+ 224   2                  break;
+ 225   2          }
+ 226   1      }
+ 227          
+ 228          /* 其他显示函数 */
+ 229          void Led_Proc()
+ 230          {
+ 231   1          if (Seg_show_mode == 0) {
+ 232   2              ucLed[0] = 1;
+ 233   2          } else {
+ 234   2              ucLed[0] = 0;
+ 235   2          }
+ 236   1          if (Seg_show_mode == 1 || Seg_show_mode == 2 || Seg_show_mode == 3) {
+ 237   2              ucLed[1] = 1;
+ 238   2          } else {
+ 239   2              ucLed[1] = 0;
+ 240   2          }
+C51 COMPILER V9.59.0.0   MAIN                                                              01/20/2024 11:10:24 PAGE 5   
+
+ 241   1          if (Seg_show_mode == 5) {
+ 242   2              ucLed[2] = 1;
+ 243   2          } else {
+ 244   2              ucLed[2] = 0;
+ 245   2          }
+ 246   1      }
+ 247          
+ 248          /* 定时器0中断初始化函数 */
+ 249          void Timer0Init(void) // 1毫秒@12.000MHz
+ 250          {
+ 251   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 252   1          TMOD &= 0xF0; // 设置定时器模式
+ 253   1          TL0 = 0x18;   // 设置定时初始值
+ 254   1          TH0 = 0xFC;   // 设置定时初始值
+ 255   1          TF0 = 0;      // 清除TF0标志
+ 256   1          TR0 = 1;      // 定时器0开始计时
+ 257   1          ET0 = 1;      // 定时器中断0打开
+ 258   1          EA  = 1;      // 总中断打开
+ 259   1      }
+ 260          /*计数器1中断初始化函数*/
+ 261          void Timer1Init(void)
+ 262          {
+ 263   1          TH1 = 0XFF;
+ 264   1          TL1 = 0XFF;
+ 265   1          TR1 = 1;
+ 266   1          ET1 = 1;
+ 267   1          EA  = 1;
+ 268   1      }
+ 269          void Timer1Server() interrupt 3
+ 270          {
+ 271   1          count_f++;
+ 272   1      }
+ 273          /* 定时器0中断服务函数 */
+ 274          void Timer0Server() interrupt 1
+ 275          {
+ 276   1          if (++Key_Slow_Down == 10) Key_Slow_Down = 0;  // 键盘减速专用
+ 277   1          if (++Seg_Slow_Down == 200) Seg_Slow_Down = 0; // 数码管减速专用
+ 278   1          if (++Seg_Pos == 8) Seg_Pos = 0;               // 数码管显示专用
+ 279   1          if (++time_3s >= 3000)                         // 当计时3s时
+ 280   1          {
+ 281   2              time_3s    = 3001; // 防止溢出
+ 282   2              light_flag = 0;
+ 283   2          }
+ 284   1          if (++time_1s >= 1000) {
+ 285   2              // 现在1s,我们来统计一下频率
+ 286   2              time_1s = 0;
+ 287   2              dat_f   = count_f; // 取出这1s的频率
+ 288   2              count_f = 0;       // 计数值归零
+ 289   2          }
+ 290   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 291   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 292   1      }
+ 293          
+ 294          void deal_mode()
+ 295          {
+ 296   1      
+ 297   1          if (show_flag == 0) {
+ 298   2              Seg_show_mode = 0;
+ 299   2          } else if (show_flag == 1) {
+ 300   2              if (re_show_flag == 0) {
+ 301   3                  Seg_show_mode = 1;
+ 302   3              } else if (re_show_flag == 1) {
+C51 COMPILER V9.59.0.0   MAIN                                                              01/20/2024 11:10:24 PAGE 6   
+
+ 303   3                  Seg_show_mode = 2;
+ 304   3              } else if (re_show_flag == 2) {
+ 305   3                  Seg_show_mode = 3;
+ 306   3              }
+ 307   2          } else if (show_flag == 2) {
+ 308   2              Seg_show_mode = 4;
+ 309   2          } else if (show_flag == 100) {
+ 310   2              Seg_show_mode = 5;
+ 311   2          }
+ 312   1      }
+ 313          /* Main */
+ 314          void main()
+ 315          {
+ 316   1          System_Init();
+ 317   1          Timer0Init();
+ 318   1          Timer1Init();
+ 319   1          Set_Rtc(ucRtc); // 上电初始化时钟
+ 320   1          while (1) {
+ 321   2              Key_Proc();
+ 322   2              Seg_Proc();
+ 323   2              Led_Proc();
+ 324   2              deal_mode();
+ 325   2          }
+ 326   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1442    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =     85    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

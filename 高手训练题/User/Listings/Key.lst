@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   KEY                                                               01/26/2024 22:06:56 PAGE 1   
+C51 COMPILER V9.59.0.0   KEY                                                               01/26/2024 22:24:55 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
@@ -12,45 +12,41 @@ line level    source
    2          
    3          unsigned char Key_Read()
    4          {
-   5   1          unsigned char temp = 0;
-   6   1          //第1列
-   7   1          P44 = 0;
-   8   1          P42 = 1;
-   9   1          P35 = 1;
-  10   1          P34 = 1;
-  11   1          if(P33 == 0) temp = 4;
-  12   1          if(P32 == 0) temp = 5;
-  13   1          if(P31 == 0) temp = 6;
-  14   1          if(P30 == 0) temp = 7;
-  15   1          //第2列
-  16   1          P44 = 1;
-  17   1          P42 = 0;
-  18   1          P35 = 1;
-  19   1          P34 = 1;
-  20   1          if(P33 == 0) temp = 8;
-  21   1          if(P32 == 0) temp = 9;
-  22   1          if(P31 == 0) temp = 10;
-  23   1          if(P30 == 0) temp = 11;
-  24   1          //第3列
-  25   1          P44 = 1;
-  26   1          P42 = 1;
-  27   1          P35 = 0;
-  28   1          P34 = 1;
-  29   1          if(P33 == 0) temp = 12;
-  30   1          if(P32 == 0) temp = 13;
-  31   1          if(P31 == 0) temp = 14;
-  32   1          if(P30 == 0) temp = 15;
-  33   1          //第4列
-  34   1          P44 = 1;
-  35   1          P42 = 1;
-  36   1          P35 = 1;
-  37   1          P34 = 0;
-  38   1          if(P33 == 0) temp = 16;
-  39   1          if(P32 == 0) temp = 17;
-  40   1          if(P31 == 0) temp = 18;
-  41   1          if(P30 == 0) temp = 19;
-  42   1          return temp;
-  43   1      }
+   5   1        unsigned char temp = 0;
+   6   1        P44 = 0;P42 = 1;P35 = 1;P34 = 1;
+   7   1        if(P33 == 0) temp = 4;
+   8   1        if(P32 == 0) temp = 5;
+   9   1        if(P31 == 0) temp = 6;
+  10   1        if(P30 == 0) temp = 7;
+  11   1        P44 = 1;P42 = 0;P35 = 1;P34 = 1;
+  12   1        if(P33 == 0) temp = 8;
+  13   1        if(P32 == 0) temp = 9;
+  14   1        if(P31 == 0) temp = 10;
+  15   1        if(P30 == 0) temp = 11;
+  16   1        P44 = 1;P42 = 1;P35 = 0;P34 = 1;
+  17   1        if(P33 == 0) temp = 12;
+  18   1        if(P32 == 0) temp = 13;
+  19   1        if(P31 == 0) temp = 14;
+  20   1        if(P30 == 0) temp = 15;
+  21   1        P44 = 1;P42 = 1;P35 = 1;P34 = 0;
+  22   1        if(P33 == 0) temp = 16;
+  23   1        if(P32 == 0) temp = 17;
+  24   1        if(P31 == 0) temp = 18;
+  25   1        if(P30 == 0) temp = 19;
+  26   1        return temp;
+  27   1      }
+  28          
+  29          /*
+  30          unsigned char Key_Read()
+  31          {
+  32            unsigned char temp = 0;
+  33            if(P33 == 0) temp = 4;
+  34            if(P32 == 0) temp = 5;
+  35            if(P31 == 0) temp = 6;
+  36            if(P30 == 0) temp = 7;
+  37            return temp;
+  38          }
+  39          */
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
@@ -62,8 +58,6 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.
-
-C51 COMPILER V9.59.0.0   KEY                                                               01/26/2024 22:06:56 PAGE 2   
 
 
 C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

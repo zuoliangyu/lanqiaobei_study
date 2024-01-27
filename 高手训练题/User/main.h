@@ -4,12 +4,14 @@
 #include <Led.h>          //Led底层驱动专用头文件
 #include <Key.h>          //按键底层驱动专用头文件
 #include <Seg.h>          //数码管底层驱动专用头文件
-#include <Uart.h>         //串口底层驱动专用头文件
-#include <stdio.h>        //标准库底层驱动专用头文件
-#include <onewire.h>      //温度传感器底层驱动
-#include <ds1302.h>       //ds1302底层驱动专用头文件
-#include <iic.h>          //IIC底层驱动专用头文件
-#include <ultrasound.h>   //超声波
+#include "ds1302.h"
+#include "onewire.h"
+#include <ultrasonic.h>
+#include "iic.h"
+#include <Uart.h>
+#include <stdio.h>
+#include <string.h>
 #include <intrins.h>
+
 #define uchar unsigned char
 #define uint unsigned int

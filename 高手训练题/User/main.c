@@ -1,19 +1,8 @@
 /* 头文件声明区 */
-#include <STC15F2K60S2.H> //单片机寄存器专用头文件
-#include <Init.h>		  //初始化底层驱动专用头文件
-#include <Led.h>		  //Led底层驱动专用头文件
-#include <Key.h>		  //按键底层驱动专用头文件
-#include <Seg.h>		  //数码管底层驱动专用头文件
-#include "ds1302.h"
-#include "onewire.h"
-#include <ultrasonic.h>
-#include "iic.h"
-#include <Uart.h>
-#include <stdio.h>
-#include <string.h>
+#include <main.h> //单片机寄存器专用头文件
 
 /* 变量声明区 */
-unsigned char Key_Val, Key_Down, Key_Old, Key_Up;					  // 按键专用变量
+
 unsigned char Key_Slow_Down;										  // 按键减速专用变量
 unsigned int Uart_Slow_Down;										  // 按键减速专用变量
 idata unsigned char Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};	  // 数码管显示数据存放数组
@@ -59,9 +48,22 @@ unsigned char Led_Pos;								   // LED扫描
 float DA_Output;									   // DA输出
 unsigned char Timer_Count;							   // 串口时间计数
 
+// 键盘映射
+uchar Key_to_num(uchar Key_Down)
+{
+	uchar key_num[10] = {4, 8, 12, 16, 9, 13, 17, 10, 14, 18};
+	uchar i;
+	for (i = 0; i < 10; i++)
+		if (Key_Down == key_num[i])
+			return i;
+	// 当按下的按键是没有用的按键的时候
+	if (i == 10 && Key_Down != key_num[9])
+		return 100;
+}
 /* 键盘处理函数 */
 void Key_Proc()
 {
+	static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
 	unsigned char i;
 	if (Key_Slow_Down)
 		return;
@@ -75,48 +77,13 @@ void Key_Proc()
 	/*初始界面按键 密码输入*/
 	if (Seg_Disp_Mode == 0 && Pass_Input_Index < 8)
 	{
-		switch (Key_Down) // 密码输入
+		uchar input_value;
+		input_value = Key_to_num(Key_Down);
+		// 输入有效
+		if (input_value != 100)
 		{
-		case 4:
-			Pass_Input[Pass_Input_Index] = 0;
+			Pass_Input[Pass_Input_Index] = input_value;
 			Pass_Input_Index++;
-			break;
-		case 8:
-			Pass_Input[Pass_Input_Index] = 1;
-			Pass_Input_Index++;
-			break;
-		case 12:
-			Pass_Input[Pass_Input_Index] = 2;
-			Pass_Input_Index++;
-			break;
-		case 16:
-			Pass_Input[Pass_Input_Index] = 3;
-			Pass_Input_Index++;
-			break;
-		case 9:
-			Pass_Input[Pass_Input_Index] = 4;
-			Pass_Input_Index++;
-			break;
-		case 13:
-			Pass_Input[Pass_Input_Index] = 5;
-			Pass_Input_Index++;
-			break;
-		case 17:
-			Pass_Input[Pass_Input_Index] = 6;
-			Pass_Input_Index++;
-			break;
-		case 10:
-			Pass_Input[Pass_Input_Index] = 7;
-			Pass_Input_Index++;
-			break;
-		case 14:
-			Pass_Input[Pass_Input_Index] = 8;
-			Pass_Input_Index++;
-			break;
-		case 18:
-			Pass_Input[Pass_Input_Index] = 9;
-			Pass_Input_Index++;
-			break;
 		}
 	}
 	if (Seg_Disp_Mode == 0)
@@ -381,7 +348,7 @@ void Seg_Proc()
 		break;
 	case 400: // 温度
 		Seg_Slow_Down += 1;
-		Temp = Read_t();
+		Temp = rd_temperature();
 		break;
 	}
 
@@ -713,7 +680,7 @@ void Uart1Server() interrupt 4
 void main()
 {
 
-	while (Read_t() == 85)
+	while (rd_temperature() == 85)
 		;
 	System_Init();
 	Timer0Init();

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "seg.h": "c",
+        "init.h": "c"
+    }
+}
