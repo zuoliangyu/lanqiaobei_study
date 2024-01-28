@@ -10,6 +10,7 @@ void Seg_Disp(unsigned char wela, dula, point)
     // ÊÖ¶¯Ïû¶¶
     P0 = 0xff;
     P2 = P2 & 0x1f | 0xe0;
+
     P0 = seg_wela[wela];
     P2 = P2 & 0x1f | 0xc0;
     P2 &= 0x1f;

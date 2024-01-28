@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -15,14 +15,14 @@ line level    source
    5          
    6          uchar Key_Slow_Down;                      // 按键减速专用变量
    7          uint Uart_Slow_Down;                      // 按键减速专用变量
-   8          idata uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};    // 数码管显示数据存放数组
-   9          idata uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 数码管小数点数据存放数组
+   8           uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};   // 数码管显示数据存放数组
+   9           uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // 数码管小数点数据存放数组
   10          uchar Seg_Pos;                          // 数码管扫描专用变量
   11          uint Seg_Slow_Down;                       // 数码管减速专用变量
-  12          idata uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};        // Led显示数据存放数组
+  12           uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // Led显示数据存放数组
   13          uchar Seg_Disp_Mode;                      // 模式界面 0-系统初始界面 1-主界面 时钟  信息
   14          uchar Pass_Word[8] = {1, 2, 3, 4, 5, 6, 7, 8};          // 初始密码
-  15          idata uchar Pass_Input[8] = {11, 11, 11, 11, 11, 11, 11, 11}; // 密码输入
+  15           uchar Pass_Input[8] = {11, 11, 11, 11, 11, 11, 11, 11}; // 密码输入
   16          uchar Pass_Input_Index;                     // 密码输入指针
   17          uint Timer_3000Ms;                        // 长按计时
   18          bit Key_Flag;                         // 计时标志位
@@ -62,7 +62,7 @@ line level    source
   52          {
   53   1        switch (key)
   54   1        {
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 2   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 2   
 
   55   2        case 4:
   56   2          return 0;
@@ -126,7 +126,7 @@ line level    source
  114   3            if (Key_Up == 5)
  115   3            {
  116   4              Timer_3000Ms = Key_Flag = 0;
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 3   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 3   
 
  117   4            }
  118   3          }
@@ -190,7 +190,7 @@ line level    source
  176   2          else
  177   2          {
  178   3            if (Key_Up == 7)          // 捕捉到上升沿
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 4   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 4   
 
  179   3              Timer_2000Ms = Key_Flag1 = 0; // 复位，便于下次
  180   3          }
@@ -254,7 +254,7 @@ line level    source
  238   4              E2PROM_Alarm[2] = (Alarm_Set[4] * 10 + Alarm_Set[5]);
  239   4              if (E2PROM_Alarm[0] < 23 && E2PROM_Alarm[1] < 59 && E2PROM_Alarm[2] < 59) // 数据合理
  240   4              {
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 5   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 5   
 
  241   5                E2PROM_Read(E2PROM_Alarm, 0, 3);
  242   5                Seg_Disp_Mode = 1;
@@ -277,507 +277,521 @@ line level    source
  259   3          }
  260   2          if (Clock_Set_Index < (Key_Input_Flag + 2)) // 输入两个之后不能再输
  261   2          {
- 262   3            switch (Key_Down) // 时间输入
- 263   3            {
- 264   4            case 4:
- 265   4              if (Seg_Disp_Mode == 3)
- 266   4                Clock_Set[Clock_Set_Index] = 0;
- 267   4              else if (Seg_Disp_Mode == 4)
- 268   4                Alarm_Set[Clock_Set_Index] = 0;
- 269   4              Clock_Set_Index++;
- 270   4              break;
- 271   4            case 8:
- 272   4              if (Seg_Disp_Mode == 3)
- 273   4                Clock_Set[Clock_Set_Index] = 1;
- 274   4              else if (Seg_Disp_Mode == 4)
- 275   4                Alarm_Set[Clock_Set_Index] = 1;
- 276   4              Clock_Set_Index++;
- 277   4              break;
- 278   4            case 12:
- 279   4              if (Seg_Disp_Mode == 3)
- 280   4                Clock_Set[Clock_Set_Index] = 2;
- 281   4              else if (Seg_Disp_Mode == 4)
- 282   4                Alarm_Set[Clock_Set_Index] = 2;
- 283   4              Clock_Set_Index++;
- 284   4              break;
- 285   4            case 16:
- 286   4              if (Seg_Disp_Mode == 3)
- 287   4                Clock_Set[Clock_Set_Index] = 3;
- 288   4              else if (Seg_Disp_Mode == 4)
- 289   4                Alarm_Set[Clock_Set_Index] = 3;
- 290   4              Clock_Set_Index++;
- 291   4              break;
- 292   4            case 9:
- 293   4              if (Seg_Disp_Mode == 3)
- 294   4                Clock_Set[Clock_Set_Index] = 4;
- 295   4              else if (Seg_Disp_Mode == 4)
- 296   4                Alarm_Set[Clock_Set_Index] = 4;
- 297   4              Clock_Set_Index++;
- 298   4              break;
- 299   4            case 13:
- 300   4              if (Seg_Disp_Mode == 3)
- 301   4                Clock_Set[Clock_Set_Index] = 5;
- 302   4              else if (Seg_Disp_Mode == 4)
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 6   
+ 262   3            uchar input_data;
+ 263   3            input_data = key_to_num(Key_Down);
+ 264   3            switch (Key_Down) // 时间输入
+ 265   3            {
+ 266   4            case 4:
+ 267   4              if (Seg_Disp_Mode == 3)
+ 268   4                Clock_Set[Clock_Set_Index] = 0;
+ 269   4              else if (Seg_Disp_Mode == 4)
+ 270   4                Alarm_Set[Clock_Set_Index] = 0;
+ 271   4              Clock_Set_Index++;
+ 272   4              break;
+ 273   4            case 8:
+ 274   4              if (Seg_Disp_Mode == 3)
+ 275   4                Clock_Set[Clock_Set_Index] = 1;
+ 276   4              else if (Seg_Disp_Mode == 4)
+ 277   4                Alarm_Set[Clock_Set_Index] = 1;
+ 278   4              Clock_Set_Index++;
+ 279   4              break;
+ 280   4            case 12:
+ 281   4              if (Seg_Disp_Mode == 3)
+ 282   4                Clock_Set[Clock_Set_Index] = 2;
+ 283   4              else if (Seg_Disp_Mode == 4)
+ 284   4                Alarm_Set[Clock_Set_Index] = 2;
+ 285   4              Clock_Set_Index++;
+ 286   4              break;
+ 287   4            case 16:
+ 288   4              if (Seg_Disp_Mode == 3)
+ 289   4                Clock_Set[Clock_Set_Index] = 3;
+ 290   4              else if (Seg_Disp_Mode == 4)
+ 291   4                Alarm_Set[Clock_Set_Index] = 3;
+ 292   4              Clock_Set_Index++;
+ 293   4              break;
+ 294   4            case 9:
+ 295   4              if (Seg_Disp_Mode == 3)
+ 296   4                Clock_Set[Clock_Set_Index] = 4;
+ 297   4              else if (Seg_Disp_Mode == 4)
+ 298   4                Alarm_Set[Clock_Set_Index] = 4;
+ 299   4              Clock_Set_Index++;
+ 300   4              break;
+ 301   4            case 13:
+ 302   4              if (Seg_Disp_Mode == 3)
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 6   
 
- 303   4                Alarm_Set[Clock_Set_Index] = 5;
- 304   4              Clock_Set_Index++;
- 305   4              break;
- 306   4            case 17:
- 307   4              if (Seg_Disp_Mode == 3)
- 308   4                Clock_Set[Clock_Set_Index] = 6;
- 309   4              else if (Seg_Disp_Mode == 4)
- 310   4                Alarm_Set[Clock_Set_Index] = 6;
- 311   4              Clock_Set_Index++;
- 312   4              break;
- 313   4            case 10:
- 314   4              if (Seg_Disp_Mode == 3)
- 315   4                Clock_Set[Clock_Set_Index] = 7;
- 316   4              else if (Seg_Disp_Mode == 4)
- 317   4                Alarm_Set[Clock_Set_Index] = 7;
- 318   4              Clock_Set_Index++;
- 319   4              break;
- 320   4            case 14:
- 321   4              if (Seg_Disp_Mode == 3)
- 322   4                Clock_Set[Clock_Set_Index] = 8;
- 323   4              else if (Seg_Disp_Mode == 4)
- 324   4                Alarm_Set[Clock_Set_Index] = 8;
- 325   4              Clock_Set_Index++;
- 326   4              break;
- 327   4            case 18:
- 328   4              if (Seg_Disp_Mode == 3)
- 329   4                Clock_Set[Clock_Set_Index] = 9;
- 330   4              else if (Seg_Disp_Mode == 4)
- 331   4                Alarm_Set[Clock_Set_Index] = 9;
- 332   4              Clock_Set_Index++;
- 333   4              break;
- 334   4            }
- 335   3          }
- 336   2        }
- 337   1      }
- 338          
- 339          /* 信息处理函数 */
- 340          void Seg_Proc()
- 341          {
- 342   1        unsigned char i;
- 343   1        //  if(Seg_Slow_Down) return;
- 344   1        //  Seg_Slow_Down = 1;//数码管减速程序
- 345   1      
- 346   1        switch (Seg_Slow_Down)
- 347   1        {
- 348   2        case 100: // 时钟读取
- 349   2          Seg_Slow_Down += 1;
- 350   2          Read_Rtc(Clock_Crl);
- 351   2          break;
- 352   2        case 200: // 超声波
- 353   2          Seg_Slow_Down += 1;
- 354   2          ultrasonic = Ut_Wave_Data();
- 355   2          if ((ultrasonic_Ture - ultrasonic < 10) || (ultrasonic - ultrasonic_Ture < 10))
- 356   2            ultrasonic_Ture = ultrasonic;
- 357   2          break;
- 358   2        case 300: // AD
- 359   2          Seg_Slow_Down += 1;
- 360   2          AD_Output = Ad_Read(0x43);        // 光敏电阻
- 361   2          AD_Rb2_Output = Ad_Read(0x41) / 51.0; // 电位器输出
- 362   2          Da_Write(DA_Output);          // DA输出
- 363   2          Sun_Flag = (AD_Output > 100);
- 364   2          break;
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 7   
+ 303   4                Clock_Set[Clock_Set_Index] = 5;
+ 304   4              else if (Seg_Disp_Mode == 4)
+ 305   4                Alarm_Set[Clock_Set_Index] = 5;
+ 306   4              Clock_Set_Index++;
+ 307   4              break;
+ 308   4            case 17:
+ 309   4              if (Seg_Disp_Mode == 3)
+ 310   4                Clock_Set[Clock_Set_Index] = 6;
+ 311   4              else if (Seg_Disp_Mode == 4)
+ 312   4                Alarm_Set[Clock_Set_Index] = 6;
+ 313   4              Clock_Set_Index++;
+ 314   4              break;
+ 315   4            case 10:
+ 316   4              if (Seg_Disp_Mode == 3)
+ 317   4                Clock_Set[Clock_Set_Index] = 7;
+ 318   4              else if (Seg_Disp_Mode == 4)
+ 319   4                Alarm_Set[Clock_Set_Index] = 7;
+ 320   4              Clock_Set_Index++;
+ 321   4              break;
+ 322   4            case 14:
+ 323   4              if (Seg_Disp_Mode == 3)
+ 324   4                Clock_Set[Clock_Set_Index] = 8;
+ 325   4              else if (Seg_Disp_Mode == 4)
+ 326   4                Alarm_Set[Clock_Set_Index] = 8;
+ 327   4              Clock_Set_Index++;
+ 328   4              break;
+ 329   4            case 18:
+ 330   4              if (Seg_Disp_Mode == 3)
+ 331   4                Clock_Set[Clock_Set_Index] = 9;
+ 332   4              else if (Seg_Disp_Mode == 4)
+ 333   4                Alarm_Set[Clock_Set_Index] = 9;
+ 334   4              Clock_Set_Index++;
+ 335   4              break;
+ 336   4            }
+ 337   3          }
+ 338   2        }
+ 339   1      }
+ 340          
+ 341          /* 信息处理函数 */
+ 342          void Seg_Proc()
+ 343          {
+ 344   1        uchar i;
+ 345   1        switch (Seg_Slow_Down)
+ 346   1        {
+ 347   2        case 100: // 时钟读取
+ 348   2          Seg_Slow_Down++;
+ 349   2          Read_Rtc(Clock_Crl);
+ 350   2          break;
+ 351   2        case 200: // 超声波
+ 352   2          Seg_Slow_Down++;
+ 353   2          ultrasonic = Ut_Wave_Data();
+ 354   2          if ((ultrasonic_Ture - ultrasonic < 10) || (ultrasonic - ultrasonic_Ture < 10))
+ 355   2            ultrasonic_Ture = ultrasonic;
+ 356   2          break;
+ 357   2        case 300: // AD
+ 358   2          Seg_Slow_Down++;
+ 359   2          AD_Output = Ad_Read(0x43);        // 光敏电阻
+ 360   2          AD_Rb2_Output = Ad_Read(0x41) / 51.0; // 电位器输出
+ 361   2          Da_Write(DA_Output);          // DA输出
+ 362   2          Sun_Flag = (AD_Output > 100);
+ 363   2          break;
+ 364   2        case 400: // 温度
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 7   
 
- 365   2        case 400: // 温度
- 366   2          Seg_Slow_Down += 1;
- 367   2          Temp = Read_t();
- 368   2          break;
- 369   2        }
- 370   1      
- 371   1        Seg_Point[5] = (Seg_Disp_Mode == 2);
- 372   1        switch (Seg_Disp_Mode)
- 373   1        {
- 374   2        case 0: // 系统初始界面
- 375   2          if (Pass_Input_Index != 0)
- 376   2          {
- 377   3            for (i = 0; i < Pass_Input_Index; i++)
- 378   3              Seg_Buf[7 - i] = Pass_Input[Pass_Input_Index - i - 1];
- 379   3          }
- 380   2          else
- 381   2          {
- 382   3            for (i = 0; i < 8; i++)
- 383   3              Seg_Buf[i] = 11;
- 384   3          }
- 385   2          break;
- 386   2        case 1: // 主界面
- 387   2          for (i = 0; i < 3; i++)
- 388   2          {
- 389   3            Seg_Buf[i * 2 + i] = Clock_Crl[i] / 10;
- 390   3            Seg_Buf[i * 2 + i + 1] = Clock_Crl[i] % 10;
- 391   3          }
- 392   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag ? 10 : 11;
- 393   2          break;
- 394   2        case 2: // 超声波 光 温度
- 395   2          Seg_Buf[0] = ultrasonic_Ture / 10;
- 396   2          Seg_Buf[1] = ultrasonic_Ture % 10;
- 397   2          Seg_Buf[2] = (unsigned char)Sun_Flag;
- 398   2          Seg_Buf[3] = 11;
- 399   2          Seg_Buf[4] = (unsigned char)Temp / 10;
- 400   2          Seg_Buf[5] = (unsigned char)Temp % 10;
- 401   2          Seg_Buf[6] = (unsigned int)(Temp * 10) % 10;
- 402   2          Seg_Buf[7] = 12;
- 403   2          break;
- 404   2        case 3: // 时钟设置
- 405   2          Seg_Buf[0] = Clock_Set[0];
- 406   2          Seg_Buf[1] = Clock_Set[1];
- 407   2          Seg_Buf[3] = Clock_Set[2];
- 408   2          Seg_Buf[4] = Clock_Set[3];
- 409   2          Seg_Buf[6] = Clock_Set[4];
- 410   2          Seg_Buf[7] = Clock_Set[5];
- 411   2      
- 412   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag2 ? 10 : 11;
- 413   2          break;
- 414   2        case 4: // 闹钟设置
- 415   2          Seg_Buf[0] = Alarm_Set[0];
- 416   2          Seg_Buf[1] = Alarm_Set[1];
- 417   2          Seg_Buf[3] = Alarm_Set[2];
- 418   2          Seg_Buf[4] = Alarm_Set[3];
- 419   2          Seg_Buf[6] = Alarm_Set[4];
- 420   2          Seg_Buf[7] = Alarm_Set[5];
- 421   2      
- 422   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag2 ? 10 : 11;
- 423   2          break;
- 424   2        }
- 425   1      }
- 426          
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 8   
+ 365   2          Seg_Slow_Down++;
+ 366   2          Temp = rd_temperature();
+ 367   2          break;
+ 368   2        }
+ 369   1      
+ 370   1        Seg_Point[5] = (Seg_Disp_Mode == 2);
+ 371   1        switch (Seg_Disp_Mode)
+ 372   1        {
+ 373   2        case 0: // 系统初始界面
+ 374   2          if (Pass_Input_Index != 0)
+ 375   2          {
+ 376   3            for (i = 0; i < Pass_Input_Index; i++)
+ 377   3              Seg_Buf[7 - i] = Pass_Input[Pass_Input_Index - i - 1];
+ 378   3          }
+ 379   2          else
+ 380   2          {
+ 381   3            for (i = 0; i < 8; i++)
+ 382   3              Seg_Buf[i] = 11;
+ 383   3          }
+ 384   2          break;
+ 385   2        case 1: // 主界面
+ 386   2          for (i = 0; i < 3; i++)
+ 387   2          {
+ 388   3            Seg_Buf[i * 2 + i] = Clock_Crl[i] / 10;
+ 389   3            Seg_Buf[i * 2 + i + 1] = Clock_Crl[i] % 10;
+ 390   3          }
+ 391   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag ? 10 : 11;
+ 392   2          break;
+ 393   2        case 2: // 超声波 光 温度
+ 394   2          Seg_Buf[0] = ultrasonic_Ture / 10;
+ 395   2          Seg_Buf[1] = ultrasonic_Ture % 10;
+ 396   2          Seg_Buf[2] = (uchar)Sun_Flag;
+ 397   2          Seg_Buf[3] = 11;
+ 398   2          Seg_Buf[4] = (uchar)Temp / 10;
+ 399   2          Seg_Buf[5] = (uchar)Temp % 10;
+ 400   2          Seg_Buf[6] = (uint)(Temp * 10) % 10;
+ 401   2          Seg_Buf[7] = 12;
+ 402   2          break;
+ 403   2        case 3: // 时钟设置
+ 404   2          Seg_Buf[0] = Clock_Set[0];
+ 405   2          Seg_Buf[1] = Clock_Set[1];
+ 406   2          Seg_Buf[3] = Clock_Set[2];
+ 407   2          Seg_Buf[4] = Clock_Set[3];
+ 408   2          Seg_Buf[6] = Clock_Set[4];
+ 409   2          Seg_Buf[7] = Clock_Set[5];
+ 410   2      
+ 411   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag2 ? 10 : 11;
+ 412   2          break;
+ 413   2        case 4: // 闹钟设置
+ 414   2          Seg_Buf[0] = Alarm_Set[0];
+ 415   2          Seg_Buf[1] = Alarm_Set[1];
+ 416   2          Seg_Buf[3] = Alarm_Set[2];
+ 417   2          Seg_Buf[4] = Alarm_Set[3];
+ 418   2          Seg_Buf[6] = Alarm_Set[4];
+ 419   2          Seg_Buf[7] = Alarm_Set[5];
+ 420   2      
+ 421   2          Seg_Buf[2] = Seg_Buf[5] = Seg_Star_Flag2 ? 10 : 11;
+ 422   2          break;
+ 423   2        }
+ 424   1      }
+ 425          
+ 426          /* 其他显示函数 */
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 8   
 
- 427          /* 其他显示函数 */
- 428          void Led_Proc()
- 429          {
- 430   1      
- 431   1        ucLed[0] = (Seg_Disp_Mode == 0);
- 432   1        ucLed[1] = (Seg_Disp_Mode == 1);
- 433   1        ucLed[2] = (Seg_Disp_Mode == 3);
- 434   1        ucLed[3] = (Seg_Disp_Mode == 4);
- 435   1        ucLed[4] = (Seg_Disp_Mode == 2);
- 436   1      
- 437   1        Led_Lever = ((AD_Rb2_Output) * 2.0);
- 438   1        // DA
- 439   1        DA_Output = (Sun_Flag ? 1 : 5);
- 440   1      }
- 441          
- 442          /*串口*/
- 443          void Uart_Sent_Proc()
- 444          {
- 445   1        if (Uart_Slow_Down)
- 446   1          return;
- 447   1        Uart_Slow_Down = 1;
- 448   1        // 每到一个整点后单片机向上位机发送指令
- 449   1        if (Clock_Crl[1] == 0 && Clock_Crl[2] == 0) // 整点
- 450   1        {
- 451   2          printf("Time = %d:%d:%d", (unsigned int)Clock_Crl[0], (unsigned int)Clock_Crl[1], (unsigned int)Clock_Cr
-             -l[2]);
- 452   2        }
- 453   1      
- 454   1        if (Seg_Disp_Mode == 1) // 时钟显示界面
- 455   1        {
- 456   2          if (Timer_Count == 2) // 在时钟显示界面时每间隔三秒单片机向上位机发送指令
- 457   2            printf("%d:%d-%dCM_%dC", (unsigned int)Clock_Crl[0], (unsigned int)Clock_Crl[1], (unsigned int)ultrason
-             -ic_Ture, (unsigned int)Temp);
- 458   2        }
- 459   1      }
- 460          
- 461          /*串口处理函数*/
- 462          void Uart_Proc()
- 463          {
- 464   1        unsigned char a; // For循环
- 465   1        unsigned char i; // while循环
- 466   1        if (Uart_Recv_Index == 0)
- 467   1          return;
- 468   1        if (Syt_Flag >= 10)
- 469   1        {
- 470   2          Syt_Flag = Time_Syt_Flag = 0; // 复位
- 471   2          if (Uart_Enable_Flag)     // 串口开始使能
- 472   2          {
- 473   3            if ((Seg_Disp_Mode == 1 || Seg_Disp_Mode == 2))
- 474   3            {
- 475   4              if (Uart_Recv_Index == 4) // 主界面串口功能
- 476   4              {
- 477   5                if (Uart_Recv[0] == 'D' && Uart_Recv[1] == 'I' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'P') // 信�
+ 427          void Led_Proc()
+ 428          {
+ 429   1      
+ 430   1        ucLed[0] = (Seg_Disp_Mode == 0);
+ 431   1        ucLed[1] = (Seg_Disp_Mode == 1);
+ 432   1        ucLed[2] = (Seg_Disp_Mode == 3);
+ 433   1        ucLed[3] = (Seg_Disp_Mode == 4);
+ 434   1        ucLed[4] = (Seg_Disp_Mode == 2);
+ 435   1      
+ 436   1        Led_Lever = ((AD_Rb2_Output) * 2.0);
+ 437   1        // DA
+ 438   1        DA_Output = (Sun_Flag ? 1 : 5);
+ 439   1      }
+ 440          
+ 441          /*串口*/
+ 442          void Uart_Sent_Proc()
+ 443          {
+ 444   1        if (Uart_Slow_Down)
+ 445   1          return;
+ 446   1        Uart_Slow_Down = 1;
+ 447   1        // 每到一个整点后单片机向上位机发送指令
+ 448   1        if (Clock_Crl[1] == 0 && Clock_Crl[2] == 0) // 整点
+ 449   1        {
+ 450   2          printf("Time = %d:%d:%d", (uint)Clock_Crl[0], (uint)Clock_Crl[1], (uint)Clock_Crl[2]);
+ 451   2        }
+ 452   1      
+ 453   1        if (Seg_Disp_Mode == 1) // 时钟显示界面
+ 454   1        {
+ 455   2          if (Timer_Count == 2) // 在时钟显示界面时每间隔三秒单片机向上位机发送指令
+ 456   2            printf("%d:%d-%dCM_%dC", (uint)Clock_Crl[0], (uint)Clock_Crl[1], (uint)ultrasonic_Ture, (uint)Temp);
+ 457   2        }
+ 458   1      }
+ 459          
+ 460          /*串口处理函数*/
+ 461          void Uart_Proc()
+ 462          {
+ 463   1        uchar a; // For循环
+ 464   1        uchar i; // while循环
+ 465   1        if (Uart_Recv_Index == 0)
+ 466   1          return;
+ 467   1        if (Syt_Flag >= 10)
+ 468   1        {
+ 469   2          Syt_Flag = Time_Syt_Flag = 0; // 复位
+ 470   2          if (Uart_Enable_Flag)     // 串口开始使能
+ 471   2          {
+ 472   3            if ((Seg_Disp_Mode == 1 || Seg_Disp_Mode == 2))
+ 473   3            {
+ 474   4              if (Uart_Recv_Index == 4) // 主界面串口功能
+ 475   4              {
+ 476   5                if (Uart_Recv[0] == 'D' && Uart_Recv[1] == 'I' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'P') // 信�
              -��显示
- 478   5                {
- 479   6                  Seg_Disp_Mode = 2; // 信息显示界面
- 480   6                }
- 481   5                if (Uart_Recv[0] == 'C' && Uart_Recv[1] == 'K' && Uart_Recv[2] == 'G' && Uart_Recv[3] == 'B') // 串�
+ 477   5                {
+ 478   6                  Seg_Disp_Mode = 2; // 信息显示界面
+ 479   6                }
+ 480   5                if (Uart_Recv[0] == 'C' && Uart_Recv[1] == 'K' && Uart_Recv[2] == 'G' && Uart_Recv[3] == 'B') // 串�
              -��关
- 482   5                {
- 483   6                  Uart_Enable_Flag = 0; // 关闭串口功能
- 484   6                  Seg_Disp_Mode = 1;
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 9   
+ 481   5                {
+ 482   6                  Uart_Enable_Flag = 0; // 关闭串口功能
+ 483   6                  Seg_Disp_Mode = 1;
+ 484   6                }
+ 485   5                if (Uart_Recv[0] == 'S' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'Z') // 时�
+             -��设置
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 9   
 
- 485   6                }
- 486   5                if (Uart_Recv[0] == 'S' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'Z') // 时�
+ 486   5                {
+ 487   6                  Seg_Disp_Mode = 3; // 时钟设置界面
+ 488   6                }
+ 489   5                if (Uart_Recv[0] == 'N' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'Z') // 闹�
              -��设置
- 487   5                {
- 488   6                  Seg_Disp_Mode = 3; // 时钟设置界面
- 489   6                }
- 490   5                if (Uart_Recv[0] == 'N' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'S' && Uart_Recv[3] == 'Z') // 闹�
+ 490   5                {
+ 491   6                  Seg_Disp_Mode = 4; // 闹钟设置界面
+ 492   6                }
+ 493   5                if (Uart_Recv[0] == 'N' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'K' && Uart_Recv[3] == 'G') // 闹�
              -��设置
- 491   5                {
- 492   6                  Seg_Disp_Mode = 4; // 闹钟设置界面
- 493   6                }
- 494   5                if (Uart_Recv[0] == 'N' && Uart_Recv[1] == 'Z' && Uart_Recv[2] == 'K' && Uart_Recv[3] == 'G') // 闹�
+ 494   5                {
+ 495   6                  Alarm_Enable_Flag = 1; // 闹钟使能
+ 496   6                }
+ 497   5              }
+ 498   4            }
+ 499   3            if ((Seg_Disp_Mode == 3 || Seg_Disp_Mode == 4))
+ 500   3            {
+ 501   4              if (Uart_Recv_Index == 6) // 时钟闹钟设置
+ 502   4              {
+ 503   5                // 小时设置：HSetXX
+ 504   5                if (Uart_Recv[0] == 'H' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // 闹�
              -��设置
- 495   5                {
- 496   6                  Alarm_Enable_Flag = 1; // 闹钟使能
- 497   6                }
- 498   5              }
- 499   4            }
- 500   3            if ((Seg_Disp_Mode == 3 || Seg_Disp_Mode == 4))
- 501   3            {
- 502   4              if (Uart_Recv_Index == 6) // 时钟闹钟设置
- 503   4              {
- 504   5                // 小时设置：HSetXX
- 505   5                if (Uart_Recv[0] == 'H' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // 闹�
-             -��设置
- 506   5                {
- 507   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
+ 505   5                {
+ 506   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
              -9'))) // 0-9
- 508   6                  {
- 509   7                    if (Seg_Disp_Mode == 3) // 时钟设置
- 510   7                    {
- 511   8                      Clock_Set[0] = Uart_Recv[4] - 48;
- 512   8                      Clock_Set[1] = Uart_Recv[5] - 48;
- 513   8                    }
- 514   7                    else // 闹钟设置
- 515   7                    {
- 516   8                      Alarm_Set[0] = Uart_Recv[4] - 48;
- 517   8                      Alarm_Set[1] = Uart_Recv[5] - 48;
- 518   8                    }
- 519   7                  }
- 520   6                }
- 521   5                // 分钟设置：MSetXX
- 522   5                if (Uart_Recv[0] == 'M' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // 闹�
+ 507   6                  {
+ 508   7                    if (Seg_Disp_Mode == 3) // 时钟设置
+ 509   7                    {
+ 510   8                      Clock_Set[0] = Uart_Recv[4] - 48;
+ 511   8                      Clock_Set[1] = Uart_Recv[5] - 48;
+ 512   8                    }
+ 513   7                    else // 闹钟设置
+ 514   7                    {
+ 515   8                      Alarm_Set[0] = Uart_Recv[4] - 48;
+ 516   8                      Alarm_Set[1] = Uart_Recv[5] - 48;
+ 517   8                    }
+ 518   7                  }
+ 519   6                }
+ 520   5                // 分钟设置：MSetXX
+ 521   5                if (Uart_Recv[0] == 'M' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // 闹�
              -��设置
- 523   5                {
- 524   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
+ 522   5                {
+ 523   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
              -9'))) // 0-9
- 525   6                  {
- 526   7                    if (Seg_Disp_Mode == 3)
- 527   7                    {
- 528   8                      Clock_Set[2] = Uart_Recv[4] - 48;
- 529   8                      Clock_Set[3] = Uart_Recv[5] - 48;
- 530   8                    }
- 531   7                    else
- 532   7                    {
- 533   8                      Alarm_Set[2] = Uart_Recv[4] - 48;
- 534   8                      Alarm_Set[3] = Uart_Recv[5] - 48;
- 535   8                    }
- 536   7                  }
- 537   6                }
- 538   5                // 秒钟设置：SSetXX
- 539   5                if (Uart_Recv[0] == 'S' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // 闹�
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 10  
+ 524   6                  {
+ 525   7                    if (Seg_Disp_Mode == 3)
+ 526   7                    {
+ 527   8                      Clock_Set[2] = Uart_Recv[4] - 48;
+ 528   8                      Clock_Set[3] = Uart_Recv[5] - 48;
+ 529   8                    }
+ 530   7                    else
+ 531   7                    {
+ 532   8                      Alarm_Set[2] = Uart_Recv[4] - 48;
+ 533   8                      Alarm_Set[3] = Uart_Recv[5] - 48;
+ 534   8                    }
+ 535   7                  }
+ 536   6                }
+ 537   5                // 秒钟设置：SSetXX
+ 538   5                if (Uart_Recv[0] == 'S' && Uart_Recv[1] == 'S' && Uart_Recv[2] == 'e' && Uart_Recv[3] == 't') // 闹�
+             -��设置
+ 539   5                {
+ 540   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 10  
 
-             -��设置
- 540   5                {
- 541   6                  if (((Uart_Recv[4] >= '0') && (Uart_Recv[4] <= '9')) && ((Uart_Recv[5] >= '0') && (Uart_Recv[5] <= '
              -9'))) // 0-9
- 542   6                  {
- 543   7                    if (Seg_Disp_Mode == 3)
- 544   7                    {
- 545   8                      Clock_Set[4] = Uart_Recv[4] - 48;
- 546   8                      Clock_Set[5] = Uart_Recv[5] - 48;
- 547   8                    }
- 548   7                    else
- 549   7                    {
- 550   8                      Alarm_Set[4] = Uart_Recv[4] - 48;
- 551   8                      Alarm_Set[5] = Uart_Recv[5] - 48;
- 552   8                    }
- 553   7                  }
- 554   6                }
- 555   5              }
- 556   4              if (Uart_Recv_Index == 4) // 关闭串口
- 557   4              {
- 558   5                if (Uart_Recv[0] == 'C' && Uart_Recv[1] == 'K' && Uart_Recv[2] == 'G' && Uart_Recv[3] == 'B') // 串�
+ 541   6                  {
+ 542   7                    if (Seg_Disp_Mode == 3)
+ 543   7                    {
+ 544   8                      Clock_Set[4] = Uart_Recv[4] - 48;
+ 545   8                      Clock_Set[5] = Uart_Recv[5] - 48;
+ 546   8                    }
+ 547   7                    else
+ 548   7                    {
+ 549   8                      Alarm_Set[4] = Uart_Recv[4] - 48;
+ 550   8                      Alarm_Set[5] = Uart_Recv[5] - 48;
+ 551   8                    }
+ 552   7                  }
+ 553   6                }
+ 554   5              }
+ 555   4              if (Uart_Recv_Index == 4) // 关闭串口
+ 556   4              {
+ 557   5                if (Uart_Recv[0] == 'C' && Uart_Recv[1] == 'K' && Uart_Recv[2] == 'G' && Uart_Recv[3] == 'B') // 串�
              -��关
- 559   5                  Uart_Enable_Flag = 0;
- 560   5              }
- 561   4            }
- 562   3          }
- 563   2          if (Seg_Disp_Mode == 1) // 在时钟显示界面时上位机可发送修改密码指令
- 564   2          {
- 565   3            if (Uart_Recv_Index == 10)
- 566   3            {
- 567   4              if (Uart_Recv[0] == 'X' && Uart_Recv[1] == 'G')
- 568   4              {
- 569   5                i = 2;
- 570   5                while (((Uart_Recv[i] >= '0') && (Uart_Recv[4] <= '9')))
- 571   5                {
- 572   6                  i++;
- 573   6                  if (i == 8)
- 574   6                    break;
- 575   6                }
- 576   5                if (i == 8)
- 577   5                {
- 578   6                  for (a = 0; a < 8; a++)
- 579   6                  {
- 580   7                    Pass_Word[a] = Uart_Recv[a + 2] - 48;
- 581   7                    Seg_Disp_Mode = 0;
- 582   7                  }
- 583   6                }
- 584   5              }
- 585   4            }
- 586   3          }
- 587   2          memset(Uart_Recv, 0, Uart_Recv_Index);
- 588   2          Uart_Recv_Index = 0;
- 589   2        }
- 590   1      }
- 591          /*定时器1中断初始化函数*/
- 592          void Timer1_Init(void) // 125微秒@12.000MHz
- 593          {
- 594   1        AUXR &= 0xBF; // 定时器时钟12T模式
- 595   1        TMOD &= 0x0F; // 设置定时器模式
- 596   1        TL1 = 0x83;   // 设置定时初始值
- 597   1        TH1 = 0xFF;   // 设置定时初始值
- 598   1        TF1 = 0;    // 清除TF1标志
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 11  
+ 558   5                  Uart_Enable_Flag = 0;
+ 559   5              }
+ 560   4            }
+ 561   3          }
+ 562   2          if (Seg_Disp_Mode == 1) // 在时钟显示界面时上位机可发送修改密码指令
+ 563   2          {
+ 564   3            if (Uart_Recv_Index == 10)
+ 565   3            {
+ 566   4              if (Uart_Recv[0] == 'X' && Uart_Recv[1] == 'G')
+ 567   4              {
+ 568   5                i = 2;
+ 569   5                while (((Uart_Recv[i] >= '0') && (Uart_Recv[4] <= '9')))
+ 570   5                {
+ 571   6                  i++;
+ 572   6                  if (i == 8)
+ 573   6                    break;
+ 574   6                }
+ 575   5                if (i == 8)
+ 576   5                {
+ 577   6                  for (a = 0; a < 8; a++)
+ 578   6                  {
+ 579   7                    Pass_Word[a] = Uart_Recv[a + 2] - 48;
+ 580   7                    Seg_Disp_Mode = 0;
+ 581   7                  }
+ 582   6                }
+ 583   5              }
+ 584   4            }
+ 585   3          }
+ 586   2          memset(Uart_Recv, 0, Uart_Recv_Index);
+ 587   2          Uart_Recv_Index = 0;
+ 588   2        }
+ 589   1      }
+ 590          /*定时器1中断初始化函数*/
+ 591          void Timer1_Init(void) // 125微秒@12.000MHz
+ 592          {
+ 593   1        AUXR &= 0xBF; // 定时器时钟12T模式
+ 594   1        TMOD &= 0x0F; // 设置定时器模式
+ 595   1        TL1 = 0x83;   // 设置定时初始值
+ 596   1        TH1 = 0xFF;   // 设置定时初始值
+ 597   1        TF1 = 0;    // 清除TF1标志
+ 598   1        TR1 = 1;    // 定时器1开始计时
+ 599   1        ET1 = 1;    // 定时器中断1打开
+ 600   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 11  
 
- 599   1        TR1 = 1;    // 定时器1开始计时
- 600   1        ET1 = 1;    // 定时器中断1打开
- 601   1      }
- 602          
- 603          /* 定时器0中断初始化函数 */
- 604          void Timer0Init(void) // 1毫秒@12.000MHz
- 605          {
- 606   1        AUXR &= 0x7F; // 定时器时钟12T模式
- 607   1        TMOD &= 0xF0; // 设置定时器模式
- 608   1        TL0 = 0x18;   // 设置定时初始值
- 609   1        TH0 = 0xFC;   // 设置定时初始值
- 610   1        TF0 = 0;    // 清除TF0标志
- 611   1        TR0 = 1;    // 定时器0开始计时
- 612   1        ET0 = 1;    // 定时器中断0打开
- 613   1        EA = 1;     // 总中断打开
- 614   1      }
- 615          
- 616          /* 定时器0中断服务函数 */
- 617          void Timer0Server() interrupt 1
- 618          {
- 619   1        if (++Uart_Slow_Down == 1000)
- 620   1        {
- 621   2          Uart_Slow_Down = 0;
- 622   2          if (++Timer_Count == 3)
- 623   2            Timer_Count = 0;
- 624   2        }
- 625   1        if (++Key_Slow_Down == 10)
- 626   1          Key_Slow_Down = 0; // 键盘减速专用
- 627   1        if (++Seg_Slow_Down == 500)
- 628   1          Seg_Slow_Down = 0; // 数码管减速专用
- 629   1        if (++Seg_Pos == 8)
- 630   1          Seg_Pos = 0; // 数码管显示专用
- 631   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
- 632   1      
- 633   1        if (Key_Flag == 1)
- 634   1        {
- 635   2          if (++Timer_3000Ms == 4000) // 长按
- 636   2          {
- 637   3            Timer_3000Ms = 4000;
- 638   3          }
- 639   2        }
- 640   1      
- 641   1        if (++Timer_500Ms == 500) // 时间间隔符闪烁
- 642   1        {
- 643   2          Timer_500Ms = 0;
- 644   2          Seg_Star_Flag ^= 1;
- 645   2        }
- 646   1      
- 647   1        if (++Timer_700Ms == 700) // 时间闹钟设置间隔符
- 648   1        {
- 649   2          Timer_700Ms = 0;
- 650   2          Seg_Star_Flag2 ^= 1;
- 651   2        }
- 652   1      
- 653   1        if (Key_Flag1)
- 654   1        {
- 655   2          if (++Timer_2000Ms == 3000) // 长按
- 656   2            Timer_2000Ms = 3000;
- 657   2        }
- 658   1      
- 659   1        // 串口
- 660   1        if (Time_Syt_Flag)
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 12  
+ 601          
+ 602          /* 定时器0中断初始化函数 */
+ 603          void Timer0Init(void) // 1毫秒@12.000MHz
+ 604          {
+ 605   1        AUXR &= 0x7F; // 定时器时钟12T模式
+ 606   1        TMOD &= 0xF0; // 设置定时器模式
+ 607   1        TL0 = 0x18;   // 设置定时初始值
+ 608   1        TH0 = 0xFC;   // 设置定时初始值
+ 609   1        TF0 = 0;    // 清除TF0标志
+ 610   1        TR0 = 1;    // 定时器0开始计时
+ 611   1        ET0 = 1;    // 定时器中断0打开
+ 612   1        EA = 1;     // 总中断打开
+ 613   1      }
+ 614          
+ 615          /* 定时器0中断服务函数 */
+ 616          void Timer0Server() interrupt 1
+ 617          {
+ 618   1        if (++Uart_Slow_Down == 1000)
+ 619   1        {
+ 620   2          Uart_Slow_Down = 0;
+ 621   2          if (++Timer_Count == 3)
+ 622   2            Timer_Count = 0;
+ 623   2        }
+ 624   1        if (++Key_Slow_Down == 10)
+ 625   1          Key_Slow_Down = 0; // 键盘减速专用
+ 626   1        if (++Seg_Slow_Down == 500)
+ 627   1          Seg_Slow_Down = 0; // 数码管减速专用
+ 628   1        if (++Seg_Pos == 8)
+ 629   1          Seg_Pos = 0; // 数码管显示专用
+ 630   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 631   1      
+ 632   1        if (Key_Flag == 1)
+ 633   1        {
+ 634   2          if (++Timer_3000Ms == 4000) // 长按
+ 635   2          {
+ 636   3            Timer_3000Ms = 4000;
+ 637   3          }
+ 638   2        }
+ 639   1      
+ 640   1        if (++Timer_500Ms == 500) // 时间间隔符闪烁
+ 641   1        {
+ 642   2          Timer_500Ms = 0;
+ 643   2          Seg_Star_Flag ^= 1;
+ 644   2        }
+ 645   1      
+ 646   1        if (++Timer_700Ms == 700) // 时间闹钟设置间隔符
+ 647   1        {
+ 648   2          Timer_700Ms = 0;
+ 649   2          Seg_Star_Flag2 ^= 1;
+ 650   2        }
+ 651   1      
+ 652   1        if (Key_Flag1)
+ 653   1        {
+ 654   2          if (++Timer_2000Ms == 3000) // 长按
+ 655   2            Timer_2000Ms = 3000;
+ 656   2        }
+ 657   1      
+ 658   1        // 串口
+ 659   1        if (Time_Syt_Flag)
+ 660   1          Syt_Flag++;
+ 661   1      
+ 662   1        // led亮度等级
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 12  
 
- 661   1          Syt_Flag++;
- 662   1      
- 663   1        // led亮度等级
- 664   1        if (++Term_Led == 10)
- 665   1          Term_Led = 0;
- 666   1      }
- 667          
- 668          /*定时器1服务函数*/
- 669          void Timer1Server() interrupt 3
- 670          {
- 671   1        if (++Led_Pos == 8)
- 672   1          Led_Pos = 0;
- 673   1      
- 674   1        if (Term_Led <= Led_Lever)
- 675   1          Led_Disp(Led_Pos, ucLed[Led_Pos]);
- 676   1        else
- 677   1          Led_Disp(Led_Pos, 0);
- 678   1      }
- 679          
- 680          /*串口*/
- 681          void Uart1Server() interrupt 4
- 682          {
- 683   1        if (RI == 1) // 开始接受数据
- 684   1        {
- 685   2          Time_Syt_Flag = 1;
- 686   2          Syt_Flag = 0;
- 687   2          Uart_Recv[Uart_Recv_Index] = SBUF;
- 688   2          Uart_Recv_Index++;
- 689   2          RI = 0;
- 690   2        }
- 691   1        if (Uart_Recv_Index > 10)
- 692   1          Uart_Recv_Index = 0;
- 693   1      }
- 694          
- 695          /* Main */
- 696          void main()
- 697          {
- 698   1      
- 699   1        while (Read_t() == 85)
- 700   1          ;
- 701   1        System_Init();
- 702   1        Timer0Init();
- 703   1        Set_Rtc(Clock_Crl);
- 704   1        UartInit();
- 705   1        E2PROM_Write(E2PROM_Alarm, 0, 3);
- 706   1        Alarm[0] = E2PROM_Alarm[0];
- 707   1        Alarm[1] = E2PROM_Alarm[1];
- 708   1        Alarm[2] = E2PROM_Alarm[2];
- 709   1        E2PROM_Write(Clock, 8, 3);
- 710   1        Clock_Crl[0] = Clock[0];
- 711   1        Clock_Crl[1] = Clock[1];
- 712   1        Clock_Crl[2] = Clock[2];
- 713   1      
- 714   1        Timer1_Init();
- 715   1        while (1)
- 716   1        {
- 717   2          Uart_Sent_Proc();
- 718   2          Key_Proc();
- 719   2          Seg_Proc();
- 720   2          Led_Proc();
- 721   2          Uart_Proc();
- 722   2        }
-C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 10:56:40 PAGE 13  
+ 663   1        if (++Term_Led == 10)
+ 664   1          Term_Led = 0;
+ 665   1      }
+ 666          
+ 667          /*定时器1服务函数*/
+ 668          void Timer1Server() interrupt 3
+ 669          {
+ 670   1        if (++Led_Pos == 8)
+ 671   1          Led_Pos = 0;
+ 672   1      
+ 673   1        if (Term_Led <= Led_Lever)
+ 674   1          Led_Disp(Led_Pos, ucLed[Led_Pos]);
+ 675   1        else
+ 676   1          Led_Disp(Led_Pos, 0);
+ 677   1      }
+ 678          
+ 679          /*串口*/
+ 680          void Uart1Server() interrupt 4
+ 681          {
+ 682   1        if (RI == 1) // 开始接受数据
+ 683   1        {
+ 684   2          Time_Syt_Flag = 1;
+ 685   2          Syt_Flag = 0;
+ 686   2          Uart_Recv[Uart_Recv_Index] = SBUF;
+ 687   2          Uart_Recv_Index++;
+ 688   2          RI = 0;
+ 689   2        }
+ 690   1        if (Uart_Recv_Index > 10)
+ 691   1          Uart_Recv_Index = 0;
+ 692   1      }
+ 693          void Delay750ms() //@12.000MHz
+ 694          {
+ 695   1        unsigned char i, j, k;
+ 696   1      
+ 697   1        _nop_();
+ 698   1        _nop_();
+ 699   1        i = 35;
+ 700   1        j = 51;
+ 701   1        k = 182;
+ 702   1        do
+ 703   1        {
+ 704   2          do
+ 705   2          {
+ 706   3            while (--k)
+ 707   3              ;
+ 708   3          } while (--j);
+ 709   2        } while (--i);
+ 710   1      }
+ 711          
+ 712          /* Main */
+ 713          void main()
+ 714          {
+ 715   1        rd_temperature();
+ 716   1        Delay750ms(); // 延时确保上电后下次读取不是85
+ 717   1        System_Init();
+ 718   1        Timer0Init();
+ 719   1        Set_Rtc(Clock_Crl);
+ 720   1        UartInit();
+ 721   1        E2PROM_Write(E2PROM_Alarm, 0, 3);
+ 722   1        Alarm[0] = E2PROM_Alarm[0];
+ 723   1        Alarm[1] = E2PROM_Alarm[1];
+ 724   1        Alarm[2] = E2PROM_Alarm[2];
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:35:14 PAGE 13  
 
- 723   1      }
+ 725   1        E2PROM_Write(Clock, 8, 3);
+ 726   1        Clock_Crl[0] = Clock[0];
+ 727   1        Clock_Crl[1] = Clock[1];
+ 728   1        Clock_Crl[2] = Clock[2];
+ 729   1      
+ 730   1        Timer1_Init();
+ 731   1        while (1)
+ 732   1        {
+ 733   2          Uart_Sent_Proc();
+ 734   2          Key_Proc();
+ 735   2          Seg_Proc();
+ 736   2          Led_Proc();
+ 737   2          Uart_Proc();
+ 738   2        }
+ 739   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   3138    ----
+   CODE SIZE        =   3110    ----
    CONSTANT SIZE    =     31    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     55       3
-   IDATA SIZE       =     66    ----
+   DATA SIZE        =     87       3
+   IDATA SIZE       =     34    ----
    BIT SIZE         =      8    ----
 END OF MODULE INFORMATION.
 

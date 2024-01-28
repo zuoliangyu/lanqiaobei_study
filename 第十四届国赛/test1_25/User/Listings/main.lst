@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              01/25/2024 23:24:51 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:34:39 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -36,7 +36,7 @@ line level    source
   26          
   27          /*温度模块*/
   28          float temperature_value; // 温度值
-  29          
+  29          float temp;
   30          /*参数界面*/
   31          uchar dis_demo;
   32          uchar temperature_demo;
@@ -62,7 +62,7 @@ line level    source
   52   1        speed_value = 340;
   53   1        dac_low_value = 1.0;
   54   1      }
-C51 COMPILER V9.59.0.0   MAIN                                                              01/25/2024 23:24:51 PAGE 2   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:34:39 PAGE 2   
 
   55          void init_Seg_LED() // 将数码管和LED清空，避免忘记修改
   56          {
@@ -126,7 +126,7 @@ line level    source
  114   4              break;
  115   4            case 2:
  116   4              switch (test3_show_mode)
-C51 COMPILER V9.59.0.0   MAIN                                                              01/25/2024 23:24:51 PAGE 3   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:34:39 PAGE 3   
 
  117   4              {
  118   5              case 0:
@@ -190,7 +190,7 @@ line level    source
  176   3            reset_flag = 1;
  177   3          }
  178   2          else
-C51 COMPILER V9.59.0.0   MAIN                                                              01/25/2024 23:24:51 PAGE 4   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:34:39 PAGE 4   
 
  179   2          {
  180   3            reset_flag = 0;
@@ -254,7 +254,7 @@ line level    source
  238   2          Seg_Buf[6] = test2_show_mode ? temperature_demo / 10 : dis_demo / 10;
  239   2          Seg_Buf[7] = test2_show_mode ? temperature_demo % 10 : dis_demo % 10;
  240   2          break;
-C51 COMPILER V9.59.0.0   MAIN                                                              01/25/2024 23:24:51 PAGE 5   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:34:39 PAGE 5   
 
  241   2        case 2:
  242   2          /*工厂界面*/
@@ -318,7 +318,7 @@ line level    source
  300   1        uchar i;
  301   1        switch (Seg_show_mode)
  302   1        {
-C51 COMPILER V9.59.0.0   MAIN                                                              01/25/2024 23:24:51 PAGE 6   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:34:39 PAGE 6   
 
  303   2        case 0:
  304   2          for (i = 0; i < 8; i++)
@@ -382,7 +382,7 @@ line level    source
  362   2          memory_data = dis_value;
  363   2          if (++time_6s >= 6000)
  364   2          {
-C51 COMPILER V9.59.0.0   MAIN                                                              01/25/2024 23:24:51 PAGE 7   
+C51 COMPILER V9.59.0.0   MAIN                                                              01/27/2024 21:34:39 PAGE 7   
 
  365   3            time_6s = write_data_flag = 0;
  366   3          }
@@ -439,7 +439,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     59       1
+   DATA SIZE        =     63       1
    IDATA SIZE       =   ----    ----
    BIT SIZE         =      5    ----
 END OF MODULE INFORMATION.

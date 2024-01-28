@@ -259,6 +259,8 @@ void Key_Proc()
 		}
 		if (Clock_Set_Index < (Key_Input_Flag + 2)) // 输入两个之后不能再输
 		{
+			uchar input_data;
+			input_data = key_to_num(Key_Down);
 			switch (Key_Down) // 时间输入
 			{
 			case 4:
@@ -339,32 +341,29 @@ void Key_Proc()
 /* 信息处理函数 */
 void Seg_Proc()
 {
-	unsigned char i;
-	//	if(Seg_Slow_Down) return;
-	//	Seg_Slow_Down = 1;//数码管减速程序
-
+	uchar i;
 	switch (Seg_Slow_Down)
 	{
 	case 100: // 时钟读取
-		Seg_Slow_Down += 1;
+		Seg_Slow_Down++;
 		Read_Rtc(Clock_Crl);
 		break;
 	case 200: // 超声波
-		Seg_Slow_Down += 1;
+		Seg_Slow_Down++;
 		ultrasonic = Ut_Wave_Data();
 		if ((ultrasonic_Ture - ultrasonic < 10) || (ultrasonic - ultrasonic_Ture < 10))
 			ultrasonic_Ture = ultrasonic;
 		break;
 	case 300: // AD
-		Seg_Slow_Down += 1;
+		Seg_Slow_Down++;
 		AD_Output = Ad_Read(0x43);			  // 光敏电阻
 		AD_Rb2_Output = Ad_Read(0x41) / 51.0; // 电位器输出
 		Da_Write(DA_Output);				  // DA输出
 		Sun_Flag = (AD_Output > 100);
 		break;
 	case 400: // 温度
-		Seg_Slow_Down += 1;
-		Temp = Read_t();
+		Seg_Slow_Down++;
+		Temp = rd_temperature();
 		break;
 	}
 
@@ -394,11 +393,11 @@ void Seg_Proc()
 	case 2: // 超声波 光 温度
 		Seg_Buf[0] = ultrasonic_Ture / 10;
 		Seg_Buf[1] = ultrasonic_Ture % 10;
-		Seg_Buf[2] = (unsigned char)Sun_Flag;
+		Seg_Buf[2] = (uchar)Sun_Flag;
 		Seg_Buf[3] = 11;
-		Seg_Buf[4] = (unsigned char)Temp / 10;
-		Seg_Buf[5] = (unsigned char)Temp % 10;
-		Seg_Buf[6] = (unsigned int)(Temp * 10) % 10;
+		Seg_Buf[4] = (uchar)Temp / 10;
+		Seg_Buf[5] = (uchar)Temp % 10;
+		Seg_Buf[6] = (uint)(Temp * 10) % 10;
 		Seg_Buf[7] = 12;
 		break;
 	case 3: // 时钟设置
@@ -448,21 +447,21 @@ void Uart_Sent_Proc()
 	// 每到一个整点后单片机向上位机发送指令
 	if (Clock_Crl[1] == 0 && Clock_Crl[2] == 0) // 整点
 	{
-		printf("Time = %d:%d:%d", (unsigned int)Clock_Crl[0], (unsigned int)Clock_Crl[1], (unsigned int)Clock_Crl[2]);
+		printf("Time = %d:%d:%d", (uint)Clock_Crl[0], (uint)Clock_Crl[1], (uint)Clock_Crl[2]);
 	}
 
 	if (Seg_Disp_Mode == 1) // 时钟显示界面
 	{
 		if (Timer_Count == 2) // 在时钟显示界面时每间隔三秒单片机向上位机发送指令
-			printf("%d:%d-%dCM_%dC", (unsigned int)Clock_Crl[0], (unsigned int)Clock_Crl[1], (unsigned int)ultrasonic_Ture, (unsigned int)Temp);
+			printf("%d:%d-%dCM_%dC", (uint)Clock_Crl[0], (uint)Clock_Crl[1], (uint)ultrasonic_Ture, (uint)Temp);
 	}
 }
 
 /*串口处理函数*/
 void Uart_Proc()
 {
-	unsigned char a; // For循环
-	unsigned char i; // while循环
+	uchar a; // For循环
+	uchar i; // while循环
 	if (Uart_Recv_Index == 0)
 		return;
 	if (Syt_Flag >= 10)
@@ -691,13 +690,30 @@ void Uart1Server() interrupt 4
 	if (Uart_Recv_Index > 10)
 		Uart_Recv_Index = 0;
 }
+void Delay750ms() //@12.000MHz
+{
+	unsigned char i, j, k;
+
+	_nop_();
+	_nop_();
+	i = 35;
+	j = 51;
+	k = 182;
+	do
+	{
+		do
+		{
+			while (--k)
+				;
+		} while (--j);
+	} while (--i);
+}
 
 /* Main */
 void main()
 {
-
-	while (Read_t() == 85)
-		;
+	rd_temperature();
+	Delay750ms(); // 延时确保上电后下次读取不是85
 	System_Init();
 	Timer0Init();
 	Set_Rtc(Clock_Crl);

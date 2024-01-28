@@ -26,7 +26,6 @@ uint dis_value; // 距离值cm
 
 /*温度模块*/
 float temperature_value; // 温度值
-
 /*参数界面*/
 uchar dis_demo;
 uchar temperature_demo;

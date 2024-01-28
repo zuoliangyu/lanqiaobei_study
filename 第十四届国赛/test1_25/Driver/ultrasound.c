@@ -39,8 +39,8 @@ float Ut_Wave_Data(unsigned int speed, char cali_value) // 超声波距离读取
     TR1 = 0;      // 停止计时
     if (TF1 == 0) // 定时器没有溢出
     {
-        time = TH1 << 8 | TL1;                  // 读取当前时间
-        return (time * speed / 2 /1000 + cali_value); // 返回距离值
+        time = TH1 << 8 | TL1;                         // 读取当前时间
+        return (time / 1000 * speed / 2 + cali_value); // 返回距离值
     }
     else
     {

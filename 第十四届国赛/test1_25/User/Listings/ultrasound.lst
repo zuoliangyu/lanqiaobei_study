@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   ULTRASOUND                                                        01/25/2024 23:24:51 PAGE 1   
+C51 COMPILER V9.59.0.0   ULTRASOUND                                                        01/27/2024 21:34:40 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ULTRASOUND
@@ -49,8 +49,8 @@ line level    source
   39   1          TR1 = 0;      // 停止计时
   40   1          if (TF1 == 0) // 定时器没有溢出
   41   1          {
-  42   2              time = TH1 << 8 | TL1;                  // 读取当前时间
-  43   2              return (time * speed / 2 /1000 + cali_value); // 返回距离值
+  42   2              time = TH1 << 8 | TL1;                         // 读取当前时间
+  43   2              return (time / 1000 * speed / 2 + cali_value); // 返回距离值
   44   2          }
   45   1          else
   46   1          {
@@ -62,7 +62,7 @@ line level    source
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =    116    ----
-C51 COMPILER V9.59.0.0   ULTRASOUND                                                        01/25/2024 23:24:51 PAGE 2   
+C51 COMPILER V9.59.0.0   ULTRASOUND                                                        01/27/2024 21:34:40 PAGE 2   
 
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
