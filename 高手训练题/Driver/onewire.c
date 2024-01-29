@@ -62,7 +62,7 @@ bit init_ds18b20(void)
   	return initflag;
 }
 
-float Read_t()
+float rd_temperature()
 {
 	unsigned char high,low;
 	init_ds18b20();//≥ı ºªØ
