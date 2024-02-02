@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "seg.h": "c",
+        "init.h": "c",
+        "main.h": "c",
+        "ds1302.h": "c",
+        "onewire.h": "c",
+        "iic.h": "c",
+        "intrins.h": "c",
+        "ultrasound.h": "c",
+        "stdio.h": "c",
+        "uart.h": "c",
+        "stc15f2k60s2.h": "c",
+        "STC15F2K60S2.H": "cpp",
+        "led.h": "c"
+    }
+}
