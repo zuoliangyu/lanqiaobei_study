@@ -1,0 +1,354 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 20:57:34 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          #define LIGHT_NUM 50
+   3          #define DARK_NUM 10
+   4          /* 变量声明区 */
+   5          uchar Key_Slow_Down;                 // 按键减速专用变量
+   6          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
+   7          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // 数码管小数点数据存放数组
+   8          uchar Seg_Pos;                     // 数码管扫描专用变量
+   9          uint Seg_Slow_Down;                  // 数码管减速专用变量
+  10          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // Led显示数据存放数组
+  11          uchar ucRtc[3] = {0x11, 0x11, 0x11};
+  12          /*界面*/
+  13          bit Seg_show_mode;    // 0数据 1参数
+  14          uchar data_show_mode; // 0时间 1距离 2记录
+  15          bit celi_show_mode;   // 0时间参数 1距离参数
+  16          bit burst_mode;     // 0触发模式 1定时模式
+  17          uchar data_show_memory; // 0最大值 1最小值 2平均值
+  18          /*数据*/
+  19          uchar collection_time = 2;
+  20          uchar collection_time_arr[5] = {2, 3, 5, 7, 9};
+  21          uchar collection_time_index;
+  22          uchar dis_demo = 10;
+  23          uint dis_value;
+  24          uint dis_max;
+  25          uint dis_min;
+  26          uint collection_count;
+  27          uchar wring_count;
+  28          bit wring_flag;
+  29          float dis_aver;
+  30          
+  31          uchar light_value, light_value_old;
+  32          void init_Seg()
+  33          {
+  34   1        uchar i;
+  35   1        for (i = 0; i < 8; i++)
+  36   1        {
+  37   2          Seg_Buf[i] = 10;
+  38   2          Seg_Point[i] = 0;
+  39   2        }
+  40   1      }
+  41          void hide_high_Seg(uchar start_num, uchar end_num)
+  42          {
+  43   1        uchar i;
+  44   1        for (i = start_num; i < end_num; i++)
+  45   1        {
+  46   2          if (Seg_Buf[i] != 0)
+  47   2            break;
+  48   2          else
+  49   2            Seg_Buf[i] = 10;
+  50   2        }
+  51   1      }
+  52          /* 键盘处理函数 */
+  53          void Key_Proc()
+  54          {
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 20:57:34 PAGE 2   
+
+  55   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
+  56   1        if (Key_Slow_Down)
+  57   1          return;
+  58   1        Key_Slow_Down = 1; // 键盘减速程序
+  59   1      
+  60   1        Key_Val = Key_Read();           // 实时读取键码值
+  61   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 捕捉按键下降沿
+  62   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键上降沿
+  63   1        Key_Old = Key_Val;              // 辅助扫描变量
+  64   1        if (Key_Down == 4)
+  65   1        {
+  66   2          Seg_show_mode ^= 1;
+  67   2          celi_show_mode = data_show_mode = data_show_memory = 0;
+  68   2          init_Seg();
+  69   2        }
+  70   1        if (Key_Down == 5)
+  71   1        {
+  72   2          // 参数界面
+  73   2          if (Seg_show_mode)
+  74   2          {
+  75   3            celi_show_mode ^= 1;
+  76   3            init_Seg();
+  77   3          }
+  78   2          // 数据界面
+  79   2          else
+  80   2          {
+  81   3            data_show_mode = (++data_show_mode) % 3;
+  82   3            init_Seg();
+  83   3          }
+  84   2        }
+  85   1        if (Key_Down == 8 && Seg_show_mode == 0)
+  86   1        {
+  87   2          if (data_show_mode == 1)
+  88   2            burst_mode ^= 1;
+  89   2          else if (data_show_mode == 2)
+  90   2          {
+  91   3            data_show_memory = (++data_show_memory) % 3;
+  92   3            init_Seg();
+  93   3          }
+  94   2        }
+  95   1        if (Key_Down == 9 && Seg_show_mode == 1)
+  96   1        {
+  97   2          if (celi_show_mode)
+  98   2            dis_demo = (++dis_demo > 80) ? 10 : dis_demo;
+  99   2          else
+ 100   2          {
+ 101   3            collection_time_index = (++collection_time_index) % 5;
+ 102   3            collection_time = collection_time_arr[collection_time_index];
+ 103   3          }
+ 104   2        }
+ 105   1      }
+ 106          
+ 107          /* 信息处理函数 */
+ 108          void Seg_Proc()
+ 109          {
+ 110   1        uchar temp_dis;
+ 111   1        if (Seg_Slow_Down)
+ 112   1          return;
+ 113   1        Seg_Slow_Down = 1; // 数码管减速程序
+ 114   1        Read_Rtc(ucRtc);
+ 115   1        light_value = Ad_Read(0x01);
+ 116   1        // 定时模式
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 20:57:34 PAGE 3   
+
+ 117   1        if (burst_mode)
+ 118   1        {
+ 119   2          if ((ucRtc[2] / 16 * 10 + ucRtc[2] % 16) % collection_time == 0)
+ 120   2          {
+ 121   3            dis_value = Ut_Wave_Data();
+ 122   3            collection_count = (++collection_count) % 65535;
+ 123   3            dis_aver = (dis_aver * (collection_count - 1) + dis_value) / collection_count;
+ 124   3            if (dis_value > dis_demo - 5 || dis_value < dis_demo + 5)
+ 125   3            {
+ 126   4              if (++wring_count > 3)
+ 127   4              {
+ 128   5                wring_count = 4;
+ 129   5              }
+ 130   4            }
+ 131   3            else
+ 132   3              wring_count = 0;
+ 133   3          }
+ 134   2        }
+ 135   1        // 触发模式
+ 136   1        else
+ 137   1        {
+ 138   2          // 光->暗
+ 139   2          if (light_value_old > LIGHT_NUM && light_value < DARK_NUM)
+ 140   2          {
+ 141   3            dis_value = Ut_Wave_Data();
+ 142   3            collection_count = (++collection_count) % 65535;
+ 143   3            dis_aver = (dis_aver * (collection_count - 1) + dis_value) / collection_count;
+ 144   3            if (dis_value > dis_demo - 5 || dis_value < dis_demo + 5)
+ 145   3              wring_count = (++wring_count) % 4;
+ 146   3            else
+ 147   3              wring_count = 0;
+ 148   3          }
+ 149   2        }
+ 150   1        if (dis_max < dis_value)
+ 151   1          dis_max = dis_value;
+ 152   1        if (dis_min > dis_value || dis_min == 0)
+ 153   1          dis_min = dis_value;
+ 154   1        if (dis_value > 80)
+ 155   1          Da_Write(255);
+ 156   1        else if (dis_value < 10)
+ 157   1          Da_Write(51);
+ 158   1        else
+ 159   1          Da_Write(dis_value / 70.0 * 4 * 51);
+ 160   1        light_value_old = light_value;
+ 161   1        // 参数界面
+ 162   1        if (Seg_show_mode)
+ 163   1        {
+ 164   2          Seg_Buf[0] = 18; // P
+ 165   2          Seg_Buf[1] = (uchar)celi_show_mode + 1;
+ 166   2          if (celi_show_mode)
+ 167   2          {
+ 168   3            Seg_Buf[6] = collection_time / 10 % 10;
+ 169   3            Seg_Buf[7] = collection_time % 10;
+ 170   3          }
+ 171   2          else
+ 172   2          {
+ 173   3            Seg_Buf[6] = dis_demo / 10 % 10;
+ 174   3            Seg_Buf[7] = dis_demo % 10;
+ 175   3          }
+ 176   2        }
+ 177   1        // 数据界面
+ 178   1        else
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 20:57:34 PAGE 4   
+
+ 179   1        {
+ 180   2          switch (data_show_mode)
+ 181   2          {
+ 182   3          case 0:
+ 183   3            /* 时间显示 */
+ 184   3            Seg_Buf[0] = ucRtc[0] / 16;
+ 185   3            Seg_Buf[1] = ucRtc[0] % 16;
+ 186   3            Seg_Buf[2] = 16;
+ 187   3            Seg_Buf[3] = ucRtc[1] / 16;
+ 188   3            Seg_Buf[4] = ucRtc[1] % 16;
+ 189   3            Seg_Buf[5] = 16;
+ 190   3            Seg_Buf[6] = ucRtc[2] / 16;
+ 191   3            Seg_Buf[7] = ucRtc[2] % 16;
+ 192   3            break;
+ 193   3          case 1:
+ 194   3            /*距离显示*/
+ 195   3            Seg_Buf[0] = 11; // L
+ 196   3            Seg_Buf[1] = (burst_mode) ? 12 : 13;
+ 197   3            Seg_Buf[5] = dis_value / 100 % 10;
+ 198   3            Seg_Buf[6] = dis_value / 10 % 10;
+ 199   3            Seg_Buf[7] = dis_value % 10;
+ 200   3            hide_high_Seg(5, 7);
+ 201   3            break;
+ 202   3          case 2:
+ 203   3            /*数据记录*/
+ 204   3            Seg_Buf[0] = 14; // H
+ 205   3            Seg_Buf[1] = data_show_memory + 15;
+ 206   3            switch (data_show_memory)
+ 207   3            {
+ 208   4            case 0:
+ 209   4              /* 最大值 */
+ 210   4              Seg_Buf[4] = dis_max / 1000 % 10;
+ 211   4              Seg_Buf[5] = dis_max / 100 % 10;
+ 212   4              Seg_Buf[6] = dis_max / 10 % 10;
+ 213   4              Seg_Buf[7] = dis_max % 10;
+ 214   4              hide_high_Seg(4, 7);
+ 215   4              break;
+ 216   4            case 1:
+ 217   4              /*平均值*/
+ 218   4              temp_dis = dis_aver * 10;
+ 219   4              Seg_Buf[4] = temp_dis / 1000 % 10;
+ 220   4              Seg_Buf[5] = temp_dis / 100 % 10;
+ 221   4              Seg_Buf[6] = temp_dis / 10 % 10;
+ 222   4              Seg_Buf[7] = temp_dis % 10;
+ 223   4              hide_high_Seg(4, 6);
+ 224   4              Seg_Point[6] = 1;
+ 225   4              break;
+ 226   4            case 2:
+ 227   4              /*最小值*/
+ 228   4              Seg_Buf[4] = dis_min / 1000 % 10;
+ 229   4              Seg_Buf[5] = dis_min / 100 % 10;
+ 230   4              Seg_Buf[6] = dis_min / 10 % 10;
+ 231   4              Seg_Buf[7] = dis_min % 10;
+ 232   4              hide_high_Seg(4, 7);
+ 233   4              break;
+ 234   4            }
+ 235   3            break;
+ 236   3          }
+ 237   2        }
+ 238   1      }
+ 239          
+ 240          /* 其他显示函数 */
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 20:57:34 PAGE 5   
+
+ 241          void Led_Proc()
+ 242          {
+ 243   1        ucLed[0] = (Seg_show_mode == 0 && data_show_mode == 0);
+ 244   1        ucLed[1] = (Seg_show_mode == 0 && data_show_mode == 1);
+ 245   1        ucLed[2] = (Seg_show_mode == 0 && data_show_mode == 2);
+ 246   1        ucLed[3] = !burst_mode;
+ 247   1        if (burst_mode)
+ 248   1        {
+ 249   2          Beep(wring_count >= 3);
+ 250   2          ucLed[4] = (wring_count >= 3);
+ 251   2        }
+ 252   1        else
+ 253   1        {
+ 254   2          Beep(0);
+ 255   2          ucLed[4] = 0;
+ 256   2        }
+ 257   1        ucLed[5] = (light_value > LIGHT_NUM);
+ 258   1      }
+ 259          
+ 260          /* 定时器0中断初始化函数 */
+ 261          void Timer0Init(void) // 1毫秒@12.000MHz
+ 262          {
+ 263   1        AUXR &= 0x7F; // 定时器时钟12T模式
+ 264   1        TMOD &= 0xF0; // 设置定时器模式
+ 265   1        TL0 = 0x18;   // 设置定时初始值
+ 266   1        TH0 = 0xFC;   // 设置定时初始值
+ 267   1        TF0 = 0;    // 清除TF0标志
+ 268   1        TR0 = 1;    // 定时器0开始计时
+ 269   1        ET0 = 1;    // 定时器中断0打开
+ 270   1        EA = 1;     // 总中断打开
+ 271   1      }
+ 272          
+ 273          /* 定时器0中断服务函数 */
+ 274          void Timer0Server() interrupt 1
+ 275          {
+ 276   1        if (++Key_Slow_Down == 10)
+ 277   1          Key_Slow_Down = 0; // 键盘减速专用
+ 278   1        if (++Seg_Slow_Down == 500)
+ 279   1          Seg_Slow_Down = 0; // 数码管减速专用
+ 280   1        if (++Seg_Pos == 8)
+ 281   1          Seg_Pos = 0; // 数码管显示专用
+ 282   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 283   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 284   1      }
+ 285          
+ 286          void Delay750ms() //@12MHz
+ 287          {
+ 288   1        unsigned char i, j, k;
+ 289   1      
+ 290   1        _nop_();
+ 291   1        _nop_();
+ 292   1        i = 35;
+ 293   1        j = 51;
+ 294   1        k = 182;
+ 295   1        do
+ 296   1        {
+ 297   2          do
+ 298   2          {
+ 299   3            while (--k)
+ 300   3              ;
+ 301   3          } while (--j);
+ 302   2        } while (--i);
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 20:57:34 PAGE 6   
+
+ 303   1      }
+ 304          
+ 305          /* Main */
+ 306          void main()
+ 307          {
+ 308   1        // 如果有温度读取的话
+ 309   1        rd_temperature();
+ 310   1        Delay750ms();
+ 311   1        System_Init();
+ 312   1        Timer0Init();
+ 313   1        Set_Rtc(ucRtc);
+ 314   1        while (1)
+ 315   1        {
+ 316   2          Key_Proc();
+ 317   2          Seg_Proc();
+ 318   2          Led_Proc();
+ 319   2        }
+ 320   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1616    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     60    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
