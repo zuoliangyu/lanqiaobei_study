@@ -1,0 +1,206 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 16:22:49 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* 变量声明区 */
+   3          uchar Key_Slow_Down;                 // 按键减速专用变量
+   4          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
+   5          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // 数码管小数点数据存放数组
+   6          uchar Seg_Pos;                     // 数码管扫描专用变量
+   7          uint Seg_Slow_Down;                  // 数码管减速专用变量
+   8          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // Led显示数据存放数组
+   9          
+  10          uchar Seg_show_mode; // 0温度，1参数，2DAC
+  11          float temperature_value;
+  12          uchar temperature_demo = 25;
+  13          uchar DAC_out_digit;
+  14          bit DAC_flag; // 0为参数 1为温度关系
+  15          void init_Seg()
+  16          {
+  17   1        uchar i;
+  18   1        for (i = 0; i < 8; i++)
+  19   1        {
+  20   2          Seg_Buf[i] = 10;
+  21   2          Seg_Point[i] = 0;
+  22   2        }
+  23   1      }
+  24          
+  25          /* 键盘处理函数 */
+  26          void Key_Proc()
+  27          {
+  28   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
+  29   1        if (Key_Slow_Down)
+  30   1          return;
+  31   1        Key_Slow_Down = 1; // 键盘减速程序
+  32   1      
+  33   1        Key_Val = Key_Read();           // 实时读取键码值
+  34   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 捕捉按键下降沿
+  35   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键上降沿
+  36   1        Key_Old = Key_Val;              // 辅助扫描变量
+  37   1        switch (Key_Down)
+  38   1        {
+  39   2        case 4:
+  40   2          init_Seg();
+  41   2          Seg_show_mode = (++Seg_show_mode) % 3;
+  42   2          break;
+  43   2        case 8:
+  44   2          if (Seg_show_mode == 1)
+  45   2            temperature_demo = (--temperature_demo < 0) ? 0 : temperature_demo;
+  46   2          break;
+  47   2        case 9:
+  48   2          if (Seg_show_mode == 1)
+  49   2            temperature_demo = (++temperature_demo > 99) ? 99 : temperature_demo;
+  50   2          break;
+  51   2        case 5:
+  52   2          DAC_flag ^= 1;
+  53   2          break;
+  54   2        }
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 16:22:49 PAGE 2   
+
+  55   1      }
+  56          
+  57          /* 信息处理函数 */
+  58          void Seg_Proc()
+  59          {
+  60   1        uint temp_temperature;
+  61   1        uint DAC_out_analog_x100;
+  62   1        if (Seg_Slow_Down)
+  63   1          return;
+  64   1        Seg_Slow_Down = 1; // 数码管减速程序
+  65   1        temperature_value = rd_temperature();
+  66   1        temp_temperature = temperature_value * 100;
+  67   1        if (DAC_flag)
+  68   1        {
+  69   2          if (temperature_value >= 40)
+  70   2            DAC_out_digit = 204; // 4*255/5
+  71   2          else if (temperature_value <= 20)
+  72   2            DAC_out_digit = 51; // 1*255/5
+  73   2          else
+  74   2            DAC_out_digit = ((temperature_value - 20) * 3.0 / 20.0 + 1.0) * 51;
+  75   2        }
+  76   1        DAC_out_analog_x100 = DAC_out_digit / 51.0 * 100;
+  77   1        switch (Seg_show_mode)
+  78   1        {
+  79   2        case 0:
+  80   2          /* 温度界面 */
+  81   2          Seg_Buf[0] = 11; // C
+  82   2          Seg_Buf[4] = temp_temperature / 1000 % 10;
+  83   2          Seg_Buf[5] = temp_temperature / 100 % 10;
+  84   2          Seg_Buf[6] = temp_temperature / 10 % 10;
+  85   2          Seg_Buf[7] = temp_temperature % 10;
+  86   2          Seg_Point[5] = 1;
+  87   2          break;
+  88   2        case 1:
+  89   2          /*参数界面*/
+  90   2          Seg_Buf[0] = 12; // P
+  91   2          Seg_Buf[6] = temperature_demo / 10 % 10;
+  92   2          Seg_Buf[7] = temperature_demo % 10;
+  93   2          break;
+  94   2        case 2:
+  95   2          /*DAC输出*/
+  96   2          Seg_Buf[0] = 13; // A
+  97   2          Seg_Buf[5] = DAC_out_analog_x100 / 100 % 10;
+  98   2          Seg_Buf[6] = DAC_out_analog_x100 / 10 % 10;
+  99   2          Seg_Buf[7] = DAC_out_analog_x100 % 10;
+ 100   2          Seg_Point[5] = 1;
+ 101   2          break;
+ 102   2        }
+ 103   1      }
+ 104          
+ 105          /* 其他显示函数 */
+ 106          void Led_Proc()
+ 107          {
+ 108   1        Da_Write(DAC_out_digit);
+ 109   1        ucLed[0] = !DAC_flag;
+ 110   1        ucLed[1] = (Seg_show_mode == 0);
+ 111   1        ucLed[2] = (Seg_show_mode == 1);
+ 112   1        ucLed[3] = (Seg_show_mode == 2);
+ 113   1      }
+ 114          
+ 115          /* 定时器0中断初始化函数 */
+ 116          void Timer0Init(void) // 1毫秒@12.000MHz
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 16:22:49 PAGE 3   
+
+ 117          {
+ 118   1        AUXR &= 0x7F; // 定时器时钟12T模式
+ 119   1        TMOD &= 0xF0; // 设置定时器模式
+ 120   1        TL0 = 0x18;   // 设置定时初始值
+ 121   1        TH0 = 0xFC;   // 设置定时初始值
+ 122   1        TF0 = 0;    // 清除TF0标志
+ 123   1        TR0 = 1;    // 定时器0开始计时
+ 124   1        ET0 = 1;    // 定时器中断0打开
+ 125   1        EA = 1;     // 总中断打开
+ 126   1      }
+ 127          
+ 128          /* 定时器0中断服务函数 */
+ 129          void Timer0Server() interrupt 1
+ 130          {
+ 131   1        if (++Key_Slow_Down == 10)
+ 132   1          Key_Slow_Down = 0; // 键盘减速专用
+ 133   1        if (++Seg_Slow_Down == 500)
+ 134   1          Seg_Slow_Down = 0; // 数码管减速专用
+ 135   1        if (++Seg_Pos == 8)
+ 136   1          Seg_Pos = 0; // 数码管显示专用
+ 137   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 138   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 139   1      }
+ 140          
+ 141          void Delay750ms() //@12MHz
+ 142          {
+ 143   1        unsigned char i, j, k;
+ 144   1      
+ 145   1        _nop_();
+ 146   1        _nop_();
+ 147   1        i = 35;
+ 148   1        j = 51;
+ 149   1        k = 182;
+ 150   1        do
+ 151   1        {
+ 152   2          do
+ 153   2          {
+ 154   3            while (--k)
+ 155   3              ;
+ 156   3          } while (--j);
+ 157   2        } while (--i);
+ 158   1      }
+ 159          
+ 160          /* Main */
+ 161          void main()
+ 162          {
+ 163   1        // 如果有温度读取的话
+ 164   1        rd_temperature();
+ 165   1        Delay750ms();
+ 166   1      
+ 167   1        System_Init();
+ 168   1        Timer0Init();
+ 169   1      
+ 170   1        while (1)
+ 171   1        {
+ 172   2          Key_Proc();
+ 173   2          Seg_Proc();
+ 174   2          Led_Proc();
+ 175   2        }
+ 176   1      }
+
+
+C51 COMPILER V9.59.0.0   MAIN                                                              02/03/2024 16:22:49 PAGE 4   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    774    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     39       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
