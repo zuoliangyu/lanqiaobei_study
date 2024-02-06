@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:38:45 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:54:06 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -28,187 +28,195 @@ line level    source
   18          uint time_5s;
   19          
   20          uchar error_count;
-  21          
-  22          /* 键盘处理函数 */
-  23          void Key_Proc()
-  24          {
-  25   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
-  26   1        if (Key_Slow_Down)
-  27   1          return;
-  28   1        Key_Slow_Down = 1; // 键盘减速程序
-  29   1      
-  30   1        Key_Val = Key_Read();           // 实时读取键码值
-  31   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 捕捉按键下降沿
-  32   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键上降沿
-  33   1        Key_Old = Key_Val;              // 辅助扫描变量
-  34   1        switch (Key_Down)
-  35   1        {
-  36   2        case 12:
-  37   2          if (Seg_show_mode == 0)
-  38   2          {
-  39   3            EEPROM_Write(&vol_demo, 0, 1);
-  40   3          }
-  41   2          Seg_show_mode = (++Seg_show_mode) % 3;
-  42   2          error_count = 0;
-  43   2          break;
-  44   2        case 16:
-  45   2          if (Seg_show_mode == 1)
-  46   2            vol_demo = (vol_demo + 5 > 50 ? 0 : vol_demo + 5);
-  47   2          error_count = 0;
-  48   2          break;
-  49   2        case 17:
-  50   2          if (Seg_show_mode == 1)
-  51   2            vol_demo = (vol_demo - 5 < 0 ? 50 : vol_demo - 5);
-  52   2          error_count = 0;
-  53   2          break;
-  54   2        case 13:
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:38:45 PAGE 2   
+  21          void init_Seg()
+  22          {
+  23   1        uchar i;
+  24   1        for (i = 0; i < 8; i++)
+  25   1        {
+  26   2          Seg_Buf[i] = 10;
+  27   2          Seg_Point[i] = 0;
+  28   2        }
+  29   1      }
+  30          /* 键盘处理函数 */
+  31          void Key_Proc()
+  32          {
+  33   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
+  34   1        if (Key_Slow_Down)
+  35   1          return;
+  36   1        Key_Slow_Down = 1; // 键盘减速程序
+  37   1      
+  38   1        Key_Val = Key_Read();           // 实时读取键码值
+  39   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 捕捉按键下降沿
+  40   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键上降沿
+  41   1        Key_Old = Key_Val;              // 辅助扫描变量
+  42   1        switch (Key_Down)
+  43   1        {
+  44   2        case 12:
+  45   2          if (Seg_show_mode == 0)
+  46   2          {
+  47   3            EEPROM_Write(&vol_demo, 0, 1);
+  48   3          }
+  49   2          Seg_show_mode = (++Seg_show_mode) % 3;
+  50   2          error_count = 0;
+  51   2          break;
+  52   2        case 16:
+  53   2          if (Seg_show_mode == 1)
+  54   2            vol_demo = (vol_demo + 5 > 50 ? 0 : vol_demo + 5);
+C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:54:06 PAGE 2   
 
-  55   2          if (Seg_show_mode == 2)
-  56   2            count_down = 0;
-  57   2          error_count = 0;
-  58   2          break;
-  59   2        default:
-  60   2          error_count = (++error_count >= 3) ? 3 : error_count;
+  55   2          error_count = 0;
+  56   2          break;
+  57   2        case 17:
+  58   2          if (Seg_show_mode == 1)
+  59   2            vol_demo = (vol_demo - 5 < 0 ? 50 : vol_demo - 5);
+  60   2          error_count = 0;
   61   2          break;
-  62   2        }
-  63   1      }
-  64          
-  65          /* 信息处理函数 */
-  66          void Seg_Proc()
-  67          {
-  68   1        uint real_V;
-  69   1        if (Seg_Slow_Down)
-  70   1          return;
-  71   1        Seg_Slow_Down = 1; // 数码管减速程序
-  72   1        switch (Seg_show_mode)
-  73   1        {
-  74   2        case 0:
-  75   2          /* 数据显示 */
-  76   2          Seg_Buf[0] = 11;           // U
-  77   2          real_V = Ad_Read(0x03) * 100 / 51; // 0-255->0-500
-  78   2          // 当检测到下降沿的时候计数+1
-  79   2          if (old_vol > vol_demo * 10 && real_V < vol_demo * 10)
-  80   2      
-  81   2            count_down++;
-  82   2          if (real_V < vol_demo * 10)
-  83   2            count_down_flag = 1;
-  84   2          else
-  85   2            count_down_flag = 0;
-  86   2          old_vol = real_V;
-  87   2          Seg_Buf[5] = real_V / 100 % 10; // 百位
-  88   2          Seg_Buf[6] = real_V % 100 / 10; // 十位
-  89   2          Seg_Buf[7] = real_V % 10;   // 个位
-  90   2          Seg_Point[5] = 1;
-  91   2          break;
-  92   2      
-  93   2        case 1:
-  94   2          /*参数设置*/
-  95   2          Seg_Buf[0] = 12;          // P
-  96   2          Seg_Buf[5] = vol_demo / 100 % 10; // 百位
-  97   2          Seg_Buf[6] = vol_demo / 10 % 10;  // 十位
-  98   2          Seg_Buf[7] = vol_demo % 10;     // 个位
-  99   2          Seg_Point[5] = 1;
- 100   2          break;
- 101   2        case 2:
- 102   2          /*计数界面*/
- 103   2          Seg_Buf[0] = 13; // N
- 104   2          Seg_Buf[1] = count_down / 10000000 % 10;
- 105   2          Seg_Buf[2] = count_down / 1000000 % 10;
- 106   2          Seg_Buf[3] = count_down / 100000 % 10;
- 107   2          Seg_Buf[4] = count_down / 10000 % 10;
- 108   2          Seg_Buf[5] = count_down / 1000 % 10;
- 109   2          Seg_Buf[6] = count_down / 100 % 10;
- 110   2          Seg_Buf[7] = count_down % 10;
- 111   2          break;
- 112   2        }
- 113   1      }
- 114          
- 115          /* 其他显示函数 */
- 116          void Led_Proc()
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:38:45 PAGE 3   
+  62   2        case 13:
+  63   2          if (Seg_show_mode == 2)
+  64   2            count_down = 0;
+  65   2          error_count = 0;
+  66   2          break;
+  67   2        default:
+  68   2          error_count = (++error_count >= 3) ? 3 : error_count;
+  69   2          break;
+  70   2        }
+  71   1      }
+  72          
+  73          /* 信息处理函数 */
+  74          void Seg_Proc()
+  75          {
+  76   1        uint real_V;
+  77   1        if (Seg_Slow_Down)
+  78   1          return;
+  79   1        Seg_Slow_Down = 1; // 数码管减速程序
+  80   1        switch (Seg_show_mode)
+  81   1        {
+  82   2        case 0:
+  83   2          /* 数据显示 */
+  84   2          Seg_Buf[0] = 11;           // U
+  85   2          real_V = Ad_Read(0x03) * 100 / 51; // 0-255->0-500
+  86   2          // 当检测到下降沿的时候计数+1
+  87   2          if (old_vol > vol_demo * 10 && real_V < vol_demo * 10)
+  88   2      
+  89   2            count_down++;
+  90   2          if (real_V < vol_demo * 10)
+  91   2            count_down_flag = 1;
+  92   2          else
+  93   2            count_down_flag = 0;
+  94   2          old_vol = real_V;
+  95   2          Seg_Buf[5] = real_V / 100 % 10; // 百位
+  96   2          Seg_Buf[6] = real_V % 100 / 10; // 十位
+  97   2          Seg_Buf[7] = real_V % 10;   // 个位
+  98   2          Seg_Point[5] = 1;
+  99   2          break;
+ 100   2      
+ 101   2        case 1:
+ 102   2          /*参数设置*/
+ 103   2          Seg_Buf[0] = 12;          // P
+ 104   2          Seg_Buf[5] = vol_demo / 100 % 10; // 百位
+ 105   2          Seg_Buf[6] = vol_demo / 10 % 10;  // 十位
+ 106   2          Seg_Buf[7] = vol_demo % 10;     // 个位
+ 107   2          Seg_Point[5] = 1;
+ 108   2          break;
+ 109   2        case 2:
+ 110   2          /*计数界面*/
+ 111   2          Seg_Buf[0] = 13; // N
+ 112   2          Seg_Buf[1] = count_down / 10000000 % 10;
+ 113   2          Seg_Buf[2] = count_down / 1000000 % 10;
+ 114   2          Seg_Buf[3] = count_down / 100000 % 10;
+ 115   2          Seg_Buf[4] = count_down / 10000 % 10;
+ 116   2          Seg_Buf[5] = count_down / 1000 % 10;
+C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:54:06 PAGE 3   
 
- 117          {
- 118   1        ucLed[0] = (time_5s >= 5000);
- 119   1        ucLed[1] = (count_down % 2);
- 120   1        ucLed[2] = (error_count >= 3);
+ 117   2          Seg_Buf[6] = count_down / 100 % 10;
+ 118   2          Seg_Buf[7] = count_down % 10;
+ 119   2          break;
+ 120   2        }
  121   1      }
  122          
- 123          /* 定时器0中断初始化函数 */
- 124          void Timer0Init(void) // 1毫秒@12.000MHz
+ 123          /* 其他显示函数 */
+ 124          void Led_Proc()
  125          {
- 126   1        AUXR &= 0x7F; // 定时器时钟12T模式
- 127   1        TMOD &= 0xF0; // 设置定时器模式
- 128   1        TL0 = 0x18;   // 设置定时初始值
- 129   1        TH0 = 0xFC;   // 设置定时初始值
- 130   1        TF0 = 0;    // 清除TF0标志
- 131   1        TR0 = 1;    // 定时器0开始计时
- 132   1        ET0 = 1;    // 定时器中断0打开
- 133   1        EA = 1;     // 总中断打开
- 134   1      }
- 135          
- 136          /* 定时器0中断服务函数 */
- 137          void Timer0Server() interrupt 1
- 138          {
- 139   1        if (++Key_Slow_Down == 10)
- 140   1          Key_Slow_Down = 0; // 键盘减速专用
- 141   1        if (++Seg_Slow_Down == 500)
- 142   1          Seg_Slow_Down = 0; // 数码管减速专用
- 143   1        if (++Seg_Pos == 8)
- 144   1          Seg_Pos = 0; // 数码管显示专用
- 145   1        if (count_down_flag)
- 146   1        {
- 147   2          if (++time_5s >= 5000)
- 148   2            time_5s = 5000;
- 149   2        }
- 150   1        else
- 151   1          time_5s = 0;
- 152   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
- 153   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
- 154   1      }
- 155          
- 156          void Delay750ms() //@12MHz
- 157          {
- 158   1        unsigned char i, j, k;
- 159   1      
- 160   1        _nop_();
- 161   1        _nop_();
- 162   1        i = 35;
- 163   1        j = 51;
- 164   1        k = 182;
- 165   1        do
- 166   1        {
- 167   2          do
- 168   2          {
- 169   3            while (--k)
- 170   3              ;
- 171   3          } while (--j);
- 172   2        } while (--i);
- 173   1      }
- 174          
- 175          /* Main */
- 176          void main()
- 177          {
- 178   1        // 如果有温度读取的话
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:38:45 PAGE 4   
+ 126   1        ucLed[0] = (time_5s >= 5000);
+ 127   1        ucLed[1] = (count_down % 2);
+ 128   1        ucLed[2] = (error_count >= 3);
+ 129   1      }
+ 130          
+ 131          /* 定时器0中断初始化函数 */
+ 132          void Timer0Init(void) // 1毫秒@12.000MHz
+ 133          {
+ 134   1        AUXR &= 0x7F; // 定时器时钟12T模式
+ 135   1        TMOD &= 0xF0; // 设置定时器模式
+ 136   1        TL0 = 0x18;   // 设置定时初始值
+ 137   1        TH0 = 0xFC;   // 设置定时初始值
+ 138   1        TF0 = 0;    // 清除TF0标志
+ 139   1        TR0 = 1;    // 定时器0开始计时
+ 140   1        ET0 = 1;    // 定时器中断0打开
+ 141   1        EA = 1;     // 总中断打开
+ 142   1      }
+ 143          
+ 144          /* 定时器0中断服务函数 */
+ 145          void Timer0Server() interrupt 1
+ 146          {
+ 147   1        if (++Key_Slow_Down == 10)
+ 148   1          Key_Slow_Down = 0; // 键盘减速专用
+ 149   1        if (++Seg_Slow_Down == 500)
+ 150   1          Seg_Slow_Down = 0; // 数码管减速专用
+ 151   1        if (++Seg_Pos == 8)
+ 152   1          Seg_Pos = 0; // 数码管显示专用
+ 153   1        if (count_down_flag)
+ 154   1        {
+ 155   2          if (++time_5s >= 5000)
+ 156   2            time_5s = 5000;
+ 157   2        }
+ 158   1        else
+ 159   1          time_5s = 0;
+ 160   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 161   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 162   1      }
+ 163          
+ 164          void Delay750ms() //@12MHz
+ 165          {
+ 166   1        unsigned char i, j, k;
+ 167   1      
+ 168   1        _nop_();
+ 169   1        _nop_();
+ 170   1        i = 35;
+ 171   1        j = 51;
+ 172   1        k = 182;
+ 173   1        do
+ 174   1        {
+ 175   2          do
+ 176   2          {
+ 177   3            while (--k)
+ 178   3              ;
+C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 21:54:06 PAGE 4   
 
- 179   1        rd_temperature();
- 180   1        Delay750ms();
- 181   1      
- 182   1        System_Init();
- 183   1        Timer0Init();
- 184   1        EEPROM_Read(&vol_demo, 0, 1);
- 185   1        while (1)
- 186   1        {
- 187   2          Key_Proc();
- 188   2          Seg_Proc();
- 189   2          Led_Proc();
- 190   2        }
- 191   1      }
+ 179   3          } while (--j);
+ 180   2        } while (--i);
+ 181   1      }
+ 182          
+ 183          /* Main */
+ 184          void main()
+ 185          {
+ 186   1        // 如果有温度读取的话
+ 187   1        rd_temperature();
+ 188   1        Delay750ms();
+ 189   1      
+ 190   1        System_Init();
+ 191   1        Timer0Init();
+ 192   1        EEPROM_Read(&vol_demo, 0, 1);
+ 193   1        while (1)
+ 194   1        {
+ 195   2          Key_Proc();
+ 196   2          Seg_Proc();
+ 197   2          Led_Proc();
+ 198   2        }
+ 199   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    927    ----
+   CODE SIZE        =    955    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
