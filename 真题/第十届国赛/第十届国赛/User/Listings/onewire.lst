@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   ONEWIRE                                                           01/30/2024 15:23:39 PAGE 1   
+C51 COMPILER V9.59.0.0   ONEWIRE                                                           02/06/2024 23:16:26 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ONEWIRE
@@ -62,7 +62,7 @@ line level    source
   52   1          bit initflag = 0;
   53   1      
   54   1          DQ = 1;
-C51 COMPILER V9.59.0.0   ONEWIRE                                                           01/30/2024 15:23:39 PAGE 2   
+C51 COMPILER V9.59.0.0   ONEWIRE                                                           02/06/2024 23:16:26 PAGE 2   
 
   55   1          Delay_OneWire(12);
   56   1          DQ = 0;
@@ -74,40 +74,23 @@ line level    source
   62   1      
   63   1          return initflag;
   64   1      }
-  65          
-  66          void start_Convert()
-  67          {
-  68   1          init_ds18b20();
-  69   1          Write_DS18B20(0xcc); // 跳过ROM
-  70   1          Write_DS18B20(0x44); // 启动温度转换
-  71   1      }
-  72          float read_temperture()
-  73          {
-  74   1          unsigned char low, high;
-  75   1          init_ds18b20();
-  76   1          Write_DS18B20(0xcc);   // 跳过ROM
-  77   1          Write_DS18B20(0xbe);   // 读取温度值
-  78   1          low = Read_DS18B20();  // 低位
-  79   1          high = Read_DS18B20(); // 高位
-  80   1          return ((high << 8) | low) / 16.0;
-  81   1      }
-  82          float rd_temperature()
-  83          {
-  84   1          unsigned char low, high;
-  85   1          init_ds18b20();        // 初始化
-  86   1          Write_DS18B20(0xcc);   // 跳过ROM
-  87   1          Write_DS18B20(0x44);   // 进行温度转换
-  88   1          init_ds18b20();        // 初始化
-  89   1          Write_DS18B20(0xcc);   // 跳过ROM
-  90   1          Write_DS18B20(0xbe);   // 读取温度
-  91   1          low = Read_DS18B20();  // 低位
-  92   1          high = Read_DS18B20(); // 高位
-  93   1          return ((high << 8) | low) / 16.0;
-  94   1      }
+  65          float rd_temperature()
+  66          {
+  67   1          unsigned char low, high;
+  68   1          init_ds18b20();        // 初始化
+  69   1          Write_DS18B20(0xcc);   // 跳过ROM
+  70   1          Write_DS18B20(0x44);   // 进行温度转换
+  71   1          init_ds18b20();        // 初始化
+  72   1          Write_DS18B20(0xcc);   // 跳过ROM
+  73   1          Write_DS18B20(0xbe);   // 读取温度
+  74   1          low = Read_DS18B20();  // 低位
+  75   1          high = Read_DS18B20(); // 高位
+  76   1          return ((high << 8) | low) / 16.0;
+  77   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    224    ----
+   CODE SIZE        =    187    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

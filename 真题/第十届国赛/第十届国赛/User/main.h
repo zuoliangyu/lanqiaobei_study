@@ -12,5 +12,6 @@
 #include <ultrasound.h>   //超声波
 #include <intrins.h>
 #include <stdio.h>
+#include <string.h>
 #define uchar unsigned char
 #define uint unsigned int

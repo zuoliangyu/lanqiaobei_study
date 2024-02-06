@@ -32,9 +32,9 @@ unsigned char Ut_Wave_Data() // 超声波距离读取函数
     unsigned int time;
     TMOD &= 0X0F;
     TH1 = TL1 = 0;
-    Wave_Init();
+    Ut_Wave_Init();
     TR1 = 1;
-    while ((RX == 1) && (TF1 == 0))
+    while ((Rx == 1) && (TF1 == 0))
         ;
     TR1 = 0;
     if (TF1 == 0)
