@@ -1,0 +1,394 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 10:32:50 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\driver;..\user) DEBUG OBJECTEX
+                    -TEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          
+   3          /* 变量 */
+   4          /* 键盘方面 */
+   5          uchar Key_Slow_Down;
+   6          
+   7          /* LED 方面*/
+   8          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   9          /* 数码管方面 */
+  10          uint Seg_Slow_Down;
+  11          uchar Seg_Pos;
+  12          uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10};
+  13          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  14          
+  15          /* 时间 */
+  16          uchar ucRtc[3] = {0x11, 0x59, 0x56};
+  17          uint time_1s;
+  18          uint time_2s;
+  19          uint time_3s;
+  20          uchar time_100ms;
+  21          /* 界面 */
+  22          uchar Seg_show_mode; // 0 时间 1 回显 2 参数
+  23          uchar re_show_mode;  // 0 温度 1 湿度 2 时间
+  24          
+  25          /* 数据 */
+  26          uchar max_temperature;       // 最大温度
+  27          uint aver_temperature_10x;   // 平均温度
+  28          uint old_temperature_10x;    // 上一次的温度
+  29          uchar max_humidity;          // 最大湿度
+  30          uint aver_humidity_10x;      // 平均湿度
+  31          uint old_humidity_10x;       // 上一次的湿度
+  32          uchar trigger_count;         // 触发次数
+  33          uchar trigger_time[3];       // 触发时间
+  34          uchar para_temperature = 30; // 温度参数
+  35          uint freq;
+  36          
+  37          /* 相关判断参数 */
+  38          uchar old_light_value;   // 上一次的光强参数
+  39          bit trigger_flag;        // 触发标志
+  40          bit long_press_flag;     // 长按标志
+  41          bit wring_flag;          // 温度超过参数报警
+  42          bit Led_light_flag;      // 闪烁
+  43          bit error_humidity_flag; // 湿度是否有效，无效为1
+  44          bit data_up;             // 温湿度均升高
+  45          
+  46          /* 函数 */
+  47          /* 清空数据 */
+  48          void Clear_Data(void)
+  49          {
+  50   1          uchar i;
+  51   1          max_temperature = 0;      // 最大温度
+  52   1          aver_temperature_10x = 0; // 平均温度
+  53   1          max_humidity = 0;         // 最大湿度
+  54   1          aver_humidity_10x = 0;    // 平均湿度
+C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 10:32:50 PAGE 2   
+
+  55   1          trigger_count = 0;        // 触发次数
+  56   1          for (i = 0; i < 3; i++)
+  57   1              trigger_time[i] = 0; // 触发时间
+  58   1      }
+  59          /* 数码管复位 */
+  60          void Seg_Reset(void)
+  61          {
+  62   1          uchar i;
+  63   1          for (i = 0; i < 8; i++)
+  64   1          {
+  65   2              Seg_Buf[i] = 10;
+  66   2              Seg_Point[i] = 0;
+  67   2          }
+  68   1      }
+  69          /* 湿度计算 */
+  70          float rd_humidity(void)
+  71          {
+  72   1          float humidity_value;
+  73   1          if (freq < 200 || freq > 2000)
+  74   1              return 0;
+  75   1          humidity_value = (freq - 200) * 2 / 45 + 10;
+  76   1          return humidity_value;
+  77   1      }
+  78          
+  79          /* 键盘处理 */
+  80          void Key_Porc(void)
+  81          {
+  82   1          static uchar Key_Val, Key_Down, Key_Old, Key_Up;
+  83   1          if (Key_Slow_Down)
+  84   1              return;
+  85   1          Key_Slow_Down = 1;
+  86   1      
+  87   1          Key_Val = Key_Read();
+  88   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  89   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  90   1          Key_Old = Key_Val;
+  91   1      
+  92   1          if (Key_Down == 4)
+  93   1          {
+  94   2              Seg_Reset();
+  95   2              Seg_show_mode = (++Seg_show_mode) % 3;
+  96   2              re_show_mode = 0;
+  97   2          }
+  98   1          if (Seg_show_mode == 1 && Key_Down == 5)
+  99   1          {
+ 100   2              Seg_Reset();
+ 101   2              re_show_mode = (++re_show_mode) % 3;
+ 102   2          }
+ 103   1          if (Seg_show_mode == 2)
+ 104   1          {
+ 105   2              if (Key_Down == 8)
+ 106   2                  para_temperature = (++para_temperature > 99) ? 99 : para_temperature;
+ 107   2              else if (Key_Down == 9)
+ 108   2                  para_temperature = (--para_temperature < 0) ? 0 : para_temperature;
+ 109   2          }
+ 110   1          if (Seg_show_mode == 0)
+ 111   1          {
+ 112   2              if (Key_Down == 9)
+ 113   2              {
+ 114   3                  long_press_flag = 1;
+ 115   3              }
+ 116   2              if (Key_Up == 9)
+C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 10:32:50 PAGE 3   
+
+ 117   2              {
+ 118   3                  if (time_2s >= 2000)
+ 119   3                      Clear_Data();
+ 120   3                  long_press_flag = 0;
+ 121   3              }
+ 122   2          }
+ 123   1      }
+ 124          
+ 125          /* 数码管处理 */
+ 126          void Seg_Porc(void)
+ 127          {
+ 128   1          uint temp_temperature_10x, temp_humidity_10x;
+ 129   1          uchar temp_light;
+ 130   1          if (Seg_Slow_Down)
+ 131   1              return;
+ 132   1          Seg_Slow_Down = 1;
+ 133   1          temp_light = Ad_Read(0x01);
+ 134   1          // 避免重复触发
+ 135   1          if ((old_light_value > 50) &&
+ 136   1              (temp_light < 50) &&
+ 137   1              (trigger_flag == 0))
+ 138   1              trigger_flag = 1;
+ 139   1      
+ 140   1          // 被触发，并且到达3s，
+ 141   1          else if (trigger_flag == 1 && time_3s >= 3000)
+ 142   1              trigger_flag = 0;
+ 143   1          old_light_value = temp_light;
+ 144   1          if (trigger_flag)
+ 145   1          {
+ 146   2              Seg_Buf[1] = Seg_Buf[2] = 10;
+ 147   2              Seg_Point[6] = 0;
+ 148   2              /* 温湿度界面 */
+ 149   2              Seg_Buf[0] = 16; // E
+ 150   2              temp_temperature_10x = rd_temperature() * 10;
+ 151   2              temp_humidity_10x = rd_humidity() * 10;
+ 152   2              Seg_Buf[3] = temp_temperature_10x / 10 % 10;
+ 153   2              Seg_Buf[4] = temp_temperature_10x % 10;
+ 154   2              Seg_Buf[5] = 11; //-
+ 155   2              // 无效数据
+ 156   2              if (temp_humidity_10x == 0)
+ 157   2              {
+ 158   3                  error_humidity_flag = 1;
+ 159   3                  Seg_Buf[6] = 17; // A
+ 160   3                  Seg_Buf[7] = 17; // A
+ 161   3              }
+ 162   2              // 有效数据
+ 163   2              else
+ 164   2              {
+ 165   3                  error_humidity_flag = 0; // 数据有效
+ 166   3                  wring_flag = (temp_temperature_10x > para_temperature * 10);
+ 167   3                  if ((trigger_count >= 2) &&
+ 168   3                      (temp_humidity_10x > old_humidity_10x) &&
+ 169   3                      (temp_temperature_10x > old_temperature_10x))
+ 170   3                      data_up = 1;
+ 171   3                  else
+ 172   3                      data_up = 0;
+ 173   3                  old_humidity_10x = temp_humidity_10x;
+ 174   3                  old_temperature_10x = temp_temperature_10x;
+ 175   3                  Seg_Buf[6] = temp_humidity_10x / 10 % 10;
+ 176   3                  Seg_Buf[7] = temp_humidity_10x % 10;
+ 177   3                  if (++trigger_count == 100)
+ 178   3                      trigger_count = 99;
+C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 10:32:50 PAGE 4   
+
+ 179   3                  max_temperature = (max_temperature > temp_temperature_10x) ? max_temperature : temp_temperatur
+             -e_10x;
+ 180   3                  max_humidity = (max_humidity > temp_humidity_10x) ? max_humidity : temp_humidity_10x;
+ 181   3                  aver_temperature_10x = (aver_temperature_10x * (trigger_count - 1) + temp_temperature_10x) / (
+             -trigger_count);
+ 182   3                  aver_humidity_10x = (aver_humidity_10x * (trigger_count - 1) + temp_humidity_10x) / (trigger_c
+             -ount);
+ 183   3              }
+ 184   2          }
+ 185   1          else
+ 186   1          {
+ 187   2              switch (Seg_show_mode)
+ 188   2              {
+ 189   3              case 0:
+ 190   3                  /* 时间 */
+ 191   3                  Read_Rtc(ucRtc);
+ 192   3                  Seg_Buf[0] = ucRtc[0] / 16;
+ 193   3                  Seg_Buf[1] = ucRtc[0] % 16;
+ 194   3                  Seg_Buf[2] = 11; //-
+ 195   3                  Seg_Buf[3] = ucRtc[1] / 16;
+ 196   3                  Seg_Buf[4] = ucRtc[1] % 16;
+ 197   3                  Seg_Buf[5] = 11; //-
+ 198   3                  Seg_Buf[6] = ucRtc[2] / 16;
+ 199   3                  Seg_Buf[7] = ucRtc[2] % 16;
+ 200   3                  break;
+ 201   3              case 1:
+ 202   3                  /* 回显 */
+ 203   3                  switch (re_show_mode)
+ 204   3                  {
+ 205   4                  case 0:
+ 206   4                      /* 温度 */
+ 207   4                      Seg_Buf[0] = 12; // C
+ 208   4                      if (trigger_count != 0)
+ 209   4                      {
+ 210   5                          Seg_Buf[2] = max_temperature / 10 % 10;
+ 211   5                          Seg_Buf[3] = max_temperature % 10;
+ 212   5                          Seg_Buf[4] = 11; //-
+ 213   5                          Seg_Buf[5] = aver_temperature_10x / 100 % 10;
+ 214   5                          Seg_Buf[6] = aver_temperature_10x / 10 % 10;
+ 215   5                          Seg_Buf[7] = aver_temperature_10x % 10;
+ 216   5                          Seg_Point[6] = 1;
+ 217   5                      }
+ 218   4                      break;
+ 219   4                  case 1:
+ 220   4                      /* 湿度 */
+ 221   4                      Seg_Buf[0] = 13; // H
+ 222   4                      if (trigger_count != 0)
+ 223   4                      {
+ 224   5                          Seg_Buf[2] = max_humidity / 10 % 10;
+ 225   5                          Seg_Buf[3] = max_humidity % 10;
+ 226   5                          Seg_Buf[4] = 11; //-
+ 227   5                          Seg_Buf[5] = aver_humidity_10x / 100 % 10;
+ 228   5                          Seg_Buf[6] = aver_humidity_10x / 10 % 10;
+ 229   5                          Seg_Buf[7] = aver_humidity_10x % 10;
+ 230   5                          Seg_Point[6] = 1;
+ 231   5                      }
+ 232   4                      break;
+ 233   4                  case 2:
+ 234   4                      /* 时间 */
+ 235   4                      Seg_Buf[0] = 14; // F
+ 236   4                      Seg_Buf[1] = trigger_count / 10 % 10;
+ 237   4                      Seg_Buf[2] = trigger_count % 10;
+C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 10:32:50 PAGE 5   
+
+ 238   4                      if (trigger_count != 0)
+ 239   4                      {
+ 240   5                          Seg_Buf[3] = trigger_time[0] / 16;
+ 241   5                          Seg_Buf[4] = trigger_time[0] % 16;
+ 242   5                          Seg_Buf[5] = 11; //-
+ 243   5                          Seg_Buf[6] = trigger_time[1] / 16;
+ 244   5                          Seg_Buf[7] = trigger_time[1] % 16;
+ 245   5                      }
+ 246   4                      break;
+ 247   4                  }
+ 248   3                  break;
+ 249   3              case 2:
+ 250   3                  /* 参数 */
+ 251   3                  Seg_Buf[0] = 15; // P
+ 252   3                  Seg_Buf[6] = para_temperature / 10 % 10;
+ 253   3                  Seg_Buf[7] = para_temperature % 10;
+ 254   3                  break;
+ 255   3              }
+ 256   2          }
+ 257   1      }
+ 258          
+ 259          /* LED处理 */
+ 260          void Led_Porc(void)
+ 261          {
+ 262   1          /* 界面 */
+ 263   1          ucLed[0] = (Seg_show_mode == 0);
+ 264   1          ucLed[1] = (Seg_show_mode == 1);
+ 265   1          ucLed[2] = (Seg_show_mode == 2);
+ 266   1          /* 报警 */
+ 267   1          ucLed[3] = (wring_flag) ? Led_light_flag : 0;
+ 268   1          ucLed[4] = error_humidity_flag;
+ 269   1          ucLed[5] = data_up;
+ 270   1      }
+ 271          
+ 272          /* 定时器/计数器部分 */
+ 273          /* 计数器 */
+ 274          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 275          {
+ 276   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 277   1          TMOD &= 0xF0; // 设置定时器模式
+ 278   1          TMOD |= 0x05; // 设置定时器模式
+ 279   1          TL0 = 0;      // 设置定时初始值
+ 280   1          TH0 = 0;      // 设置定时初始值
+ 281   1          TF0 = 0;      // 清除TF0标志
+ 282   1          TR0 = 1;      // 定时器0开始计时
+ 283   1      }
+ 284          /* 定时器 */
+ 285          void Timer1_Init(void) // 1毫秒@12.000MHz
+ 286          {
+ 287   1          AUXR &= 0xBF; // 定时器时钟12T模式
+ 288   1          TMOD &= 0x0F; // 设置定时器模式
+ 289   1          TL1 = 0x18;   // 设置定时初始值
+ 290   1          TH1 = 0xFC;   // 设置定时初始值
+ 291   1          TF1 = 0;      // 清除TF1标志
+ 292   1          TR1 = 1;      // 定时器1开始计时
+ 293   1          ET1 = 1;      // 允许定时器1中断
+ 294   1          EA = 1;       // 允许总中断
+ 295   1      }
+ 296          /* 定时器服务函数 */
+ 297          void Timer1_ISR(void) interrupt 3
+ 298          {
+ 299   1          if (++Key_Slow_Down == 10)
+C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 10:32:50 PAGE 6   
+
+ 300   1              Key_Slow_Down = 0;
+ 301   1          if (++Seg_Slow_Down == 200)
+ 302   1              Seg_Slow_Down = 0;
+ 303   1          if (++Seg_Pos == 8)
+ 304   1              Seg_Pos = 0;
+ 305   1          if (++time_1s == 1000)
+ 306   1          {
+ 307   2              time_1s = 0;
+ 308   2              freq = TH0 << 8 | TL0;
+ 309   2              TH0 = 0;
+ 310   2              TL0 = 0;
+ 311   2          }
+ 312   1          if (trigger_flag)
+ 313   1          {
+ 314   2              if (++time_3s >= 3000)
+ 315   2              {
+ 316   3                  time_3s = 3001;
+ 317   3              }
+ 318   2          }
+ 319   1          else
+ 320   1              time_3s = 0;
+ 321   1          // 开始长按计时
+ 322   1          if (long_press_flag)
+ 323   1          {
+ 324   2              if (++time_2s >= 2000)
+ 325   2              {
+ 326   3                  time_2s = 2001;
+ 327   3              }
+ 328   2          }
+ 329   1          else
+ 330   1              time_2s = 0;
+ 331   1          // 处于报警
+ 332   1      
+ 333   1          if (++time_100ms == 100)
+ 334   1          {
+ 335   2              time_100ms = 0;
+ 336   2              Led_light_flag ^= 1;
+ 337   2          }
+ 338   1      
+ 339   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 340   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 341   1      }
+ 342          
+ 343          void main()
+ 344          {
+ 345   1          System_Init();
+ 346   1          Timer0_Init();
+ 347   1          Timer1_Init();
+ 348   1          Set_Rtc(ucRtc);
+ 349   1          while (1)
+ 350   1          {
+ 351   2              Key_Porc();
+ 352   2              Seg_Porc();
+ 353   2              Led_Porc();
+ 354   2          }
+ 355   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1434    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 10:32:50 PAGE 7   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     62       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      6    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

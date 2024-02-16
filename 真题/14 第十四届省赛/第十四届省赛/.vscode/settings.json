@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "stc15f2k60s2.h": "c",
+        "reg52.h": "c",
+        "onewire.h": "c",
+        "REG52.H": "cpp",
+        "iic.h": "c",
+        "main.h": "c"
+    }
+}

@@ -85,7 +85,6 @@ void Seg_Proc()
 		real_V = Ad_Read(0x03) * 100 / 51; // 0-255->0-500
 		// 当检测到下降沿的时候计数+1
 		if (old_vol > vol_demo * 10 && real_V < vol_demo * 10)
-
 			count_down++;
 		if (real_V < vol_demo * 10)
 			count_down_flag = 1;

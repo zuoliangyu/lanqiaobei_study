@@ -1,0 +1,10 @@
+".\Objects\main.obj",
+".\Objects\Key.obj",
+".\Objects\ds1302.obj",
+".\Objects\iic.obj",
+".\Objects\init.obj",
+".\Objects\Led.obj",
+".\Objects\onewire.obj",
+".\Objects\Seg.obj" 
+TO ".\Objects\test14" 
+PRINT(".\Listings\test14.m51") RAMSIZE(256) 
