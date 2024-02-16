@@ -135,9 +135,13 @@ void Seg_Porc(void)
     if ((old_light_value > 50) &&
         (temp_light < 50) &&
         (trigger_flag == 0))
+    {
         trigger_flag = 1;
+        if (++trigger_count == 100)
+            trigger_count = 99;
+    }
 
-    // 被触发，并且到达3s，
+    // 被触发，并且到达3s
     else if (trigger_flag == 1 && time_3s >= 3000)
         trigger_flag = 0;
     old_light_value = temp_light;
@@ -149,12 +153,13 @@ void Seg_Porc(void)
         Seg_Buf[0] = 16; // E
         temp_temperature_10x = rd_temperature() * 10;
         temp_humidity_10x = rd_humidity() * 10;
-        Seg_Buf[3] = temp_temperature_10x / 10 % 10;
-        Seg_Buf[4] = temp_temperature_10x % 10;
+        Seg_Buf[3] = temp_temperature_10x / 100 % 10;
+        Seg_Buf[4] = temp_temperature_10x / 10 % 10;
         Seg_Buf[5] = 11; //-
         // 无效数据
         if (temp_humidity_10x == 0)
         {
+            trigger_count--;
             error_humidity_flag = 1;
             Seg_Buf[6] = 17; // A
             Seg_Buf[7] = 17; // A
@@ -172,10 +177,8 @@ void Seg_Porc(void)
                 data_up = 0;
             old_humidity_10x = temp_humidity_10x;
             old_temperature_10x = temp_temperature_10x;
-            Seg_Buf[6] = temp_humidity_10x / 10 % 10;
-            Seg_Buf[7] = temp_humidity_10x % 10;
-            if (++trigger_count == 100)
-                trigger_count = 99;
+            Seg_Buf[6] = temp_humidity_10x / 100 % 10;
+            Seg_Buf[7] = temp_humidity_10x / 10 % 10;
             max_temperature = (max_temperature > temp_temperature_10x) ? max_temperature : temp_temperature_10x;
             max_humidity = (max_humidity > temp_humidity_10x) ? max_humidity : temp_humidity_10x;
             aver_temperature_10x = (aver_temperature_10x * (trigger_count - 1) + temp_temperature_10x) / (trigger_count);
@@ -339,13 +342,34 @@ void Timer1_ISR(void) interrupt 3
     Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
     Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
 }
+void Delay750ms(void) //@12.000MHz
+{
+    unsigned char data i, j, k;
+
+    _nop_();
+    _nop_();
+    i = 35;
+    j = 51;
+    k = 182;
+    do
+    {
+        do
+        {
+            while (--k)
+                ;
+        } while (--j);
+    } while (--i);
+}
 
 void main()
 {
+
     System_Init();
     Timer0_Init();
     Timer1_Init();
     Set_Rtc(ucRtc);
+    Delay750ms();
+    rd_temperature();
     while (1)
     {
         Key_Porc();
