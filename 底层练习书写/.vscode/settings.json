@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "ultrasonic.h": "c",
-        "ds1302.h": "c",
-        "onewire.h": "c",
-        "stc15f2k60s2.h": "c"
-    }
-}

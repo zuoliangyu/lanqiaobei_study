@@ -107,7 +107,7 @@ void Key_Porc(void)
         else if (Key_Down == 9)
             para_temperature = (--para_temperature < 0) ? 0 : para_temperature;
     }
-    if (Seg_show_mode == 0)
+    if (Seg_show_mode == 1 && re_show_mode == 2)
     {
         if (Key_Down == 9)
         {

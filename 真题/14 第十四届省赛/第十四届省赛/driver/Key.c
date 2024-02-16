@@ -2,7 +2,9 @@
 
 unsigned char Key_Read()
 {
+
     unsigned char temp = 0;
+    ET0 = 0;
     P44 = 0;
     P42 = 1;
     P35 = 1;
@@ -51,5 +53,7 @@ unsigned char Key_Read()
         temp = 18;
     if (P30 == 0)
         temp = 19;
+    ET0 = 1;
+    P3 = 0xff;
     return temp;
 }
