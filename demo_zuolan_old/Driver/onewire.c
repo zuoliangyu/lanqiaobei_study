@@ -1,77 +1,85 @@
+/*	# 	å•æ€»çº¿ä»£ç ç‰‡æ®µè¯´æ˜
+	1. 	æœ¬æ–‡ä»¶å¤¹ä¸­æä¾›çš„é©±åŠ¨ä»£ç ä¾›å‚èµ›é€‰æ‰‹å®Œæˆç¨‹åºè®¾è®¡å‚è€ƒã€‚
+	2. 	å‚èµ›é€‰æ‰‹å¯ä»¥è‡ªè¡Œç¼–å†™ç›¸å…³ä»£ç æˆ–ä»¥è¯¥ä»£ç ä¸ºåŸºç¡€ï¼Œæ ¹æ®æ‰€é€‰å•ç‰‡æœºç±»å‹ã€è¿è¡Œé€Ÿåº¦å’Œè¯•é¢˜
+		ä¸­å¯¹å•ç‰‡æœºæ—¶é’Ÿé¢‘ç‡çš„è¦æ±‚ï¼Œè¿›è¡Œä»£ç è°ƒè¯•å’Œä¿®æ”¹ã€‚
+*/
 #include "onewire.h"
-#include "reg52.h"
-
-sbit DQ = P1 ^ 4;
-
-// µ¥×ÜÏßÄÚ²¿ÑÓÊ±º¯Êı
+#include "REG52.H"
+sbit DQ = P1 ^ 4; // å•æ€»çº¿æ•°æ®å£
+//
 void Delay_OneWire(unsigned int t)
 {
-    t *= 12;
-    while (t--)
-        ;
+	unsigned char i;
+	while (t--)
+	{
+		for (i = 0; i < 12; i++)
+			;
+	}
 }
 
-// µ¥×ÜÏßĞ´²Ù×÷
+//
 void Write_DS18B20(unsigned char dat)
 {
-    unsigned char i;
-    for (i = 0; i < 8; i++)
-    {
-        DQ = 0;
-        DQ = dat & 0x01;
-        Delay_OneWire(5);
-        DQ = 1;
-        dat >>= 1; // Ò»¸öÒ»¸öĞ´Èë
-    }
-    Delay_OneWire(5);
+	unsigned char i;
+	for (i = 0; i < 8; i++)
+	{
+		DQ = 0;
+		DQ = dat & 0x01;
+		Delay_OneWire(5);
+		DQ = 1;
+		dat >>= 1;
+	}
+	Delay_OneWire(5);
 }
 
-// µ¥×ÜÏß¶Á²Ù×÷
+//
 unsigned char Read_DS18B20(void)
 {
-    unsigned char i;
-    unsigned char dat;
+	unsigned char i;
+	unsigned char dat;
 
-    for (i = 0; i < 8; i++)
-    {
-        DQ = 0;
-        dat >>= 1;
-        DQ = 1;
-        if (DQ)
-        {
-            dat |= 0x80; // Ò»¸öÒ»¸ö¶ÁÈ¡
-        }
-        Delay_OneWire(5);
-    }
-    return dat;
+	for (i = 0; i < 8; i++)
+	{
+		DQ = 0;
+		dat >>= 1;
+		DQ = 1;
+		if (DQ)
+		{
+			dat |= 0x80;
+		}
+		Delay_OneWire(5);
+	}
+	return dat;
 }
 
-// DS18B20³õÊ¼»¯
+//
 bit init_ds18b20(void)
 {
-    bit initflag = 0;
+	bit initflag = 0;
 
-    DQ = 1;
-    Delay_OneWire(12);
-    DQ = 0;
-    Delay_OneWire(80);
-    DQ = 1;
-    Delay_OneWire(10);
-    initflag = DQ;
-    Delay_OneWire(5);
+	DQ = 1;
+	Delay_OneWire(12);
+	DQ = 0;
+	Delay_OneWire(80);
+	DQ = 1;
+	Delay_OneWire(10);
+	initflag = DQ;
+	Delay_OneWire(5);
 
-    return initflag;
+	return initflag;
 }
+
 float rd_temperature()
 {
-    unsigned char low, high;
-    init_ds18b20();        // ³õÊ¼»¯
-    Write_DS18B20(0xcc);   // Ìø¹ıROM
-    Write_DS18B20(0x44);   // ½øĞĞÎÂ¶È×ª»»
-    init_ds18b20();        // ³õÊ¼»¯
-    Write_DS18B20(0xcc);   // Ìø¹ıROM
-    Write_DS18B20(0xbe);   // ¶ÁÈ¡ÎÂ¶È
-    low = Read_DS18B20();  // µÍÎ»
-    high = Read_DS18B20(); // ¸ßÎ»
-    return ((high << 8) | low) / 16.0;
+	unsigned char low, high;
+	init_ds18b20();
+	Write_DS18B20(0xcc); // è·³è¿‡ROM
+	Write_DS18B20(0x44); // å¯åŠ¨æ¸©åº¦è½¬æ¢
+
+	init_ds18b20();
+	Write_DS18B20(0xcc); // è·³è¿‡ROM
+	Write_DS18B20(0xbe); // è¯»å–æ¸©åº¦å€¼
+	low = Read_DS18B20();
+	high = Read_DS18B20();
+	return (float)(high << 8 | low) * 0.0625;
 }

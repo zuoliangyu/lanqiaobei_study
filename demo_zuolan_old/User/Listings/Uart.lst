@@ -1,57 +1,41 @@
-C51 COMPILER V9.59.0.0   UART                                                              01/30/2024 15:23:39 PAGE 1   
+C51 COMPILER V9.59.0.0   UART                                                              02/17/2024 17:27:08 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE UART
 OBJECT MODULE PLACED IN .\Objects\Uart.obj
-COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\Driver\Uart.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECT
-                    -EXTEND PRINT(.\Listings\Uart.lst) TABS(2) OBJECT(.\Objects\Uart.obj)
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\driver\Uart.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\driver;..\user) DEBU
+                    -G OBJECTEXTEND PRINT(.\Listings\Uart.lst) TABS(2) OBJECT(.\Objects\Uart.obj)
 
 line level    source
 
-   1          #include <Uart.h>
-   2          
-   3          /* ä¸²å£åˆå§‹åŒ–å‡½æ•° */
-   4          void UartInit(void)   //9600bps@12.000MHz
-   5          {
-   6   1          SCON = 0x50;    //8ä½æ•°æ®,å¯å˜æ³¢ç‰¹ç‡
-   7   1          AUXR |= 0x01;   //ä¸²å£1é€‰æ‹©å®šæ—¶å™¨2ä¸ºæ³¢ç‰¹ç‡å‘ç”Ÿå™¨
-   8   1          AUXR |= 0x04;   //å®šæ—¶å™¨æ—¶é’Ÿ1Tæ¨¡å¼
-   9   1          T2L = 0xC7;   //è®¾ç½®å®šæ—¶åˆå§‹å€¼
-  10   1          T2H = 0xFE;   //è®¾ç½®å®šæ—¶åˆå§‹å€¼
-  11   1          AUXR |= 0x10;   //å®šæ—¶å™¨2å¼€å§‹è®¡æ—¶
-  12   1          ES = 1;
-  13   1          EA = 1;
-  14   1      }
-  15          
-  16          /* putcharé‡å®šå‘ */
-  17          extern char putchar(char ch)
-  18          {
-  19   1          SBUF= ch;//å°†datæ•°æ®èµ‹ç»™SBUFï¼Œå°†æ•°æ®å‘é€å‡ºå»
-  20   1          while(TI == 0);//ç­‰å¾…æ•°æ®å‘é€
-  21   1          TI = 0;//å°†å‘é€æ ‡å¿—ä½æ¸…é›¶
-  22   1          return (ch);
-  23   1      }
-  24          void SendByte(unsigned char dat)
-  25          {
-  26   1          SBUF = dat;
-  27   1          while (TI == 0) // ç­‰å¾…å‘é€
-  28   1              ;
-  29   1          TI = 0; // å°†å‘é€æ ‡å¿—æ¸…é›¶ï¼Œå‡†å¤‡ä¸‹ä¸€æ¬¡å‘é€
-  30   1      }
-  31          
-  32          void Uart_Sent_String(unsigned char *dat)
-  33          {
-  34   1          while (*dat != "\0")
-  35   1              SendByte(*dat++);
-  36   1      }
+   1          #include "Uart.h"
+   2          void Uart1_Init(void) // 9600bps@12MHz
+   3          {
+   4   1          SCON = 0x50;  // 8Î»Êı¾İ,¿É±ä²¨ÌØÂÊ
+   5   1          AUXR |= 0x01; // ´®¿Ú1Ñ¡Ôñ¶¨Ê±Æ÷2Îª²¨ÌØÂÊ·¢ÉúÆ÷
+   6   1          AUXR |= 0x04; // ¶¨Ê±Æ÷Ê±ÖÓ1TÄ£Ê½
+   7   1          T2L = 0xC7;   // ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   8   1          T2H = 0xFE;   // ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   9   1          AUXR |= 0x10; // ¶¨Ê±Æ÷2¿ªÊ¼¼ÆÊ±
+  10   1          ES = 1;       // ´ò¿ª´®¿ÚÖĞ¶Ï
+  11   1          EA = 1;       // ´ò¿ª×ÜÖĞ¶Ï
+  12   1      }
+  13          extern char putchar(char ch)
+  14          {
+  15   1          SBUF = ch; // ½«chĞ´ÈëSBUF£¬·¢³öÊı¾İ
+  16   1          while (TI == 0)
+  17   1              ;   // µÈ´ı·¢ËÍÍê³É
+  18   1          TI = 0; // Çå³ı·¢ËÍÍê³É±êÖ¾
+  19   1          return ch;
+  20   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =     82    ----
-   CONSTANT SIZE    =      2    ----
+   CODE SIZE        =     31    ----
+   CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =   ----       3
+   DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.
