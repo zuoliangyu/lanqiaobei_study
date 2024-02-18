@@ -31,13 +31,25 @@ void Key_Proc()
     Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
     Key_Old = Key_Val;
 }
-
+float temperature_old;
 /* 数码管处理函数 */
 void Seg_Proc()
 {
+    float temperature_new;
     if (Seg_Slow_Down)
         return;
     Seg_Slow_Down = 1;
+    temperature_new = rd_temperature();
+    // 不是初次
+    if (temperature_old != 0)
+    {
+        // 在区间内，视为正常值
+        if (temperature_new - temperature_old < 5 || temperature_new - temperature_old > -5)
+            temperature_old = temperature_new;
+    }
+    else
+        temperature_old = temperature_new;
+    // 我们显示old的值
 }
 
 /* LED处理函数 */
@@ -117,6 +129,7 @@ void Delay750ms(void) //@12.000MHz
 }
 void main()
 {
+
     Timer0_Init();
     Uart1_Init();
     Set_Rtc(ucRtc);

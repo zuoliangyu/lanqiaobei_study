@@ -130,8 +130,10 @@ unsigned char Ad_Read(unsigned char addr)
     I2CStart();
     I2CSendByte(0x90);
     I2CWaitAck();
-
     I2CSendByte(addr);
+    I2CWaitAck();
+    I2CStart();
+    I2CSendByte(0x91);
     I2CWaitAck();
     temp = I2CReceiveByte();
     I2CSendAck(1);
