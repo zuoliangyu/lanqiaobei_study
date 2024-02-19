@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   LED                                                               02/17/2024 17:27:08 PAGE 1   
+C51 COMPILER V9.59.0.0   LED                                                               02/19/2024 19:57:49 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
@@ -62,7 +62,7 @@ line level    source
   52   2              P0 = temp;
   53   2              P2 = P2 & 0x1f | 0xa0;
   54   2              P2 &= 0x1f;
-C51 COMPILER V9.59.0.0   LED                                                               02/17/2024 17:27:08 PAGE 2   
+C51 COMPILER V9.59.0.0   LED                                                               02/19/2024 19:57:49 PAGE 2   
 
   55   2              temp_old = temp;
   56   2          }

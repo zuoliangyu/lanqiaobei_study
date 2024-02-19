@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   SEG                                                               01/30/2024 15:23:39 PAGE 1   
+C51 COMPILER V9.59.0.0   SEG                                                               02/19/2024 19:53:38 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE SEG
@@ -19,16 +19,17 @@ line level    source
    9   1          // ÊÖ¶¯Ïû¶¶
   10   1          P0 = 0xff;
   11   1          P2 = P2 & 0x1f | 0xe0;
-  12   1          P0 = seg_wela[wela];
-  13   1          P2 = P2 & 0x1f | 0xc0;
-  14   1          P2 &= 0x1f;
-  15   1      
-  16   1          P0 = seg_dula[dula];
-  17   1          if (point)
-  18   1              P0 &= 0x7f;
-  19   1          P2 = P2 & 0x1f | 0xe0;
-  20   1          P2 &= 0x1f;
-  21   1      }
+  12   1      
+  13   1          P0 = seg_wela[wela];
+  14   1          P2 = P2 & 0x1f | 0xc0;
+  15   1          P2 &= 0x1f;
+  16   1      
+  17   1          P0 = seg_dula[dula];
+  18   1          if (point)
+  19   1              P0 &= 0x7f;
+  20   1          P2 = P2 & 0x1f | 0xe0;
+  21   1          P2 &= 0x1f;
+  22   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE

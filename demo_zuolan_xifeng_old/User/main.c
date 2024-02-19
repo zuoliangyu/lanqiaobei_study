@@ -1,7 +1,7 @@
 #include "main.h"
 /* 变量声明区 */
 uchar Key_Slow_Down;								 // 按键减速专用变量
-uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
+uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
 uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};		 // 数码管小数点数据存放数组
 uchar Seg_Pos;										 // 数码管扫描专用变量
 uint Seg_Slow_Down;									 // 数码管减速专用变量

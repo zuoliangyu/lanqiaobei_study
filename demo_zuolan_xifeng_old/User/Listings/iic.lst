@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   IIC                                                               01/30/2024 15:23:39 PAGE 1   
+C51 COMPILER V9.59.0.0   IIC                                                               02/19/2024 19:53:39 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE IIC
@@ -62,7 +62,7 @@ line level    source
   52          //发送应答
   53          void IIC_SendAck(bit ackbit)
   54          {
-C51 COMPILER V9.59.0.0   IIC                                                               01/30/2024 15:23:39 PAGE 2   
+C51 COMPILER V9.59.0.0   IIC                                                               02/19/2024 19:53:39 PAGE 2   
 
   55   1          SCL = 0;
   56   1          SDA = ackbit;           // 0：应答，1：非应答
@@ -126,7 +126,7 @@ line level    source
  114          
  115          
  116          
-C51 COMPILER V9.59.0.0   IIC                                                               01/30/2024 15:23:39 PAGE 3   
+C51 COMPILER V9.59.0.0   IIC                                                               02/19/2024 19:53:39 PAGE 3   
 
  117          unsigned char Ad_Read(unsigned char addr)
  118          {
@@ -190,7 +190,7 @@ line level    source
  176          {
  177   1          IIC_Start();//发送开启信号
  178   1          IIC_SendByte(0xA0);//选择EEPROM芯片，确定写的模式
-C51 COMPILER V9.59.0.0   IIC                                                               01/30/2024 15:23:39 PAGE 4   
+C51 COMPILER V9.59.0.0   IIC                                                               02/19/2024 19:53:39 PAGE 4   
 
  179   1          IIC_WaitAck();//等待EEPROM反馈
  180   1      

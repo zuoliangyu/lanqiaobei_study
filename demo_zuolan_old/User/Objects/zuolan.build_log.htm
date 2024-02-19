@@ -16,37 +16,23 @@ Linker/Locator:  BL51.exe V6.22.2.0
 Library Manager: LIB51.exe V4.30.1.0
 Hex Converter:   OH51.exe V2.7.0.0
 CPU DLL:         S8051.DLL V3.122.0.0
-Dialog DLL:      DP51.DLL V2.66.0.0
-    Target DLL: VDM51.DLL
-Dialog DLL:      TP51.DLL V2.60.0.0
- 
+Dialog DLL:      DP51.DLL V2.66.0.0 
 <h2>Project:</h2>
-C:\Users\haze\Desktop\demo_zuolan\User\zuolan.uvproj
-Project File Date:  01/25/2024
+C:\Users\haze\Desktop\demo_zuolan_old\User\demo.uvproj
+Project File Date:  02/17/2024
 
 <h2>Output:</h2>
 Rebuild target 'zuolan'
 compiling main.c...
-compiling Led.c...
-compiling Seg.c...
 compiling Key.c...
-compiling Init.c...
-compiling Uart.c...
 compiling ds1302.c...
 compiling iic.c...
+compiling Led.c...
 compiling onewire.c...
-compiling ultrasound.c...
+compiling Seg.c...
+compiling Uart.c...
+compiling Ultrasonic.c...
 linking...
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_BEEP?LED
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_RELAY?LED
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_PUTCHAR?UART
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_UART_SENT_STRING?UART
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_SET_RTC?DS1302
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
     SEGMENT: ?PR?_READ_RTC?DS1302
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
@@ -58,21 +44,18 @@ linking...
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
     SEGMENT: ?PR?_EEPROM_READ?IIC
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?START_CONVERT?ONEWIRE
+    SEGMENT: ?PR?BEEP?LED
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?READ_TEMPERTURE?ONEWIRE
+    SEGMENT: ?PR?RELAY?LED
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?UT_WAVE_DATA?ULTRASOUND
-*** WARNING L1: UNRESOLVED EXTERNAL SYMBOL
-    SYMBOL:  _UART_SEND_STRING
-    MODULE:  .\Objects\main.obj (MAIN)
-*** WARNING L2: REFERENCE MADE TO UNRESOLVED EXTERNAL
-    SYMBOL:  _UART_SEND_STRING
-    MODULE:  .\Objects\main.obj (MAIN)
-    ADDRESS: 09D9H
-Program Size: data=108.3 xdata=0 code=2633
+    SEGMENT: ?PR?MOTOR?LED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_PUTCHAR?UART
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?UT_WAVE_DATA?ULTRASONIC
+Program Size: data=109.4 xdata=0 code=2428
 creating hex file from ".\Objects\zuolan"...
-".\Objects\zuolan" - 0 Error(s), 15 Warning(s).
+".\Objects\zuolan" - 0 Error(s), 10 Warning(s).
 </pre>
 </body>
 </html>

@@ -3,10 +3,10 @@
 uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 /* 数码管显示 */
-uchar Seg_Slow_Down;                                 // 数码管减速
-uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
-uchar Seg_Pos;                                       // 数码管指示
-uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // 某位是否显示小数点
+uchar Seg_Slow_Down;                                // 数码管减速
+uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+uchar Seg_Pos;                                      // 数码管指示
+uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 某位是否显示小数点
 
 /* 串口方面 */
 uchar Uart_Slow_Down;
@@ -31,25 +31,12 @@ void Key_Proc()
     Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
     Key_Old = Key_Val;
 }
-float temperature_old;
 /* 数码管处理函数 */
 void Seg_Proc()
 {
-    float temperature_new;
     if (Seg_Slow_Down)
         return;
     Seg_Slow_Down = 1;
-    temperature_new = rd_temperature();
-    // 不是初次
-    if (temperature_old != 0)
-    {
-        // 在区间内，视为正常值
-        if (temperature_new - temperature_old < 5 || temperature_new - temperature_old > -5)
-            temperature_old = temperature_new;
-    }
-    else
-        temperature_old = temperature_new;
-    // 我们显示old的值
 }
 
 /* LED处理函数 */
@@ -73,16 +60,16 @@ void Uart_Proc()
 }
 
 /* 定时器0中断初始化 */
-void Timer0_Init(void) // 1微秒@12.000MHz
+void Timer0_Init(void)		//1毫秒@12.000MHz
 {
-    AUXR &= 0x7F; // 定时器时钟12T模式
-    TMOD &= 0xF0; // 设置定时器模式
-    TL0 = 0xFF;   // 设置定时初始值
-    TH0 = 0xFF;   // 设置定时初始值
-    TF0 = 0;      // 清除TF0标志
-    TR0 = 1;      // 定时器0开始计时
-    ET0 = 1;      // 允许定时器0中断
-    EA = 1;       // 允许总中断
+	AUXR &= 0x7F;			//定时器时钟12T模式
+	TMOD &= 0xF0;			//设置定时器模式
+	TL0 = 0x18;				//设置定时初始值
+	TH0 = 0xFC;				//设置定时初始值
+	TF0 = 0;				//清除TF0标志
+	TR0 = 1;				//定时器0开始计时
+	ET0=1;
+	EA=1;
 }
 
 /* 定时器0中断函数 */
@@ -94,7 +81,8 @@ void Timer0_ISR(void) interrupt 1
         Seg_Slow_Down = 0;
     if (++Uart_Slow_Down == 200)
         Uart_Slow_Down = 0;
-    Seg_Pos = (++Seg_Pos) % 8;
+    if (++Seg_Pos == 8)
+        Seg_Pos = 0;
     Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
     Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
 }

@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 13:20:52 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -62,7 +62,7 @@ line level    source
   52   1          aver_temperature_10x = 0; // 平均温度
   53   1          max_humidity = 0;         // 最大湿度
   54   1          aver_humidity_10x = 0;    // 平均湿度
-C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 13:20:52 PAGE 2   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 2   
 
   55   1          trigger_count = 0;        // 触发次数
   56   1          for (i = 0; i < 3; i++)
@@ -119,14 +119,14 @@ line level    source
  107   2              else if (Key_Down == 9)
  108   2                  para_temperature = (--para_temperature < 0) ? 0 : para_temperature;
  109   2          }
- 110   1          if (Seg_show_mode == 0)
+ 110   1          if (Seg_show_mode == 1 && re_show_mode == 2)
  111   1          {
  112   2              if (Key_Down == 9)
  113   2              {
  114   3                  long_press_flag = 1;
  115   3              }
  116   2              if (Key_Up == 9)
-C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 13:20:52 PAGE 3   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 3   
 
  117   2              {
  118   3                  if (time_2s >= 2000)
@@ -190,7 +190,7 @@ line level    source
  176   3                  else
  177   3                      data_up = 0;
  178   3                  old_humidity_10x = temp_humidity_10x;
-C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 13:20:52 PAGE 4   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 4   
 
  179   3                  old_temperature_10x = temp_temperature_10x;
  180   3                  Seg_Buf[6] = temp_humidity_10x / 100 % 10;
@@ -254,7 +254,7 @@ line level    source
  235   4                      break;
  236   4                  case 2:
  237   4                      /* 时间 */
-C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 13:20:52 PAGE 5   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 5   
 
  238   4                      Seg_Buf[0] = 14; // F
  239   4                      Seg_Buf[1] = trigger_count / 10 % 10;
@@ -318,7 +318,7 @@ line level    source
  297   1          EA = 1;       // 允许总中断
  298   1      }
  299          /* 定时器服务函数 */
-C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 13:20:52 PAGE 6   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 6   
 
  300          void Timer1_ISR(void) interrupt 3
  301          {
@@ -382,7 +382,7 @@ line level    source
  359   3                      ;
  360   3              } while (--j);
  361   2          } while (--i);
-C51 COMPILER V9.59.0.0   MAIN                                                              02/16/2024 13:20:52 PAGE 7   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 7   
 
  362   1      }
  363          
@@ -405,7 +405,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1471    ----
+   CODE SIZE        =   1479    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
