@@ -1,10 +1,10 @@
-C51 COMPILER V9.59.0.0   UART                                                              02/19/2024 19:57:49 PAGE 1   
+C51 COMPILER V9.59.0.0   UART                                                              02/24/2024 21:37:53 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE UART
 OBJECT MODULE PLACED IN .\Objects\Uart.obj
-COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\driver\Uart.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\driver;..\user) DEBU
-                    -G OBJECTEXTEND PRINT(.\Listings\Uart.lst) TABS(2) OBJECT(.\Objects\Uart.obj)
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\Driver\Uart.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECT
+                    -EXTEND PRINT(.\Listings\Uart.lst) TABS(2) OBJECT(.\Objects\Uart.obj)
 
 line level    source
 

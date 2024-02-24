@@ -146,7 +146,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
+          <TargetSelection>11</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -412,9 +412,9 @@
               <FilePath>..\Driver\onewire.c</FilePath>
             </File>
             <File>
-              <FileName>ultrasound.c</FileName>
+              <FileName>Ultrasonic.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Driver\ultrasound.c</FilePath>
+              <FilePath>..\Driver\Ultrasonic.c</FilePath>
             </File>
           </Files>
         </Group>
