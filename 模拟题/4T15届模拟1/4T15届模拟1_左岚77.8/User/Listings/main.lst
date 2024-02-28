@@ -1,0 +1,253 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uchar Seg_Slow_Down;                                // 数码管减速
+   7          uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   8          uchar Seg_Pos;                                      // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 某位是否显示小数点
+  10          
+  11          /* 时间方面 */
+  12          uchar ucRtc[3] = {0x13, 0x11, 0x11}; // 初始化时间13:11:11
+  13          uchar input_time[3];                 // 输入数据的时间
+  14          /* 键盘方面 */
+  15          uchar Key_Slow_Down;
+  16          
+  17          /* 显示 */
+  18          uchar Seg_show_mode; // 0 时间 1 输入 2 记录
+  19          
+  20          /* 数据 */
+  21          uchar input_data_arr[4]; // 输入的四位数据
+  22          uchar input_data_index;  // 输入数据的索引
+  23          uint new_value;
+  24          uint old_value;
+  25          uchar EEPROM_string_new[4];
+  26          uchar EEPROM_string_old[4];
+  27          bit data_up_flag; // 数据上升标志
+  28          /* 键盘处理函数 */
+  29          void Key_Proc()
+  30          {
+  31   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  32   1          uchar i;
+  33   1          if (Key_Slow_Down)
+  34   1              return;
+  35   1          Key_Slow_Down = 1;
+  36   1      
+  37   1          Key_Val = Key_Read();
+  38   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  39   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  40   1          Key_Old = Key_Val;
+  41   1          if (Key_Down == 4)
+  42   1          {
+  43   2              // 在 输入界面按下切换，代表数据进行写入，我们这里将新的值计算出来
+  44   2              if (Seg_show_mode == 1)
+  45   2              {
+  46   3                  new_value = input_data_arr[0] * 1000 + input_data_arr[1] * 100 + input_data_arr[2] * 10 + inpu
+             -t_data_arr[3];
+  47   3                  EEPROM_string_new[0] = input_time[0];
+  48   3                  EEPROM_string_new[1] = input_time[1];
+  49   3                  EEPROM_string_new[2] = new_value >> 8;
+  50   3                  EEPROM_string_new[3] = new_value & 0x00ff;
+  51   3                  EEPROM_Write(EEPROM_string_new, 0, 4);
+  52   3                  data_up_flag = (new_value > old_value);
+  53   3                  old_value = new_value;
+C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 2   
+
+  54   3              }
+  55   2              Seg_show_mode = (++Seg_show_mode) % 3;
+  56   2              for (i = 0; i < 4; i++)
+  57   2                  input_data_arr[i] = 10; // 直接对应灭，每次进行界面切换的时候就清空一下数组
+  58   2              input_data_index = 0;       // 输入数据索引重置
+  59   2          }
+  60   1          if (Seg_show_mode == 1)
+  61   1          {
+  62   2              // 清空数据
+  63   2              if (Key_Down == 5)
+  64   2              {
+  65   3                  for (i = 0; i < 4; i++)
+  66   3                      input_data_arr[i] = 10; // 直接对应灭，每次进行界面切换的时候就清空一下数组
+  67   3                  input_data_index = 0;       // 输入数据索引重置
+  68   3              }
+  69   2              // 输入第一位数据了
+  70   2              if (input_data_index == 1)
+  71   2                  Read_Rtc(input_time);
+  72   2              // 当输入的数据不足四位的时候
+  73   2              if (input_data_index < 4)
+  74   2              {
+  75   3                  switch (Key_Down)
+  76   3                  {
+  77   4                  case 6:
+  78   4                      input_data_arr[input_data_index] = 0;
+  79   4                      input_data_index++;
+  80   4                      break;
+  81   4                  case 8:
+  82   4                      input_data_arr[input_data_index] = 7;
+  83   4                      input_data_index++;
+  84   4                      break;
+  85   4                  case 12:
+  86   4                      input_data_arr[input_data_index] = 8;
+  87   4                      input_data_index++;
+  88   4                      break;
+  89   4                  case 16:
+  90   4                      input_data_arr[input_data_index] = 9;
+  91   4                      input_data_index++;
+  92   4                      break;
+  93   4                  case 9:
+  94   4                      input_data_arr[input_data_index] = 4;
+  95   4                      input_data_index++;
+  96   4                      break;
+  97   4                  case 13:
+  98   4                      input_data_arr[input_data_index] = 5;
+  99   4                      input_data_index++;
+ 100   4                      break;
+ 101   4                  case 17:
+ 102   4                      input_data_arr[input_data_index] = 6;
+ 103   4                      input_data_index++;
+ 104   4                      break;
+ 105   4                  case 10:
+ 106   4                      input_data_arr[input_data_index] = 1;
+ 107   4                      input_data_index++;
+ 108   4                      break;
+ 109   4                  case 14:
+ 110   4                      input_data_arr[input_data_index] = 2;
+ 111   4                      input_data_index++;
+ 112   4                      break;
+ 113   4                  case 18:
+ 114   4                      input_data_arr[input_data_index] = 3;
+ 115   4                      input_data_index++;
+C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 3   
+
+ 116   4                      break;
+ 117   4                  }
+ 118   3              }
+ 119   2          }
+ 120   1      }
+ 121          /* 数码管处理函数 */
+ 122          void Seg_Proc()
+ 123          {
+ 124   1          uchar i;
+ 125   1          if (Seg_Slow_Down)
+ 126   1              return;
+ 127   1          Seg_Slow_Down = 1;
+ 128   1          switch (Seg_show_mode)
+ 129   1          {
+ 130   2          case 0:
+ 131   2              /* 时间 */
+ 132   2              Read_Rtc(ucRtc);
+ 133   2              Seg_Buf[0] = ucRtc[0] / 16;
+ 134   2              Seg_Buf[1] = ucRtc[0] % 16;
+ 135   2              Seg_Buf[2] = 11; //-
+ 136   2              Seg_Buf[3] = ucRtc[1] / 16;
+ 137   2              Seg_Buf[4] = ucRtc[1] % 16;
+ 138   2              Seg_Buf[5] = 11; //-
+ 139   2              Seg_Buf[6] = ucRtc[2] / 16;
+ 140   2              Seg_Buf[7] = ucRtc[2] % 16;
+ 141   2              break;
+ 142   2      
+ 143   2          case 1:
+ 144   2              /* 输入 */
+ 145   2              Seg_Buf[0] = 12; // C
+ 146   2              Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = 10;
+ 147   2              // 没有输入的时候直接是空的
+ 148   2              if (input_data_index == 0)
+ 149   2              {
+ 150   3                  Seg_Buf[4] = Seg_Buf[5] = Seg_Buf[6] = Seg_Buf[7] = 10;
+ 151   3              }
+ 152   2              else
+ 153   2              {
+ 154   3                  for (i = 0; i < input_data_index; i++)
+ 155   3                  {
+ 156   4                      Seg_Buf[7 - i] = input_data_arr[input_data_index - i - 1];
+ 157   4                  }
+ 158   3              }
+ 159   2              break;
+ 160   2          case 2:
+ 161   2              /* 记录 */
+ 162   2              Seg_Buf[0] = 13; // E
+ 163   2              Seg_Buf[1] = Seg_Buf[2] = 10;
+ 164   2              Seg_Buf[3] = input_time[0] / 16;
+ 165   2              Seg_Buf[4] = input_time[0] % 16;
+ 166   2              Seg_Buf[5] = 11; //-
+ 167   2              Seg_Buf[6] = input_time[1] / 16;
+ 168   2              Seg_Buf[7] = input_time[1] % 16;
+ 169   2              break;
+ 170   2          }
+ 171   1      }
+ 172          
+ 173          /* LED处理函数 */
+ 174          void Led_Proc()
+ 175          {
+ 176   1          ucLed[0] = (Seg_show_mode == 0);
+ 177   1          ucLed[1] = (Seg_show_mode == 1);
+C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 4   
+
+ 178   1          ucLed[2] = (Seg_show_mode == 2);
+ 179   1      
+ 180   1          ucLed[3] = data_up_flag;
+ 181   1      }
+ 182          
+ 183          /* 定时器0中断初始化 */
+ 184          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 185          {
+ 186   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 187   1          TMOD &= 0xF0; // 设置定时器模式
+ 188   1          TL0 = 0x18;   // 设置定时初始值
+ 189   1          TH0 = 0xFC;   // 设置定时初始值
+ 190   1          TF0 = 0;      // 清除TF0标志
+ 191   1          TR0 = 1;      // 定时器0开始计时
+ 192   1          ET0 = 1;
+ 193   1          EA = 1;
+ 194   1      }
+ 195          
+ 196          /* 定时器0中断函数 */
+ 197          void Timer0_ISR(void) interrupt 1
+ 198          {
+ 199   1          if (++Key_Slow_Down == 10)
+ 200   1              Key_Slow_Down = 0;
+ 201   1          if (++Seg_Slow_Down == 200)
+ 202   1              Seg_Slow_Down = 0;
+ 203   1          if (++Seg_Pos == 8)
+ 204   1              Seg_Pos = 0;
+ 205   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 206   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 207   1      }
+ 208          
+ 209          void main()
+ 210          {
+ 211   1          System_Init();
+ 212   1          Timer0_Init();
+ 213   1          Set_Rtc(ucRtc);
+ 214   1          EEPROM_Read(EEPROM_string_old, 0, 4);
+ 215   1          old_value = EEPROM_string_old[2] << 8 | EEPROM_string_old[3];
+ 216   1          while (1)
+ 217   1          {
+ 218   2              Key_Proc();
+ 219   2              Seg_Proc();
+ 220   2              Led_Proc();
+ 221   2          }
+ 222   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    834    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     55       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

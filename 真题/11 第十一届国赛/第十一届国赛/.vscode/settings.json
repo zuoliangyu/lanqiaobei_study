@@ -9,6 +9,8 @@
         "intrins.h": "c",
         "ultrasound.h": "c",
         "stdio.h": "c",
-        "uart.h": "c"
+        "uart.h": "c",
+        "stc15f2k60s2.h": "c",
+        "STC15F2K60S2.H": "cpp"
     }
 }

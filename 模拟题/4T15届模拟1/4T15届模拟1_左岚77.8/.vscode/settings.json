@@ -10,6 +10,10 @@
         "ultrasound.h": "c",
         "stdio.h": "c",
         "uart.h": "c",
-        "key.h": "c"
+        "stc15f2k60s2.h": "c",
+        "key.h": "c",
+        "ultrasonic.h": "c",
+        "led.h": "c",
+        "STC15F2K60S2.H": "cpp"
     }
 }

@@ -5,6 +5,8 @@
         "onewire.h": "c",
         "REG52.H": "cpp",
         "iic.h": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "key.h": "c",
+        "STC15F2K60S2.H": "cpp"
     }
 }
