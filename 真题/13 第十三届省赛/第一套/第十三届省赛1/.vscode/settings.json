@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "seg.h": "c",
+        "init.h": "c",
+        "main.h": "c",
+        "ds1302.h": "c",
+        "onewire.h": "c"
+    }
+}
