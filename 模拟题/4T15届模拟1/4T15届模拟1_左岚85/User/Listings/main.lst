@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/29/2024 17:23:08 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -14,7 +14,7 @@ line level    source
    4          
    5          /* 数码管显示 */
    6          uchar Seg_Slow_Down;                                // 数码管减速
-   7          uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   7          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
    8          uchar Seg_Pos;                                      // 数码管指示
    9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 某位是否显示小数点
   10          
@@ -55,14 +55,14 @@ line level    source
   45   2              {
   46   3                  new_value = input_data_arr[0] * 1000 + input_data_arr[1] * 100 + input_data_arr[2] * 10 + inpu
              -t_data_arr[3];
-  47   3                  EEPROM_string_new[0] = input_time[0];
-  48   3                  EEPROM_string_new[1] = input_time[1];
+  47   3                  EEPROM_string_new[0] = input_time[0] / 16 * 10 + input_time[0] % 16;
+  48   3                  EEPROM_string_new[1] = input_time[1] / 16 * 10 + input_time[1] % 16;
   49   3                  EEPROM_string_new[2] = new_value >> 8;
   50   3                  EEPROM_string_new[3] = new_value & 0x00ff;
   51   3                  EEPROM_Write(EEPROM_string_new, 0, 4);
   52   3                  data_up_flag = (new_value > old_value);
   53   3                  old_value = new_value;
-C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 2   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/29/2024 17:23:08 PAGE 2   
 
   54   3              }
   55   2              Seg_show_mode = (++Seg_show_mode) % 3;
@@ -126,7 +126,7 @@ line level    source
  113   4                  case 18:
  114   4                      input_data_arr[input_data_index] = 3;
  115   4                      input_data_index++;
-C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 3   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/29/2024 17:23:08 PAGE 3   
 
  116   4                      break;
  117   4                  }
@@ -190,7 +190,7 @@ line level    source
  175          {
  176   1          ucLed[0] = (Seg_show_mode == 0);
  177   1          ucLed[1] = (Seg_show_mode == 1);
-C51 COMPILER V9.59.0.0   MAIN                                                              02/28/2024 20:57:12 PAGE 4   
+C51 COMPILER V9.59.0.0   MAIN                                                              02/29/2024 17:23:08 PAGE 4   
 
  178   1          ucLed[2] = (Seg_show_mode == 2);
  179   1      
@@ -240,7 +240,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    834    ----
+   CODE SIZE        =    867    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

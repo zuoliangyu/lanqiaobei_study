@@ -4,7 +4,7 @@ uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 /* 数码管显示 */
 uchar Seg_Slow_Down;                                // 数码管减速
-uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
 uchar Seg_Pos;                                      // 数码管指示
 uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 某位是否显示小数点
 
@@ -44,8 +44,8 @@ void Key_Proc()
         if (Seg_show_mode == 1)
         {
             new_value = input_data_arr[0] * 1000 + input_data_arr[1] * 100 + input_data_arr[2] * 10 + input_data_arr[3];
-            EEPROM_string_new[0] = input_time[0];
-            EEPROM_string_new[1] = input_time[1];
+            EEPROM_string_new[0] = input_time[0] / 16 * 10 + input_time[0] % 16;
+            EEPROM_string_new[1] = input_time[1] / 16 * 10 + input_time[1] % 16;
             EEPROM_string_new[2] = new_value >> 8;
             EEPROM_string_new[3] = new_value & 0x00ff;
             EEPROM_Write(EEPROM_string_new, 0, 4);
