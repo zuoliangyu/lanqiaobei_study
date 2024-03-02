@@ -147,6 +147,7 @@ void Seg_Porc(void)
     old_light_value = temp_light;
     if (trigger_flag)
     {
+
         Seg_Buf[1] = Seg_Buf[2] = 10;
         Seg_Point[6] = 0;
         /* 温湿度界面 */
@@ -167,6 +168,7 @@ void Seg_Porc(void)
         // 有效数据
         else
         {
+            Read_Rtc(trigger_time);
             error_humidity_flag = 0; // 数据有效
             wring_flag = (temp_temperature_10x > para_temperature * 10);
             if ((trigger_count >= 2) &&
