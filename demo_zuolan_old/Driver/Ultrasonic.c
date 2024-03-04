@@ -32,24 +32,25 @@ void Ut_Wave_Init()
 unsigned char Ut_Wave_Data()
 {
     unsigned int time;
-    TMOD &= 0x0f;
-    TH1 = TL1 = 0;
-    Ut_Wave_Init();
-    TR1 = 1;
-    while ((Rx == 1) && (TF1 == 0))
-        ; // 数据读取未结束，并且没有溢出
-    TR1 = 0;
-    // 没有溢出，数据读取结束
-    if (TF1 == 0)
+    CH = CL = 0; // 清空PCA寄存器计数值
+    CCON = 0;    // 初始化PCA控制寄存器/PCA定时器停止/清除CF/
+
+    EA = 0;         // 关闭总中断
+    Ut_Wave_Init(); // 发送超声波驱动信号
+    EA = 1;         // 开启总中断
+    CR = 1;         // PCA开始计数
+    while (Rx && !CF)
+        ;   // 等待接收
+    CR = 0; // PCA停止计数
+    if (CF == 0)
     {
-        time = TH1 << 8 | TL1; // 单位为毫秒
+        time = CH << 8 | CL; // 单位为毫秒
         // L=V*T/2
         return (time * 0.017); // 返回的单位是cm
     }
-    // 数据溢出，认定此次测量无效
     else
     {
-        TF1 = 0;
+        CF = 0;
         return 0;
     }
 }
