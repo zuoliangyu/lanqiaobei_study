@@ -146,7 +146,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
+          <TargetSelection>11</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -397,19 +397,9 @@
               <FilePath>..\Driver\ds1302.c</FilePath>
             </File>
             <File>
-              <FileName>iic.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Driver\iic.c</FilePath>
-            </File>
-            <File>
               <FileName>onewire.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Driver\onewire.c</FilePath>
-            </File>
-            <File>
-              <FileName>ultrasound.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Driver\ultrasound.c</FilePath>
             </File>
           </Files>
         </Group>

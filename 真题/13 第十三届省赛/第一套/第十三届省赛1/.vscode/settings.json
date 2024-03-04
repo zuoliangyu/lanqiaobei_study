@@ -4,6 +4,14 @@
         "init.h": "c",
         "main.h": "c",
         "ds1302.h": "c",
-        "onewire.h": "c"
+        "onewire.h": "c",
+        "iic.h": "c",
+        "intrins.h": "c",
+        "ultrasound.h": "c",
+        "stdio.h": "c",
+        "uart.h": "c",
+        "INTRINS.H": "cpp",
+        "key.h": "c",
+        "led.h": "c"
     }
 }
