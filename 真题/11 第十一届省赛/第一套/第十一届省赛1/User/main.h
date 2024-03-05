@@ -6,7 +6,6 @@
 #include <Seg.h>          //数码管底层驱动专用头文件
 #include <stdio.h>        //标准库底层驱动专用头文件
 #include <onewire.h>      //温度传感器底层驱动
-#include <ds1302.h>       //ds1302底层驱动专用头文件
 #include <iic.h>          //IIC底层驱动专用头文件
 #include <intrins.h>
 #include <stdio.h>

@@ -18,15 +18,7 @@ bit count_down_flag;	  // 下降沿计数标志位
 uint time_5s;
 
 uchar error_count;
-void init_Seg()
-{
-	uchar i;
-	for (i = 0; i < 8; i++)
-	{
-		Seg_Buf[i] = 10;
-		Seg_Point[i] = 0;
-	}
-}
+
 /* 键盘处理函数 */
 void Key_Proc()
 {
@@ -63,6 +55,9 @@ void Key_Proc()
 		if (Seg_show_mode == 2)
 			count_down = 0;
 		error_count = 0;
+		break;
+	case 0:
+		// 空载，用于防止down默认的0造成影响
 		break;
 	default:
 		error_count = (++error_count >= 3) ? 3 : error_count;

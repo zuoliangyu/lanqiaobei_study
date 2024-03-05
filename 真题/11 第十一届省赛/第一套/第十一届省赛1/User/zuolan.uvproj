@@ -146,7 +146,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
+          <TargetSelection>11</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -390,11 +390,6 @@
               <FileName>Init.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Driver\Init.c</FilePath>
-            </File>
-            <File>
-              <FileName>ds1302.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Driver\ds1302.c</FilePath>
             </File>
             <File>
               <FileName>iic.c</FileName>
