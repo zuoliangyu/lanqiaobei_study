@@ -18,6 +18,26 @@ uchar ucRtc[3] = {0x13, 0x11, 0x11}; // 初始化时间13:11:11
 
 /* 键盘方面 */
 uchar Key_Slow_Down;
+
+/* 数据 */
+uint int_data; // 整数数据
+
+#define N 10
+uint data_array[N]; // 窗口大小
+uint sum_temp;      // 总和
+uchar index_temp;   // 计数
+uchar arr_count;    // 数组数据数量
+
+uint filter(uint new_data)
+{
+    sum_temp -= data_array[index_temp];
+    data_array[index_temp] = new_data;
+    sum_temp += data_array[index_temp];
+    index_temp = (++index_temp) % N;                    // 保证index_temp在0~N-1之间轮转
+    arr_count = (++arr_count == N + 1) ? N : arr_count; // 锁定数组中的元素个数
+    return sum_temp / arr_count;
+}
+
 /* 键盘处理函数 */
 void Key_Proc()
 {
@@ -30,6 +50,8 @@ void Key_Proc()
     Key_Down = Key_Val & (Key_Old ^ Key_Val);
     Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
     Key_Old = Key_Val;
+    if (Key_Down == 4)
+        EEPROM_Write(&int_data, 0, 2);
 }
 /* 数码管处理函数 */
 void Seg_Proc()
@@ -115,14 +137,26 @@ void Delay750ms(void) //@12.000MHz
         } while (--j);
     } while (--i);
 }
+uchar passwd = 123;
+uchar input_passwd;
 void main()
 {
 
     Timer0_Init();
     Uart1_Init();
     Set_Rtc(ucRtc);
-    Delay750ms();
     rd_temperature();
+    Delay750ms();
+    EEPROM_Read(&input_passwd, 8, 1); // 用不会写入的地方做校验
+    if (input_passwd != passwd)       // 校验失败，之前未写入数据1/256概率出问题
+    {
+        EEPROM_Write(&passwd, 8, 1);
+    }
+    else // 校验通过，读取我们需要的数据
+    {
+        EEPROM_Read(&int_data, 0, 2);
+    }
+
     while (1)
     {
         Key_Proc();

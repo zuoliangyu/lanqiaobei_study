@@ -9,7 +9,7 @@ void Delay12us(void) //@12.000MHz
 
     _nop_();
     _nop_();
-    i = 33;
+    i = 33; // 38
     while (--i)
         ;
 }
@@ -35,13 +35,13 @@ unsigned char Ut_Wave_Data()
     CH = CL = 0; // 清空PCA寄存器计数值
     CCON = 0;    // 初始化PCA控制寄存器/PCA定时器停止/清除CF/
 
-    EA = 0;         // 关闭总中断
-    Ut_Wave_Init(); // 发送超声波驱动信号
-    EA = 1;         // 开启总中断
-    CR = 1;         // PCA开始计数
-    while (Rx && !CF)
-        ;   // 等待接收
-    CR = 0; // PCA停止计数
+    EA = 0;           // 关闭总中断
+    Ut_Wave_Init();   // 发送超声波驱动信号
+    EA = 1;           // 开启总中断
+    CR = 1;           // PCA开始计数
+    while (Rx && !CF) // TF1
+        ;             // 等待接收
+    CR = 0;           // PCA停止计数
     if (CF == 0)
     {
         time = CH << 8 | CL; // 单位为毫秒

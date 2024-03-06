@@ -5,7 +5,19 @@
 */
 #include "onewire.h"
 #include "REG52.H"
-sbit DQ = P1 ^ 4; // 单总线数据口
+#include "intrins.h"
+sbit DQ = P1 ^ 4;	// 单总线数据口
+void Delay4us(void) //@12.000MHz
+{
+	unsigned char data i;
+
+	_nop_();
+	_nop_();
+	i = 9;
+	while (--i)
+		;
+}
+
 //
 void Delay_OneWire(unsigned int t)
 {
@@ -43,6 +55,7 @@ unsigned char Read_DS18B20(void)
 		DQ = 0;
 		dat >>= 1;
 		DQ = 1;
+		Delay4us();
 		if (DQ)
 		{
 			dat |= 0x80;
@@ -75,7 +88,7 @@ float rd_temperature()
 	init_ds18b20();
 	Write_DS18B20(0xcc); // 跳过ROM
 	Write_DS18B20(0x44); // 启动温度转换
-
+	Delay_OneWire(200);	 // 等待温度转换
 	init_ds18b20();
 	Write_DS18B20(0xcc); // 跳过ROM
 	Write_DS18B20(0xbe); // 读取温度值
