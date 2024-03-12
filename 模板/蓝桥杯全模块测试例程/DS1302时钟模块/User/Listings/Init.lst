@@ -1,0 +1,36 @@
+C51 COMPILER V9.59.0.0   INIT                                                              03/12/2024 11:36:12 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE INIT
+OBJECT MODULE PLACED IN .\Objects\Init.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\Driver\Init.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECT
+                    -EXTEND PRINT(.\Listings\Init.lst) TABS(2) OBJECT(.\Objects\Init.obj)
+
+line level    source
+
+   1          #include <Init.h>
+   2          
+   3          void System_Init()
+   4          {
+   5   1          P0 = 0xff;
+   6   1          P2 = P2 & 0x1f | 0x80;
+   7   1          P2 &= 0x1f;
+   8   1      
+   9   1          P0 = 0x00;
+  10   1          P2 = P2 & 0x1f | 0xa0;
+  11   1          P2 &= 0x1f;
+  12   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     29    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
