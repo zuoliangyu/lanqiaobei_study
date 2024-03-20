@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   IIC                                                               02/19/2024 16:19:56 PAGE 1   
+C51 COMPILER V9.59.0.0   IIC                                                               03/19/2024 17:03:06 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE IIC
@@ -62,7 +62,7 @@ line level    source
   51   1          sda = 1;
   52   1          I2C_Delay(DELAY_TIME);
   53   1      }
-C51 COMPILER V9.59.0.0   IIC                                                               02/19/2024 16:19:56 PAGE 2   
+C51 COMPILER V9.59.0.0   IIC                                                               03/19/2024 17:03:06 PAGE 2   
 
   54          
   55          //
@@ -126,7 +126,7 @@ line level    source
  113          //
  114          void I2CSendAck(unsigned char ackbit)
  115          {
-C51 COMPILER V9.59.0.0   IIC                                                               02/19/2024 16:19:56 PAGE 3   
+C51 COMPILER V9.59.0.0   IIC                                                               03/19/2024 17:03:06 PAGE 3   
 
  116   1          scl = 0;
  117   1          sda = ackbit;

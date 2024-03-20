@@ -1,0 +1,44 @@
+C51 COMPILER V9.59.0.0   UART                                                              03/18/2024 11:18:34 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\Objects\Uart.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\Driver\Uart.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECT
+                    -EXTEND PRINT(.\Listings\Uart.lst) TABS(2) OBJECT(.\Objects\Uart.obj)
+
+line level    source
+
+   1          #include "Uart.h"
+   2          void Uart1_Init(void) // 9600bps@12MHz
+   3          {
+   4   1          SCON = 0x50;  // 8位数据,可变波特率
+   5   1          AUXR |= 0x01; // 串口1选择定时器2为波特率发生器
+   6   1          AUXR |= 0x04; // 定时器时钟1T模式
+   7   1          T2L = 0xC7;   // 设置定时初始值
+   8   1          T2H = 0xFE;   // 设置定时初始值
+   9   1          AUXR |= 0x10; // 定时器2开始计时
+  10   1          ES = 1;       // 打开串口中断
+  11   1          EA = 1;       // 打开总中断
+  12   1      }
+  13          extern char putchar(char ch)
+  14          {
+  15   1          SBUF = ch; // 将ch写入SBUF，发出数据
+  16   1          while (TI == 0)
+  17   1              ;   // 等待发送完成
+  18   1          TI = 0; // 清除发送完成标志
+  19   1          return ch;
+  20   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     31    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

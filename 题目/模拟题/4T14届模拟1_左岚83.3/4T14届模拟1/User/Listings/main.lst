@@ -1,0 +1,202 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/18/2024 11:18:34 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uint Seg_Slow_Down;                                 // 数码管减速
+   7          uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   8          uchar Seg_Pos;                                      // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 某位是否显示小数点
+  10          
+  11          /* 串口方面 */
+  12          uchar Uart_Slow_Down;
+  13          uchar Uart_Buf[20];  // 串口接收到的数据
+  14          uchar Uart_Rx_Index; // 串口接收到的数据的指针
+  15          
+  16          /* 键盘方面 */
+  17          uchar Key_Slow_Down;
+  18          
+  19          /* 显示 */
+  20          uchar Seg_show_mode; // 0 距离显示 1 参数显示
+  21          uchar Dis_value;
+  22          uchar Dis_para;
+  23          bit Send_data_flag;
+  24          bit Wring_flag;
+  25          bit Led_show_flag;
+  26          uchar time_200ms;
+  27          /* 键盘处理函数 */
+  28          void Key_Proc()
+  29          {
+  30   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  31   1          if (Key_Slow_Down)
+  32   1              return;
+  33   1          Key_Slow_Down = 1;
+  34   1      
+  35   1          Key_Val = Key_Read();
+  36   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  37   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  38   1          Key_Old = Key_Val;
+  39   1          if (Key_Down == 4)
+  40   1              Seg_show_mode = (++Seg_show_mode) % 2;
+  41   1          if (Seg_show_mode == 0)
+  42   1          {
+  43   2              if (Key_Down == 8)
+  44   2                  Dis_para = Dis_value;
+  45   2          }
+  46   1          else
+  47   1          {
+  48   2              if (Key_Down == 12)
+  49   2                  Dis_para = (Dis_para >= 245) ? 255 : Dis_para + 10;
+  50   2              else if (Key_Down == 16)
+  51   2                  Dis_para = (Dis_para <= 10) ? 0 : Dis_para - 10;
+  52   2          }
+  53   1          if (Key_Down == 9)
+  54   1              Send_data_flag = 1;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/18/2024 11:18:34 PAGE 2   
+
+  55   1      }
+  56          /* 数码管处理函数 */
+  57          void Seg_Proc()
+  58          {
+  59   1          uchar i;
+  60   1          if (Seg_Slow_Down)
+  61   1              return;
+  62   1          Seg_Slow_Down = 1;
+  63   1          Dis_value = Ut_Wave_Data();
+  64   1          if (Dis_value > Dis_para)
+  65   1              Wring_flag = 1;
+  66   1          else
+  67   1              Wring_flag = 0;
+  68   1          Seg_Buf[0] = 11; // U
+  69   1          Seg_Buf[1] = Seg_show_mode + 1;
+  70   1          memset(Seg_Buf + 2, 10, 3);
+  71   1          Seg_Buf[5] = (Seg_show_mode == 0) ? Dis_value / 100 % 10
+  72   1                                            : Dis_para / 1000 % 10;
+  73   1          Seg_Buf[6] = (Seg_show_mode == 0) ? Dis_value / 10 % 10
+  74   1                                            : Dis_para / 100 % 10;
+  75   1          Seg_Buf[7] = (Seg_show_mode == 0) ? Dis_value % 10
+  76   1                                            : Dis_para / 10 % 10;
+  77   1          for (i = 5; i < 7; i++)
+  78   1          {
+  79   2              if (Seg_Buf[i - 1] == 10 && Seg_Buf[i] == 0)
+  80   2                  Seg_Buf[i] = 10;
+  81   2              else
+  82   2                  break;
+  83   2          }
+  84   1      }
+  85          
+  86          /* LED处理函数 */
+  87          void Led_Proc()
+  88          {
+  89   1          ucLed[0] = (Seg_show_mode == 0);
+  90   1          ucLed[1] = (Seg_show_mode == 1);
+  91   1          ucLed[2] = Led_show_flag;
+  92   1          memset(ucLed + 3, 0, 5);
+  93   1      }
+  94          
+  95          /* 串口处理函数 */
+  96          void Uart_Proc()
+  97          {
+  98   1          if (Uart_Slow_Down)
+  99   1              return;
+ 100   1          Uart_Slow_Down = 1;
+ 101   1          if (Send_data_flag)
+ 102   1          {
+ 103   2              printf("Distance:%bucm", Dis_value);
+ 104   2              Send_data_flag = 0;
+ 105   2          }
+ 106   1      }
+ 107          
+ 108          /* 定时器0中断初始化 */
+ 109          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 110          {
+ 111   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 112   1          TMOD &= 0xF0; // 设置定时器模式
+ 113   1          TL0 = 0x18;   // 设置定时初始值
+ 114   1          TH0 = 0xFC;   // 设置定时初始值
+ 115   1          TF0 = 0;      // 清除TF0标志
+ 116   1          TR0 = 1;      // 定时器0开始计时
+C51 COMPILER V9.59.0.0   MAIN                                                              03/18/2024 11:18:34 PAGE 3   
+
+ 117   1          ET0 = 1;
+ 118   1          EA = 1;
+ 119   1      }
+ 120          
+ 121          /* 定时器0中断函数 */
+ 122          void Timer0_ISR(void) interrupt 1
+ 123          {
+ 124   1          if (++Key_Slow_Down == 10)
+ 125   1              Key_Slow_Down = 0;
+ 126   1          if (++Seg_Slow_Down == 300)
+ 127   1              Seg_Slow_Down = 0;
+ 128   1          if (++Uart_Slow_Down == 200)
+ 129   1              Uart_Slow_Down = 0;
+ 130   1          if (++Seg_Pos == 8)
+ 131   1              Seg_Pos = 0;
+ 132   1          if (Wring_flag)
+ 133   1          {
+ 134   2              if (++time_200ms == 200)
+ 135   2              {
+ 136   3                  time_200ms = 0;
+ 137   3                  Led_show_flag ^= 1;
+ 138   3              }
+ 139   2          }
+ 140   1          else
+ 141   1          {
+ 142   2              time_200ms = 0;
+ 143   2              Led_show_flag = 0;
+ 144   2          }
+ 145   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 146   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 147   1      }
+ 148          
+ 149          /* 串口中断服务函数 */
+ 150          void Uart_ISR(void) interrupt 4
+ 151          {
+ 152   1          if (RI == 1) // 串口接收到数据
+ 153   1          {
+ 154   2              Uart_Buf[Uart_Rx_Index] = SBUF;
+ 155   2              Uart_Rx_Index++;
+ 156   2              RI = 0;
+ 157   2          }
+ 158   1      }
+ 159          void main()
+ 160          {
+ 161   1          System_Init();
+ 162   1          Timer0_Init();
+ 163   1          Uart1_Init();
+ 164   1          Dis_para = 30;
+ 165   1          while (1)
+ 166   1          {
+ 167   2              Key_Proc();
+ 168   2              Seg_Proc();
+ 169   2              Uart_Proc();
+ 170   2              Led_Proc();
+ 171   2          }
+ 172   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    635    ----
+   CONSTANT SIZE    =     15    ----
+   XDATA SIZE       =   ----    ----
+C51 COMPILER V9.59.0.0   MAIN                                                              03/18/2024 11:18:34 PAGE 4   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     58    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -97,7 +97,7 @@ void Seg_Proc()
         Vol_level = Ad_Read(0x03) / 51;
         Vol_level = (Vol_level >= 4) ? 4 : Vol_level; // 限制一下，防止出现判定5的极端情况
         if (Para_mode == 1)
-            Para_max = Vol_level * 10 +50;
+            Para_max = Vol_level * 10 + 50;
         else if (Para_mode == 2)
             Para_min = Vol_level * 10;
     }
@@ -112,8 +112,8 @@ void Seg_Proc()
         }
         Seg_Buf[5] = (Distance_value / 100 % 10 == 0) ? 10
                                                       : Distance_value / 100 % 10;
-        Seg_Buf[6] = ((Distance_value / 10 % 10 == 0) && (Seg_Buf[5] == 0)) ? 10
-                                                                            : Distance_value / 10 % 10;
+        Seg_Buf[6] = ((Distance_value / 10 % 10 == 0) && (Seg_Buf[5] == 10)) ? 10
+                                                                             : Distance_value / 10 % 10;
         Seg_Buf[7] = Distance_value % 10;
         break;
 

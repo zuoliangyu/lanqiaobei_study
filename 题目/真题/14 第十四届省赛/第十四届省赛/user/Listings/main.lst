@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2024 17:03:05 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -62,7 +62,7 @@ line level    source
   52   1          aver_temperature_10x = 0; // 平均温度
   53   1          max_humidity = 0;         // 最大湿度
   54   1          aver_humidity_10x = 0;    // 平均湿度
-C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 2   
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2024 17:03:05 PAGE 2   
 
   55   1          trigger_count = 0;        // 触发次数
   56   1          for (i = 0; i < 3; i++)
@@ -126,7 +126,7 @@ line level    source
  114   3                  long_press_flag = 1;
  115   3              }
  116   2              if (Key_Up == 9)
-C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 3   
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2024 17:03:05 PAGE 3   
 
  117   2              {
  118   3                  if (time_2s >= 2000)
@@ -161,255 +161,257 @@ line level    source
  147   1          old_light_value = temp_light;
  148   1          if (trigger_flag)
  149   1          {
- 150   2              Seg_Buf[1] = Seg_Buf[2] = 10;
- 151   2              Seg_Point[6] = 0;
- 152   2              /* 温湿度界面 */
- 153   2              Seg_Buf[0] = 16; // E
- 154   2              temp_temperature_10x = rd_temperature() * 10;
- 155   2              temp_humidity_10x = rd_humidity() * 10;
- 156   2              Seg_Buf[3] = temp_temperature_10x / 100 % 10;
- 157   2              Seg_Buf[4] = temp_temperature_10x / 10 % 10;
- 158   2              Seg_Buf[5] = 11; //-
- 159   2              // 无效数据
- 160   2              if (temp_humidity_10x == 0)
- 161   2              {
- 162   3                  trigger_count--;
- 163   3                  error_humidity_flag = 1;
- 164   3                  Seg_Buf[6] = 17; // A
- 165   3                  Seg_Buf[7] = 17; // A
- 166   3              }
- 167   2              // 有效数据
- 168   2              else
- 169   2              {
- 170   3                  error_humidity_flag = 0; // 数据有效
- 171   3                  wring_flag = (temp_temperature_10x > para_temperature * 10);
- 172   3                  if ((trigger_count >= 2) &&
- 173   3                      (temp_humidity_10x > old_humidity_10x) &&
- 174   3                      (temp_temperature_10x > old_temperature_10x))
- 175   3                      data_up = 1;
- 176   3                  else
- 177   3                      data_up = 0;
- 178   3                  old_humidity_10x = temp_humidity_10x;
-C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 4   
+ 150   2      
+ 151   2              Seg_Buf[1] = Seg_Buf[2] = 10;
+ 152   2              Seg_Point[6] = 0;
+ 153   2              /* 温湿度界面 */
+ 154   2              Seg_Buf[0] = 16; // E
+ 155   2              temp_temperature_10x = rd_temperature() * 10;
+ 156   2              temp_humidity_10x = rd_humidity() * 10;
+ 157   2              Seg_Buf[3] = temp_temperature_10x / 100 % 10;
+ 158   2              Seg_Buf[4] = temp_temperature_10x / 10 % 10;
+ 159   2              Seg_Buf[5] = 11; //-
+ 160   2              // 无效数据
+ 161   2              if (temp_humidity_10x == 0)
+ 162   2              {
+ 163   3                  trigger_count--;
+ 164   3                  error_humidity_flag = 1;
+ 165   3                  Seg_Buf[6] = 17; // A
+ 166   3                  Seg_Buf[7] = 17; // A
+ 167   3              }
+ 168   2              // 有效数据
+ 169   2              else
+ 170   2              {
+ 171   3                  Read_Rtc(trigger_time);
+ 172   3                  error_humidity_flag = 0; // 数据有效
+ 173   3                  wring_flag = (temp_temperature_10x > para_temperature * 10);
+ 174   3                  if ((trigger_count >= 2) &&
+ 175   3                      (temp_humidity_10x > old_humidity_10x) &&
+ 176   3                      (temp_temperature_10x > old_temperature_10x))
+ 177   3                      data_up = 1;
+ 178   3                  else
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2024 17:03:05 PAGE 4   
 
- 179   3                  old_temperature_10x = temp_temperature_10x;
- 180   3                  Seg_Buf[6] = temp_humidity_10x / 100 % 10;
- 181   3                  Seg_Buf[7] = temp_humidity_10x / 10 % 10;
- 182   3                  max_temperature = (max_temperature > temp_temperature_10x) ? max_temperature : temp_temperatur
+ 179   3                      data_up = 0;
+ 180   3                  old_humidity_10x = temp_humidity_10x;
+ 181   3                  old_temperature_10x = temp_temperature_10x;
+ 182   3                  Seg_Buf[6] = temp_humidity_10x / 100 % 10;
+ 183   3                  Seg_Buf[7] = temp_humidity_10x / 10 % 10;
+ 184   3                  max_temperature = (max_temperature > temp_temperature_10x) ? max_temperature : temp_temperatur
              -e_10x;
- 183   3                  max_humidity = (max_humidity > temp_humidity_10x) ? max_humidity : temp_humidity_10x;
- 184   3                  aver_temperature_10x = (aver_temperature_10x * (trigger_count - 1) + temp_temperature_10x) / (
+ 185   3                  max_humidity = (max_humidity > temp_humidity_10x) ? max_humidity : temp_humidity_10x;
+ 186   3                  aver_temperature_10x = (aver_temperature_10x * (trigger_count - 1) + temp_temperature_10x) / (
              -trigger_count);
- 185   3                  aver_humidity_10x = (aver_humidity_10x * (trigger_count - 1) + temp_humidity_10x) / (trigger_c
+ 187   3                  aver_humidity_10x = (aver_humidity_10x * (trigger_count - 1) + temp_humidity_10x) / (trigger_c
              -ount);
- 186   3              }
- 187   2          }
- 188   1          else
- 189   1          {
- 190   2              switch (Seg_show_mode)
- 191   2              {
- 192   3              case 0:
- 193   3                  /* 时间 */
- 194   3                  Read_Rtc(ucRtc);
- 195   3                  Seg_Buf[0] = ucRtc[0] / 16;
- 196   3                  Seg_Buf[1] = ucRtc[0] % 16;
- 197   3                  Seg_Buf[2] = 11; //-
- 198   3                  Seg_Buf[3] = ucRtc[1] / 16;
- 199   3                  Seg_Buf[4] = ucRtc[1] % 16;
- 200   3                  Seg_Buf[5] = 11; //-
- 201   3                  Seg_Buf[6] = ucRtc[2] / 16;
- 202   3                  Seg_Buf[7] = ucRtc[2] % 16;
- 203   3                  break;
- 204   3              case 1:
- 205   3                  /* 回显 */
- 206   3                  switch (re_show_mode)
- 207   3                  {
- 208   4                  case 0:
- 209   4                      /* 温度 */
- 210   4                      Seg_Buf[0] = 12; // C
- 211   4                      if (trigger_count != 0)
- 212   4                      {
- 213   5                          Seg_Buf[2] = max_temperature / 10 % 10;
- 214   5                          Seg_Buf[3] = max_temperature % 10;
- 215   5                          Seg_Buf[4] = 11; //-
- 216   5                          Seg_Buf[5] = aver_temperature_10x / 100 % 10;
- 217   5                          Seg_Buf[6] = aver_temperature_10x / 10 % 10;
- 218   5                          Seg_Buf[7] = aver_temperature_10x % 10;
- 219   5                          Seg_Point[6] = 1;
- 220   5                      }
- 221   4                      break;
- 222   4                  case 1:
- 223   4                      /* 湿度 */
- 224   4                      Seg_Buf[0] = 13; // H
- 225   4                      if (trigger_count != 0)
- 226   4                      {
- 227   5                          Seg_Buf[2] = max_humidity / 10 % 10;
- 228   5                          Seg_Buf[3] = max_humidity % 10;
- 229   5                          Seg_Buf[4] = 11; //-
- 230   5                          Seg_Buf[5] = aver_humidity_10x / 100 % 10;
- 231   5                          Seg_Buf[6] = aver_humidity_10x / 10 % 10;
- 232   5                          Seg_Buf[7] = aver_humidity_10x % 10;
- 233   5                          Seg_Point[6] = 1;
- 234   5                      }
- 235   4                      break;
- 236   4                  case 2:
- 237   4                      /* 时间 */
-C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 5   
+ 188   3              }
+ 189   2          }
+ 190   1          else
+ 191   1          {
+ 192   2              switch (Seg_show_mode)
+ 193   2              {
+ 194   3              case 0:
+ 195   3                  /* 时间 */
+ 196   3                  Read_Rtc(ucRtc);
+ 197   3                  Seg_Buf[0] = ucRtc[0] / 16;
+ 198   3                  Seg_Buf[1] = ucRtc[0] % 16;
+ 199   3                  Seg_Buf[2] = 11; //-
+ 200   3                  Seg_Buf[3] = ucRtc[1] / 16;
+ 201   3                  Seg_Buf[4] = ucRtc[1] % 16;
+ 202   3                  Seg_Buf[5] = 11; //-
+ 203   3                  Seg_Buf[6] = ucRtc[2] / 16;
+ 204   3                  Seg_Buf[7] = ucRtc[2] % 16;
+ 205   3                  break;
+ 206   3              case 1:
+ 207   3                  /* 回显 */
+ 208   3                  switch (re_show_mode)
+ 209   3                  {
+ 210   4                  case 0:
+ 211   4                      /* 温度 */
+ 212   4                      Seg_Buf[0] = 12; // C
+ 213   4                      if (trigger_count != 0)
+ 214   4                      {
+ 215   5                          Seg_Buf[2] = max_temperature / 10 % 10;
+ 216   5                          Seg_Buf[3] = max_temperature % 10;
+ 217   5                          Seg_Buf[4] = 11; //-
+ 218   5                          Seg_Buf[5] = aver_temperature_10x / 100 % 10;
+ 219   5                          Seg_Buf[6] = aver_temperature_10x / 10 % 10;
+ 220   5                          Seg_Buf[7] = aver_temperature_10x % 10;
+ 221   5                          Seg_Point[6] = 1;
+ 222   5                      }
+ 223   4                      break;
+ 224   4                  case 1:
+ 225   4                      /* 湿度 */
+ 226   4                      Seg_Buf[0] = 13; // H
+ 227   4                      if (trigger_count != 0)
+ 228   4                      {
+ 229   5                          Seg_Buf[2] = max_humidity / 10 % 10;
+ 230   5                          Seg_Buf[3] = max_humidity % 10;
+ 231   5                          Seg_Buf[4] = 11; //-
+ 232   5                          Seg_Buf[5] = aver_humidity_10x / 100 % 10;
+ 233   5                          Seg_Buf[6] = aver_humidity_10x / 10 % 10;
+ 234   5                          Seg_Buf[7] = aver_humidity_10x % 10;
+ 235   5                          Seg_Point[6] = 1;
+ 236   5                      }
+ 237   4                      break;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2024 17:03:05 PAGE 5   
 
- 238   4                      Seg_Buf[0] = 14; // F
- 239   4                      Seg_Buf[1] = trigger_count / 10 % 10;
- 240   4                      Seg_Buf[2] = trigger_count % 10;
- 241   4                      if (trigger_count != 0)
- 242   4                      {
- 243   5                          Seg_Buf[3] = trigger_time[0] / 16;
- 244   5                          Seg_Buf[4] = trigger_time[0] % 16;
- 245   5                          Seg_Buf[5] = 11; //-
- 246   5                          Seg_Buf[6] = trigger_time[1] / 16;
- 247   5                          Seg_Buf[7] = trigger_time[1] % 16;
- 248   5                      }
- 249   4                      break;
- 250   4                  }
- 251   3                  break;
- 252   3              case 2:
- 253   3                  /* 参数 */
- 254   3                  Seg_Buf[0] = 15; // P
- 255   3                  Seg_Buf[6] = para_temperature / 10 % 10;
- 256   3                  Seg_Buf[7] = para_temperature % 10;
- 257   3                  break;
- 258   3              }
- 259   2          }
- 260   1      }
- 261          
- 262          /* LED处理 */
- 263          void Led_Porc(void)
- 264          {
- 265   1          /* 界面 */
- 266   1          ucLed[0] = (Seg_show_mode == 0);
- 267   1          ucLed[1] = (Seg_show_mode == 1);
- 268   1          ucLed[2] = (Seg_show_mode == 2);
- 269   1          /* 报警 */
- 270   1          ucLed[3] = (wring_flag) ? Led_light_flag : 0;
- 271   1          ucLed[4] = error_humidity_flag;
- 272   1          ucLed[5] = data_up;
- 273   1      }
- 274          
- 275          /* 定时器/计数器部分 */
- 276          /* 计数器 */
- 277          void Timer0_Init(void) // 1毫秒@12.000MHz
- 278          {
- 279   1          AUXR &= 0x7F; // 定时器时钟12T模式
- 280   1          TMOD &= 0xF0; // 设置定时器模式
- 281   1          TMOD |= 0x05; // 设置定时器模式
- 282   1          TL0 = 0;      // 设置定时初始值
- 283   1          TH0 = 0;      // 设置定时初始值
- 284   1          TF0 = 0;      // 清除TF0标志
- 285   1          TR0 = 1;      // 定时器0开始计时
- 286   1      }
- 287          /* 定时器 */
- 288          void Timer1_Init(void) // 1毫秒@12.000MHz
- 289          {
- 290   1          AUXR &= 0xBF; // 定时器时钟12T模式
- 291   1          TMOD &= 0x0F; // 设置定时器模式
- 292   1          TL1 = 0x18;   // 设置定时初始值
- 293   1          TH1 = 0xFC;   // 设置定时初始值
- 294   1          TF1 = 0;      // 清除TF1标志
- 295   1          TR1 = 1;      // 定时器1开始计时
- 296   1          ET1 = 1;      // 允许定时器1中断
- 297   1          EA = 1;       // 允许总中断
- 298   1      }
- 299          /* 定时器服务函数 */
-C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 6   
+ 238   4                  case 2:
+ 239   4                      /* 时间 */
+ 240   4                      Seg_Buf[0] = 14; // F
+ 241   4                      Seg_Buf[1] = trigger_count / 10 % 10;
+ 242   4                      Seg_Buf[2] = trigger_count % 10;
+ 243   4                      if (trigger_count != 0)
+ 244   4                      {
+ 245   5                          Seg_Buf[3] = trigger_time[0] / 16;
+ 246   5                          Seg_Buf[4] = trigger_time[0] % 16;
+ 247   5                          Seg_Buf[5] = 11; //-
+ 248   5                          Seg_Buf[6] = trigger_time[1] / 16;
+ 249   5                          Seg_Buf[7] = trigger_time[1] % 16;
+ 250   5                      }
+ 251   4                      break;
+ 252   4                  }
+ 253   3                  break;
+ 254   3              case 2:
+ 255   3                  /* 参数 */
+ 256   3                  Seg_Buf[0] = 15; // P
+ 257   3                  Seg_Buf[6] = para_temperature / 10 % 10;
+ 258   3                  Seg_Buf[7] = para_temperature % 10;
+ 259   3                  break;
+ 260   3              }
+ 261   2          }
+ 262   1      }
+ 263          
+ 264          /* LED处理 */
+ 265          void Led_Porc(void)
+ 266          {
+ 267   1          /* 界面 */
+ 268   1          ucLed[0] = (Seg_show_mode == 0);
+ 269   1          ucLed[1] = (Seg_show_mode == 1);
+ 270   1          ucLed[2] = (Seg_show_mode == 2);
+ 271   1          /* 报警 */
+ 272   1          ucLed[3] = (wring_flag) ? Led_light_flag : 0;
+ 273   1          ucLed[4] = error_humidity_flag;
+ 274   1          ucLed[5] = data_up;
+ 275   1      }
+ 276          
+ 277          /* 定时器/计数器部分 */
+ 278          /* 计数器 */
+ 279          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 280          {
+ 281   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 282   1          TMOD &= 0xF0; // 设置定时器模式
+ 283   1          TMOD |= 0x05; // 设置定时器模式
+ 284   1          TL0 = 0;      // 设置定时初始值
+ 285   1          TH0 = 0;      // 设置定时初始值
+ 286   1          TF0 = 0;      // 清除TF0标志
+ 287   1          TR0 = 1;      // 定时器0开始计时
+ 288   1      }
+ 289          /* 定时器 */
+ 290          void Timer1_Init(void) // 1毫秒@12.000MHz
+ 291          {
+ 292   1          AUXR &= 0xBF; // 定时器时钟12T模式
+ 293   1          TMOD &= 0x0F; // 设置定时器模式
+ 294   1          TL1 = 0x18;   // 设置定时初始值
+ 295   1          TH1 = 0xFC;   // 设置定时初始值
+ 296   1          TF1 = 0;      // 清除TF1标志
+ 297   1          TR1 = 1;      // 定时器1开始计时
+ 298   1          ET1 = 1;      // 允许定时器1中断
+ 299   1          EA = 1;       // 允许总中断
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2024 17:03:05 PAGE 6   
 
- 300          void Timer1_ISR(void) interrupt 3
- 301          {
- 302   1          if (++Key_Slow_Down == 10)
- 303   1              Key_Slow_Down = 0;
- 304   1          if (++Seg_Slow_Down == 200)
- 305   1              Seg_Slow_Down = 0;
- 306   1          if (++Seg_Pos == 8)
- 307   1              Seg_Pos = 0;
- 308   1          if (++time_1s == 1000)
- 309   1          {
- 310   2              time_1s = 0;
- 311   2              freq = TH0 << 8 | TL0;
- 312   2              TH0 = 0;
- 313   2              TL0 = 0;
- 314   2          }
- 315   1          if (trigger_flag)
- 316   1          {
- 317   2              if (++time_3s >= 3000)
- 318   2              {
- 319   3                  time_3s = 3001;
- 320   3              }
- 321   2          }
- 322   1          else
- 323   1              time_3s = 0;
- 324   1          // 开始长按计时
- 325   1          if (long_press_flag)
- 326   1          {
- 327   2              if (++time_2s >= 2000)
- 328   2              {
- 329   3                  time_2s = 2001;
- 330   3              }
- 331   2          }
- 332   1          else
- 333   1              time_2s = 0;
- 334   1          // 处于报警
- 335   1      
- 336   1          if (++time_100ms == 100)
- 337   1          {
- 338   2              time_100ms = 0;
- 339   2              Led_light_flag ^= 1;
- 340   2          }
- 341   1      
- 342   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
- 343   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
- 344   1      }
- 345          void Delay750ms(void) //@12.000MHz
- 346          {
- 347   1          unsigned char data i, j, k;
- 348   1      
- 349   1          _nop_();
- 350   1          _nop_();
- 351   1          i = 35;
- 352   1          j = 51;
- 353   1          k = 182;
- 354   1          do
- 355   1          {
- 356   2              do
- 357   2              {
- 358   3                  while (--k)
- 359   3                      ;
- 360   3              } while (--j);
- 361   2          } while (--i);
-C51 COMPILER V9.59.0.0   MAIN                                                              02/19/2024 16:19:56 PAGE 7   
+ 300   1      }
+ 301          /* 定时器服务函数 */
+ 302          void Timer1_ISR(void) interrupt 3
+ 303          {
+ 304   1          if (++Key_Slow_Down == 10)
+ 305   1              Key_Slow_Down = 0;
+ 306   1          if (++Seg_Slow_Down == 200)
+ 307   1              Seg_Slow_Down = 0;
+ 308   1          if (++Seg_Pos == 8)
+ 309   1              Seg_Pos = 0;
+ 310   1          if (++time_1s == 1000)
+ 311   1          {
+ 312   2              time_1s = 0;
+ 313   2              freq = TH0 << 8 | TL0;
+ 314   2              TH0 = 0;
+ 315   2              TL0 = 0;
+ 316   2          }
+ 317   1          if (trigger_flag)
+ 318   1          {
+ 319   2              if (++time_3s >= 3000)
+ 320   2              {
+ 321   3                  time_3s = 3001;
+ 322   3              }
+ 323   2          }
+ 324   1          else
+ 325   1              time_3s = 0;
+ 326   1          // 开始长按计时
+ 327   1          if (long_press_flag)
+ 328   1          {
+ 329   2              if (++time_2s >= 2000)
+ 330   2              {
+ 331   3                  time_2s = 2001;
+ 332   3              }
+ 333   2          }
+ 334   1          else
+ 335   1              time_2s = 0;
+ 336   1          // 处于报警
+ 337   1      
+ 338   1          if (++time_100ms == 100)
+ 339   1          {
+ 340   2              time_100ms = 0;
+ 341   2              Led_light_flag ^= 1;
+ 342   2          }
+ 343   1      
+ 344   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 345   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 346   1      }
+ 347          void Delay750ms(void) //@12.000MHz
+ 348          {
+ 349   1          unsigned char data i, j, k;
+ 350   1      
+ 351   1          _nop_();
+ 352   1          _nop_();
+ 353   1          i = 35;
+ 354   1          j = 51;
+ 355   1          k = 182;
+ 356   1          do
+ 357   1          {
+ 358   2              do
+ 359   2              {
+ 360   3                  while (--k)
+ 361   3                      ;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2024 17:03:05 PAGE 7   
 
- 362   1      }
- 363          
- 364          void main()
- 365          {
- 366   1      
- 367   1          System_Init();
- 368   1          Timer0_Init();
- 369   1          Timer1_Init();
- 370   1          Set_Rtc(ucRtc);
- 371   1          Delay750ms();
- 372   1          rd_temperature();
- 373   1          while (1)
- 374   1          {
- 375   2              Key_Porc();
- 376   2              Seg_Porc();
- 377   2              Led_Porc();
- 378   2          }
- 379   1      }
+ 362   3              } while (--j);
+ 363   2          } while (--i);
+ 364   1      }
+ 365          
+ 366          void main()
+ 367          {
+ 368   1      
+ 369   1          System_Init();
+ 370   1          Timer0_Init();
+ 371   1          Timer1_Init();
+ 372   1          Set_Rtc(ucRtc);
+ 373   1          Delay750ms();
+ 374   1          rd_temperature();
+ 375   1          while (1)
+ 376   1          {
+ 377   2              Key_Porc();
+ 378   2              Seg_Porc();
+ 379   2              Led_Porc();
+ 380   2          }
+ 381   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1479    ----
+   CODE SIZE        =   1496    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     62       2
+   DATA SIZE        =     62       4
    IDATA SIZE       =   ----    ----
    BIT SIZE         =      6    ----
 END OF MODULE INFORMATION.
