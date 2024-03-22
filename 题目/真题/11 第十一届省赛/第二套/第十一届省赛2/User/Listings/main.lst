@@ -1,0 +1,229 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/22/2024 15:44:49 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uchar Seg_Slow_Down;                                // 数码管减速
+   7          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   8          uchar Seg_Pos;                                      // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 某位是否显示小数点
+  10          
+  11          /* 键盘方面 */
+  12          uchar Key_Slow_Down;
+  13          
+  14          /* 显示 */
+  15          uchar Seg_show_mode; // 0 数据显示 1 参数设置
+  16          /* 数据 */
+  17          uchar T_value;                          // 温度测量
+  18          uchar T_para_max = 30, T_para_min = 20; // 温度参数
+  19          uchar T_para_max_set, T_para_min_set;   // 温度参数设置
+  20          /* 判断 */
+  21          bit para_mode;      // 0 选择温度下限 1选择温度上限
+  22          bit error_data_set; // 错误数据设置
+  23          #define N 10
+  24          uint data_array[N]; // 窗口大小
+  25          uint sum_temp;      // 总和
+  26          uchar index_temp;   // 计数
+  27          uchar arr_count;    // 数组数据数量
+  28          
+  29          uint filter(uint new_data)
+  30          {
+  31   1          sum_temp -= data_array[index_temp];
+  32   1          data_array[index_temp] = new_data;
+  33   1          sum_temp += data_array[index_temp];
+  34   1          index_temp = (++index_temp) % N;                    // 保证index_temp在0~N-1之间轮转
+  35   1          arr_count = (++arr_count == N + 1) ? N : arr_count; // 锁定数组中的元素个数
+  36   1          return sum_temp / arr_count;
+  37   1      }
+  38          
+  39          /* 键盘处理函数 */
+  40          void Key_Proc()
+  41          {
+  42   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  43   1          if (Key_Slow_Down)
+  44   1              return;
+  45   1          Key_Slow_Down = 1;
+  46   1      
+  47   1          Key_Val = Key_Read();
+  48   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  49   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  50   1          Key_Old = Key_Val;
+  51   1          if (Key_Down == 4)
+  52   1          {
+  53   2              Seg_show_mode = (++Seg_show_mode) % 2;
+  54   2              para_mode = 0;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/22/2024 15:44:49 PAGE 2   
+
+  55   2              if (Seg_show_mode == 1)
+  56   2              {
+  57   3                  // 将数据值给设置值
+  58   3                  T_para_max_set = T_para_max;
+  59   3                  T_para_min_set = T_para_min;
+  60   3              }
+  61   2              if (Seg_show_mode == 0)
+  62   2              {
+  63   3                  // 进行参数合理判断
+  64   3                  if (T_para_max_set >= T_para_min_set)
+  65   3                  {
+  66   4                      error_data_set = 0;
+  67   4                      T_para_max = T_para_max_set;
+  68   4                      T_para_min = T_para_min_set;
+  69   4                  }
+  70   3                  else
+  71   3                  {
+  72   4                      error_data_set = 1;
+  73   4                  }
+  74   3              }
+  75   2          }
+  76   1          if (Key_Down == 5)
+  77   1              para_mode ^= 1;
+  78   1          if (Seg_show_mode == 1)
+  79   1          {
+  80   2              if (para_mode == 0)
+  81   2              {
+  82   3                  // 设置温度下限
+  83   3                  if (Key_Down == 6)
+  84   3                      T_para_min_set = (++T_para_min_set) % 100;
+  85   3                  if (Key_Down == 7)
+  86   3                      T_para_min_set = (T_para_min_set == 0) ? 99 : T_para_min_set - 1;
+  87   3              }
+  88   2              else
+  89   2              {
+  90   3                  // 设置温度上限
+  91   3                  if (Key_Down == 6)
+  92   3                      T_para_max_set = (++T_para_max_set) % 100;
+  93   3                  if (Key_Down == 7)
+  94   3                      T_para_max_set = (T_para_max_set == 0) ? 99 : T_para_max_set - 1;
+  95   3              }
+  96   2          }
+  97   1      }
+  98          /* 数码管处理函数 */
+  99          void Seg_Proc()
+ 100          {
+ 101   1          if (Seg_Slow_Down)
+ 102   1              return;
+ 103   1          Seg_Slow_Down = 1;
+ 104   1          T_value = filter(rd_temperature());
+ 105   1          if (T_value > T_para_max)
+ 106   1              Da_Write(4 * 51);
+ 107   1          else if (T_value < T_para_min)
+ 108   1              Da_Write(2 * 51);
+ 109   1          else
+ 110   1              Da_Write(3 * 51);
+ 111   1          switch (Seg_show_mode)
+ 112   1          {
+ 113   2          case 0:
+ 114   2              /* 数据显示 */
+ 115   2              Seg_Buf[0] = 11; // C
+ 116   2              memset(Seg_Buf + 1, 10, 5);
+C51 COMPILER V9.59.0.0   MAIN                                                              03/22/2024 15:44:49 PAGE 3   
+
+ 117   2              Seg_Buf[6] = T_value / 10 % 10;
+ 118   2              Seg_Buf[7] = T_value % 10;
+ 119   2              break;
+ 120   2      
+ 121   2          case 1:
+ 122   2              /* 参数设置 */
+ 123   2              Seg_Buf[0] = 12; // P
+ 124   2              Seg_Buf[1] = Seg_Buf[2] = 10;
+ 125   2              Seg_Buf[3] = T_para_max_set / 10 % 10;
+ 126   2              Seg_Buf[4] = T_para_max_set % 10;
+ 127   2              Seg_Buf[5] = 10;
+ 128   2              Seg_Buf[6] = T_para_min_set / 10 % 10;
+ 129   2              Seg_Buf[7] = T_para_min_set % 10;
+ 130   2              break;
+ 131   2          }
+ 132   1      }
+ 133          
+ 134          /* LED处理函数 */
+ 135          void Led_Proc()
+ 136          {
+ 137   1          ucLed[0] = (T_value > T_para_max);
+ 138   1          ucLed[1] = (T_value < T_para_min);
+ 139   1          ucLed[2] = (T_value < T_para_max && T_value > T_para_min);
+ 140   1          ucLed[3] = error_data_set;
+ 141   1      }
+ 142          
+ 143          /* 定时器0中断初始化 */
+ 144          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 145          {
+ 146   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 147   1          TMOD &= 0xF0; // 设置定时器模式
+ 148   1          TL0 = 0x18;   // 设置定时初始值
+ 149   1          TH0 = 0xFC;   // 设置定时初始值
+ 150   1          TF0 = 0;      // 清除TF0标志
+ 151   1          TR0 = 1;      // 定时器0开始计时
+ 152   1          ET0 = 1;
+ 153   1          EA = 1;
+ 154   1      }
+ 155          
+ 156          /* 定时器0中断函数 */
+ 157          void Timer0_ISR(void) interrupt 1
+ 158          {
+ 159   1          if (++Key_Slow_Down == 10)
+ 160   1              Key_Slow_Down = 0;
+ 161   1          if (++Seg_Slow_Down == 500)
+ 162   1              Seg_Slow_Down = 0;
+ 163   1          if (++Seg_Pos == 8)
+ 164   1              Seg_Pos = 0;
+ 165   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 166   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 167   1      }
+ 168          
+ 169          void Delay750ms(void) //@12.000MHz
+ 170          {
+ 171   1          unsigned char data i, j, k;
+ 172   1      
+ 173   1          _nop_();
+ 174   1          _nop_();
+ 175   1          i = 35;
+ 176   1          j = 51;
+ 177   1          k = 182;
+ 178   1          do
+C51 COMPILER V9.59.0.0   MAIN                                                              03/22/2024 15:44:49 PAGE 4   
+
+ 179   1          {
+ 180   2              do
+ 181   2              {
+ 182   3                  while (--k)
+ 183   3                      ;
+ 184   3              } while (--j);
+ 185   2          } while (--i);
+ 186   1      }
+ 187          void main()
+ 188          {
+ 189   1          System_Init();
+ 190   1          Timer0_Init();
+ 191   1          rd_temperature();
+ 192   1          Delay750ms();
+ 193   1          while (1)
+ 194   1          {
+ 195   2              Key_Proc();
+ 196   2              Seg_Proc();
+ 197   2              Led_Proc();
+ 198   2          }
+ 199   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    664    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     61    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
