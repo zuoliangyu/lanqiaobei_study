@@ -1,0 +1,161 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              02/24/2024 21:37:52 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uchar Seg_Slow_Down;                                // 数码管减速
+   7          uchar Seg_Buf[8] = {5, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   8          uchar Seg_Pos;                                      // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};      // 某位是否显示小数点
+  10          
+  11          /* 串口方面 */
+  12          uchar Uart_Slow_Down;
+  13          uchar Uart_Buf[20];  // 串口接收到的数据
+  14          uchar Uart_Rx_Index; // 串口接收到的数据的指针
+  15          
+  16          /* 时间方面 */
+  17          uchar ucRtc[3] = {0x13, 0x11, 0x11}; // 初始化时间13:11:11
+  18          
+  19          /* 键盘方面 */
+  20          uchar Key_Slow_Down;
+  21          /* 键盘处理函数 */
+  22          void Key_Proc()
+  23          {
+  24   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  25   1          if (Key_Slow_Down)
+  26   1              return;
+  27   1          Key_Slow_Down = 1;
+  28   1      
+  29   1          Key_Val = Key_Read();
+  30   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  31   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  32   1          Key_Old = Key_Val;
+  33   1      }
+  34          /* 数码管处理函数 */
+  35          void Seg_Proc()
+  36          {
+  37   1          if (Seg_Slow_Down)
+  38   1              return;
+  39   1          Seg_Slow_Down = 1;
+  40   1      }
+  41          
+  42          /* LED处理函数 */
+  43          void Led_Proc()
+  44          {
+  45   1      }
+  46          
+  47          /* 串口处理函数 */
+  48          void Uart_Proc()
+  49          {
+  50   1          if (Uart_Slow_Down)
+  51   1              return;
+  52   1          Uart_Slow_Down = 1;
+  53   1          if (Uart_Buf[0] == 'O' && Uart_Buf[1] == 'K')
+  54   1          {
+C51 COMPILER V9.59.0.0   MAIN                                                              02/24/2024 21:37:52 PAGE 2   
+
+  55   2              // 执行相关函数
+  56   2      
+  57   2              memset(Uart_Buf, 0, 20);
+  58   2              Uart_Rx_Index = 0;
+  59   2          }
+  60   1      }
+  61          
+  62          /* 定时器0中断初始化 */
+  63          void Timer0_Init(void)    //1毫秒@12.000MHz
+  64          {
+  65   1        AUXR &= 0x7F;     //定时器时钟12T模式
+  66   1        TMOD &= 0xF0;     //设置定时器模式
+  67   1        TL0 = 0x18;       //设置定时初始值
+  68   1        TH0 = 0xFC;       //设置定时初始值
+  69   1        TF0 = 0;        //清除TF0标志
+  70   1        TR0 = 1;        //定时器0开始计时
+  71   1        ET0=1;
+  72   1        EA=1;
+  73   1      }
+  74          
+  75          /* 定时器0中断函数 */
+  76          void Timer0_ISR(void) interrupt 1
+  77          {
+  78   1          if (++Key_Slow_Down == 10)
+  79   1              Key_Slow_Down = 0;
+  80   1          if (++Seg_Slow_Down == 500)
+  81   1              Seg_Slow_Down = 0;
+  82   1          if (++Uart_Slow_Down == 200)
+  83   1              Uart_Slow_Down = 0;
+  84   1          if (++Seg_Pos == 8)
+  85   1              Seg_Pos = 0;
+  86   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+  87   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+  88   1      }
+  89          
+  90          /* 串口中断服务函数 */
+  91          void Uart_ISR(void) interrupt 4
+  92          {
+  93   1          if (RI == 1) // 串口接收到数据
+  94   1          {
+  95   2              Uart_Buf[Uart_Rx_Index] = SBUF;
+  96   2              Uart_Rx_Index++;
+  97   2              RI = 0;
+  98   2          }
+  99   1      }
+ 100          void Delay750ms(void) //@12.000MHz
+ 101          {
+ 102   1          unsigned char data i, j, k;
+ 103   1      
+ 104   1          _nop_();
+ 105   1          _nop_();
+ 106   1          i = 35;
+ 107   1          j = 51;
+ 108   1          k = 182;
+ 109   1          do
+ 110   1          {
+ 111   2              do
+ 112   2              {
+ 113   3                  while (--k)
+ 114   3                      ;
+ 115   3              } while (--j);
+ 116   2          } while (--i);
+C51 COMPILER V9.59.0.0   MAIN                                                              02/24/2024 21:37:52 PAGE 3   
+
+ 117   1      }
+ 118          void main()
+ 119          {
+ 120   1      
+ 121   1          Timer0_Init();
+ 122   1          Uart1_Init();
+ 123   1          Set_Rtc(ucRtc);
+ 124   1          Delay750ms();
+ 125   1          rd_temperature();
+ 126   1          while (1)
+ 127   1          {
+ 128   2              Key_Proc();
+ 129   2              Seg_Proc();
+ 130   2              Uart_Proc();
+ 131   2              Led_Proc();
+ 132   2          }
+ 133   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    309    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     56    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
