@@ -1,0 +1,227 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/28/2024 20:26:04 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uchar Seg_Slow_Down;                                 // 数码管减速
+   7          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   8          uchar Seg_Pos;                                       // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // 某位是否显示小数点
+  10          
+  11          /* 键盘方面 */
+  12          uchar Key_Slow_Down;
+  13          
+  14          /* 数据 */
+  15          uchar Work_mode;   // 0 睡眠风20 1 自然风30 2 常风70
+  16          bit Seg_show_mode; // 0 显示风速 1 显示温度
+  17          
+  18          /* 时间 */
+  19          uchar Work_time;       // 工作时长
+  20          uchar time_mode_index; // 0->0分 1->1分 2->2分
+  21          uchar time_mode[3] = {0, 60, 120};
+  22          uchar Work_mode_P34[3] = {2, 3, 7};
+  23          uchar time_1ms;
+  24          uint time_1s;
+  25          /* 键盘处理函数 */
+  26          void Key_Proc()
+  27          {
+  28   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  29   1          if (Key_Slow_Down)
+  30   1              return;
+  31   1          Key_Slow_Down = 1;
+  32   1      
+  33   1          Key_Val = Key_Read();
+  34   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  35   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  36   1          Key_Old = Key_Val;
+  37   1      
+  38   1          if (Key_Down == 4)
+  39   1              Work_mode = (++Work_mode) % 3;
+  40   1          if (Key_Down == 5)
+  41   1          {
+  42   2              time_mode_index = (++time_mode_index) % 3;
+  43   2              Work_time = time_mode[time_mode_index];
+  44   2          }
+  45   1          if (Key_Down == 6)
+  46   1              Work_time = 0;
+  47   1          if (Key_Down == 7)
+  48   1              Seg_show_mode ^= 1;
+  49   1      }
+  50          /* 数码管处理函数 */
+  51          void Seg_Proc()
+  52          {
+  53   1          uchar T_value;
+  54   1          if (Seg_Slow_Down)
+C51 COMPILER V9.59.0.0   MAIN                                                              03/28/2024 20:26:04 PAGE 2   
+
+  55   1              return;
+  56   1          Seg_Slow_Down = 1;
+  57   1          Seg_Buf[0] = 11; //-
+  58   1          Seg_Buf[2] = 11; //-
+  59   1          Seg_Buf[3] = 10; // 灭
+  60   1          T_value = rd_temperature();
+  61   1          if (Seg_show_mode == 0)
+  62   1          {
+  63   2              // 现在是风速显示页面
+  64   2              Seg_Buf[1] = Work_mode + 1;
+  65   2              Seg_Buf[4] = Work_time / 1000 % 10;
+  66   2              Seg_Buf[5] = Work_time / 100 % 10;
+  67   2              Seg_Buf[6] = Work_time / 10 % 10;
+  68   2              Seg_Buf[7] = Work_time % 10;
+  69   2          }
+  70   1          else
+  71   1          {
+  72   2              // 现在是温度显示页面
+  73   2              Seg_Buf[1] = 4;
+  74   2              Seg_Buf[4] = 10; // 灭
+  75   2              Seg_Buf[5] = T_value / 10 % 10;
+  76   2              Seg_Buf[6] = T_value % 10;
+  77   2              Seg_Buf[7] = 12; // C
+  78   2          }
+  79   1      }
+  80          
+  81          /* LED处理函数 */
+  82          void Led_Proc()
+  83          {
+  84   1          if (Work_time)
+  85   1          {
+  86   2              // 当计时没有结束
+  87   2              ucLed[0] = (Work_mode == 0);
+  88   2              ucLed[1] = (Work_mode == 1);
+  89   2              ucLed[2] = (Work_mode == 2);
+  90   2          }
+  91   1          else
+  92   1              memset(ucLed, 0, 3);
+  93   1      }
+  94          
+  95          /* 定时器0中断初始化 */
+  96          void Timer0_Init(void) // 1毫秒@12.000MHz
+  97          {
+  98   1          AUXR &= 0x7F; // 定时器时钟12T模式
+  99   1          TMOD &= 0xF0; // 设置定时器模式
+ 100   1          TL0 = 0x18;   // 设置定时初始值
+ 101   1          TH0 = 0xFC;   // 设置定时初始值
+ 102   1          TF0 = 0;      // 清除TF0标志
+ 103   1          TR0 = 1;      // 定时器0开始计时
+ 104   1          ET0 = 1;
+ 105   1          EA = 1;
+ 106   1      }
+ 107          
+ 108          void Timer1_Init(void) // 100微秒@12.000MHz
+ 109          {
+ 110   1          AUXR |= 0x40; // 定时器时钟1T模式
+ 111   1          TMOD &= 0x0F; // 设置定时器模式
+ 112   1          TL1 = 0x50;   // 设置定时初始值
+ 113   1          TH1 = 0xFB;   // 设置定时初始值
+ 114   1          TF1 = 0;      // 清除TF1标志
+ 115   1          TR1 = 1;      // 定时器1开始计时
+ 116   1          ET1 = 1;      // 使能定时器1中断
+C51 COMPILER V9.59.0.0   MAIN                                                              03/28/2024 20:26:04 PAGE 3   
+
+ 117   1      }
+ 118          
+ 119          /* 定时器0中断函数 */
+ 120          void Timer0_ISR(void) interrupt 1
+ 121          {
+ 122   1          if (++Key_Slow_Down == 10)
+ 123   1              Key_Slow_Down = 0;
+ 124   1          if (++Seg_Slow_Down == 500)
+ 125   1              Seg_Slow_Down = 0;
+ 126   1          if (++Seg_Pos == 8)
+ 127   1              Seg_Pos = 0;
+ 128   1          if (Work_time)
+ 129   1          {
+ 130   2              if (++time_1s == 1000)
+ 131   2              {
+ 132   3                  time_1s = 0;
+ 133   3                  Work_time--;
+ 134   3              }
+ 135   2          }
+ 136   1          // 防止重新设定后出现不足1s的bug
+ 137   1          else
+ 138   1          {
+ 139   2              time_1s = 0;
+ 140   2          }
+ 141   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 142   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 143   1      }
+ 144          void Timer1_Isr(void) interrupt 3
+ 145          {
+ 146   1          // 当工作时间没有为0的时候
+ 147   1          if (Work_time)
+ 148   1          {
+ 149   2              if (++time_1ms == 10)
+ 150   2                  time_1ms = 0;
+ 151   2              // 当计时小于我们的时候，就让他高电平，否则低电平，触发占空比
+ 152   2              if (time_1ms < Work_mode_P34[Work_mode])
+ 153   2                  P34 = 1;
+ 154   2              else
+ 155   2                  P34 = 0;
+ 156   2          }
+ 157   1          // 工作时间归零，为了避免bug，我们把全部拉低
+ 158   1          else
+ 159   1          {
+ 160   2              time_1ms = 0;
+ 161   2              P34 = 0;
+ 162   2          }
+ 163   1      }
+ 164          
+ 165          void Delay750ms(void) //@12.000MHz
+ 166          {
+ 167   1          unsigned char data i, j, k;
+ 168   1      
+ 169   1          _nop_();
+ 170   1          _nop_();
+ 171   1          i = 35;
+ 172   1          j = 51;
+ 173   1          k = 182;
+ 174   1          do
+ 175   1          {
+ 176   2              do
+ 177   2              {
+ 178   3                  while (--k)
+C51 COMPILER V9.59.0.0   MAIN                                                              03/28/2024 20:26:04 PAGE 4   
+
+ 179   3                      ;
+ 180   3              } while (--j);
+ 181   2          } while (--i);
+ 182   1      }
+ 183          
+ 184          void main()
+ 185          {
+ 186   1          System_Init();
+ 187   1          Timer0_Init();
+ 188   1          Timer1_Init();
+ 189   1          rd_temperature();
+ 190   1          Delay750ms();
+ 191   1          while (1)
+ 192   1          {
+ 193   2              Key_Proc();
+ 194   2              Seg_Proc();
+ 195   2              Led_Proc();
+ 196   2          }
+ 197   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    575    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     43    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
