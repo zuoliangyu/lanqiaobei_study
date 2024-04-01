@@ -1,0 +1,344 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2024 18:46:25 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uchar Seg_Slow_Down;                                 // 数码管减速
+   7          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   8          uchar Seg_Pos;                                       // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // 某位是否显示小数点
+  10          
+  11          /* 时间方面 */
+  12          uchar ucRtc[3] = {0x23, 0x59, 0x50};    // 初始化时钟时间23:59:50
+  13          uchar alarmRtc[3] = {0x00, 0x00, 0x00}; // 初始化闹钟时间00:00:00
+  14          uchar setUcRtc[3];                      // 时间设置数组 十进制
+  15          uchar setAlarmRtc[3];                   // 闹钟设置数组 十进制
+  16          uchar setUcRtc_index;
+  17          uchar setAlarmRtc_index;
+  18          /* 键盘方面 */
+  19          uchar Key_Slow_Down;
+  20          
+  21          /* 时间方面 */
+  22          uint time_all_1s;
+  23          uint time_blink_1s; // 1s闪烁
+  24          uchar time_200ms;
+  25          uint time_5s;
+  26          /* 数据方面 */
+  27          uchar T_value; // 温度值
+  28          /* 显示方面 */
+  29          uchar Seg_show_mode; // 0 时钟显示 1 时钟设置 2 闹钟设置 3 温度显示
+  30          /* 判断 */
+  31          bit Seg_blink_flag; // 数码管闪烁标志
+  32          bit Led_blink_flag; // LED闪烁标志
+  33          bit ring_flag;      // 闹钟触发标志
+  34          /* 数据处理函数 */
+  35          void Data_Proc()
+  36          {
+  37   1          if (time_all_1s % 500 == 0)
+  38   1          {
+  39   2              // 时间读取
+  40   2              Read_Rtc(ucRtc);
+  41   2              if (ucRtc[0] == alarmRtc[0] && ucRtc[1] == alarmRtc[1] && ucRtc[2] == alarmRtc[2])
+  42   2                  // 闹钟触发
+  43   2                  ring_flag = 1;
+  44   2          }
+  45   1          if (time_all_1s % 500 == 0)
+  46   1          {
+  47   2              // 温度读取
+  48   2              T_value = rd_temperature();
+  49   2          }
+  50   1      }
+  51          /* 键盘处理函数 */
+  52          void Key_Proc()
+  53          {
+  54   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2024 18:46:25 PAGE 2   
+
+  55   1          uchar i;
+  56   1          if (time_all_1s % 10)
+  57   1              return;
+  58   1          Key_Val = Key_Read();
+  59   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  60   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  61   1          Key_Old = Key_Val;
+  62   1          switch (Seg_show_mode)
+  63   1          {
+  64   2          case 0:
+  65   2              if (Key_Down == 7)
+  66   2              {
+  67   3                  // 进入时钟设置
+  68   3                  for (i = 0; i < 3; i++)
+  69   3                  {
+  70   4                      setUcRtc[i] = ucRtc[i] / 16 * 10 + ucRtc[i] % 16;
+  71   4                  }
+  72   3                  Seg_show_mode = 1;
+  73   3              }
+  74   2              else if (Key_Down == 6)
+  75   2              {
+  76   3                  // 进入闹钟设置
+  77   3                  for (i = 0; i < 3; i++)
+  78   3                  {
+  79   4                      setAlarmRtc[i] = alarmRtc[i] / 16 * 10 + alarmRtc[i] % 16;
+  80   4                  }
+  81   3                  Seg_show_mode = 2;
+  82   3              }
+  83   2              if (Key_Old == 4)
+  84   2                  // 进入温度显示
+  85   2                  Seg_show_mode = 3;
+  86   2              break;
+  87   2      
+  88   2          case 1:
+  89   2              if (Key_Down == 7)
+  90   2                  setUcRtc_index++;
+  91   2              if (setUcRtc_index >= 3)
+  92   2              {
+  93   3                  // 返回时钟显示
+  94   3                  Seg_show_mode = 0;
+  95   3                  setUcRtc_index = 0;
+  96   3                  for (i = 0; i < 3; i++)
+  97   3                      ucRtc[i] = setUcRtc[i] / 10 << 4 | setUcRtc[i] % 10;
+  98   3                  Set_Rtc(ucRtc);
+  99   3              }
+ 100   2              if (Key_Down == 5)
+ 101   2              {
+ 102   3                  if (setUcRtc_index == 0)
+ 103   3                      // 修改小时
+ 104   3                      setUcRtc[setUcRtc_index] = (setUcRtc[setUcRtc_index] >= 24) ? 24
+ 105   3                                                                                  : setUcRtc[setUcRtc_index] + 1
+             -;
+ 106   3                  else
+ 107   3                      // 修改分秒
+ 108   3                      setUcRtc[setUcRtc_index] = (setUcRtc[setUcRtc_index] >= 60) ? 60
+ 109   3                                                                                  : setUcRtc[setUcRtc_index] + 1
+             -;
+ 110   3              }
+ 111   2              else if (Key_Down == 4)
+ 112   2                  // 修改时分秒
+ 113   2                  setUcRtc[setUcRtc_index] = (setUcRtc[setUcRtc_index] == 0) ? 0
+ 114   2                                                                             : setUcRtc[setUcRtc_index] - 1;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2024 18:46:25 PAGE 3   
+
+ 115   2              break;
+ 116   2          case 2:
+ 117   2              if (Key_Down == 6)
+ 118   2                  setAlarmRtc_index++;
+ 119   2              if (setAlarmRtc_index >= 3)
+ 120   2              {
+ 121   3                  // 返回时钟显示
+ 122   3                  Seg_show_mode = 0;
+ 123   3                  setAlarmRtc_index = 0;
+ 124   3                  for (i = 0; i < 3; i++)
+ 125   3                      alarmRtc[i] = setAlarmRtc[i] / 10 << 4 | setAlarmRtc[i] % 10;
+ 126   3              }
+ 127   2              if (Key_Down == 5)
+ 128   2              {
+ 129   3                  if (setAlarmRtc_index == 0)
+ 130   3                      // 修改小时
+ 131   3                      setAlarmRtc[setAlarmRtc_index] = (setAlarmRtc[setAlarmRtc_index] >= 24) ? 24
+ 132   3                                                                                              : setAlarmRtc[setA
+             -larmRtc_index] + 1;
+ 133   3                  else
+ 134   3                      // 修改分秒
+ 135   3                      setAlarmRtc[setUcRtc_index] = (setAlarmRtc[setUcRtc_index] >= 60) ? 60
+ 136   3                                                                                        : setAlarmRtc[setAlarmRt
+             -c_index] + 1;
+ 137   3              }
+ 138   2              else if (Key_Down == 4)
+ 139   2                  // 修改时分秒
+ 140   2                  setAlarmRtc[setUcRtc_index] = (setAlarmRtc[setAlarmRtc_index] == 0) ? 0
+ 141   2                                                                                      : setAlarmRtc[setAlarmRtc_
+             -index] - 1;
+ 142   2              break;
+ 143   2          case 3:
+ 144   2              if (Key_Up == 4)
+ 145   2                  // 返回时钟显示
+ 146   2                  Seg_show_mode = 0;
+ 147   2              break;
+ 148   2          }
+ 149   1          if (ring_flag && (Key_Down != 0))
+ 150   1              ring_flag = 0;
+ 151   1      }
+ 152          /* 数码管处理函数 */
+ 153          void Seg_Proc()
+ 154          {
+ 155   1          if (time_all_1s % 20)
+ 156   1              return;
+ 157   1          switch (Seg_show_mode)
+ 158   1          {
+ 159   2          case 0:
+ 160   2              /* 时钟显示 */
+ 161   2              Seg_Buf[0] = ucRtc[0] / 16;
+ 162   2              Seg_Buf[1] = ucRtc[0] % 16;
+ 163   2              Seg_Buf[2] = 11; //-
+ 164   2              Seg_Buf[3] = ucRtc[1] / 16;
+ 165   2              Seg_Buf[4] = ucRtc[1] % 16;
+ 166   2              Seg_Buf[5] = 11; //-
+ 167   2              Seg_Buf[6] = ucRtc[2] / 16;
+ 168   2              Seg_Buf[7] = ucRtc[2] % 16;
+ 169   2              break;
+ 170   2      
+ 171   2          case 1:
+ 172   2              /* 时钟设置 */
+ 173   2              Seg_Buf[0] = setUcRtc[0] / 10;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2024 18:46:25 PAGE 4   
+
+ 174   2              Seg_Buf[1] = setUcRtc[0] % 10;
+ 175   2              Seg_Buf[2] = 11; //-
+ 176   2              Seg_Buf[3] = setUcRtc[1] / 10;
+ 177   2              Seg_Buf[4] = setUcRtc[1] % 10;
+ 178   2              Seg_Buf[5] = 11; //-
+ 179   2              Seg_Buf[6] = setUcRtc[2] / 10;
+ 180   2              Seg_Buf[7] = setUcRtc[2] % 10;
+ 181   2              Seg_Buf[setUcRtc_index * 3] = Seg_blink_flag ? 10
+ 182   2                                                           : Seg_Buf[setUcRtc_index * 3];
+ 183   2              Seg_Buf[setUcRtc_index * 3 + 1] = Seg_blink_flag ? 10
+ 184   2                                                               : Seg_Buf[setUcRtc_index * 3 + 1];
+ 185   2              break;
+ 186   2          case 2:
+ 187   2              /* 闹钟设置 */
+ 188   2              Seg_Buf[0] = setAlarmRtc[0] / 10;
+ 189   2              Seg_Buf[1] = setAlarmRtc[0] % 10;
+ 190   2              Seg_Buf[2] = 11; //-
+ 191   2              Seg_Buf[3] = setAlarmRtc[1] / 10;
+ 192   2              Seg_Buf[4] = setAlarmRtc[1] % 10;
+ 193   2              Seg_Buf[5] = 11; //-
+ 194   2              Seg_Buf[6] = setAlarmRtc[2] / 10;
+ 195   2              Seg_Buf[7] = setAlarmRtc[2] % 10;
+ 196   2              Seg_Buf[setAlarmRtc_index * 3] = Seg_blink_flag ? 10
+ 197   2                                                              : Seg_Buf[setAlarmRtc_index * 3];
+ 198   2              Seg_Buf[setAlarmRtc_index * 3 + 1] = Seg_blink_flag ? 10
+ 199   2                                                                  : Seg_Buf[setAlarmRtc_index * 3 + 1];
+ 200   2              break;
+ 201   2              break;
+ 202   2          case 3:
+ 203   2              /* 温度显示 */
+ 204   2              memset(Seg_Buf, 10, 5);
+ 205   2              Seg_Buf[5] = T_value / 10;
+ 206   2              Seg_Buf[6] = T_value % 10;
+ 207   2              Seg_Buf[7] = 12; // C
+ 208   2              break;
+ 209   2          }
+ 210   1      }
+ 211          
+ 212          /* LED处理函数 */
+ 213          void Led_Proc()
+ 214          {
+ 215   1          ucLed[0] = Led_blink_flag;
+ 216   1      }
+ 217          
+ 218          /* 定时器0中断初始化 */
+ 219          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 220          {
+ 221   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 222   1          TMOD &= 0xF0; // 设置定时器模式
+ 223   1          TL0 = 0x18;   // 设置定时初始值
+ 224   1          TH0 = 0xFC;   // 设置定时初始值
+ 225   1          TF0 = 0;      // 清除TF0标志
+ 226   1          TR0 = 1;      // 定时器0开始计时
+ 227   1          ET0 = 1;
+ 228   1          EA = 1;
+ 229   1      }
+ 230          
+ 231          /* 定时器0中断函数 */
+ 232          void Timer0_ISR(void) interrupt 1
+ 233          {
+ 234   1          if (++time_all_1s == 1000)
+ 235   1              time_all_1s = 0;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2024 18:46:25 PAGE 5   
+
+ 236   1          if (++Seg_Pos == 8)
+ 237   1              Seg_Pos = 0;
+ 238   1          if (Seg_show_mode == 1 || Seg_show_mode == 2)
+ 239   1          {
+ 240   2              // 当进入设置界面的时候，我们开始进行计时
+ 241   2              if (++time_blink_1s == 1000)
+ 242   2              {
+ 243   3                  // 1s闪烁
+ 244   3                  time_blink_1s = 0;
+ 245   3                  Seg_blink_flag ^= 1;
+ 246   3              }
+ 247   2          }
+ 248   1          else
+ 249   1          {
+ 250   2              // 不在设置界面的时候，我们不进行计时
+ 251   2              time_blink_1s = 0;
+ 252   2              Seg_blink_flag = 0;
+ 253   2          }
+ 254   1          if (ring_flag)
+ 255   1          {
+ 256   2              // 当闹钟触发的时候，我们开始计时
+ 257   2              if (++time_200ms == 200)
+ 258   2                  Led_blink_flag ^= 1;
+ 259   2              if (++time_5s == 5000)
+ 260   2                  ring_flag = 0;
+ 261   2          }
+ 262   1          else
+ 263   1          {
+ 264   2              // 防止因为按下按键后第二次计时的bug
+ 265   2              Led_blink_flag = 0;
+ 266   2              time_5s = 0;
+ 267   2              time_200ms = 0;
+ 268   2          }
+ 269   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 270   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 271   1      }
+ 272          
+ 273          void Delay750ms(void) //@12.000MHz
+ 274          {
+ 275   1          unsigned char data i, j, k;
+ 276   1      
+ 277   1          _nop_();
+ 278   1          _nop_();
+ 279   1          i = 35;
+ 280   1          j = 51;
+ 281   1          k = 182;
+ 282   1          do
+ 283   1          {
+ 284   2              do
+ 285   2              {
+ 286   3                  while (--k)
+ 287   3                      ;
+ 288   3              } while (--j);
+ 289   2          } while (--i);
+ 290   1      }
+ 291          void main()
+ 292          {
+ 293   1          System_Init();
+ 294   1          Timer0_Init();
+ 295   1          Set_Rtc(ucRtc);
+ 296   1          rd_temperature();
+ 297   1          Delay750ms();
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2024 18:46:25 PAGE 6   
+
+ 298   1          while (1)
+ 299   1          {
+ 300   2              Data_Proc();
+ 301   2              Key_Proc();
+ 302   2              Seg_Proc();
+ 303   2              Led_Proc();
+ 304   2          }
+ 305   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1276    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     54       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
