@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   KEY                                                               03/18/2024 11:18:34 PAGE 1   
+C51 COMPILER V9.59.0.0   KEY                                                               04/06/2024 10:33:43 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
@@ -62,7 +62,7 @@ line level    source
   52   1          if (P30 == 0)
   53   1              temp = 19;
   54   1          ET0 = 1;
-C51 COMPILER V9.59.0.0   KEY                                                               03/18/2024 11:18:34 PAGE 2   
+C51 COMPILER V9.59.0.0   KEY                                                               04/06/2024 10:33:43 PAGE 2   
 
   55   1          P3 = 0xff;
   56   1          return temp;

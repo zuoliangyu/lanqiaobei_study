@@ -2,10 +2,10 @@
 #include "Led.h"
 #include "Key.h"
 #include "Seg.h"
-#include "Init.h"
 #include "Uart.h"
 #include "Ultrasonic.h"
 #include "intrins.h"
+#include "Init.h"
 #include "stdio.h"
 #include "string.h"
 #define uint unsigned int
