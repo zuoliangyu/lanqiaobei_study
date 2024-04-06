@@ -1,0 +1,285 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/05/2024 15:48:30 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uchar Seg_Slow_Down;                                 // 数码管减速
+   7          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   8          uchar Seg_Pos;                                       // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // 某位是否显示小数点
+  10          
+  11          /* 键盘方面 */
+  12          uchar Key_Slow_Down;
+  13          
+  14          /* 时间方面 */
+  15          uint time_all_1s;
+  16          uchar time_200ms;
+  17          /* 数据 */
+  18          uchar Dis_Data[10];     // 存储数组
+  19          uchar Dis_show_index;   // 显示数组下标
+  20          uchar Dis_Data_index;   // 存储数组下标
+  21          uchar Dis_new, Dis_old; // 这一次和上一次测量的结果
+  22          uchar Blind_area;       // 测量盲区
+  23          uchar Led_blink_cnt;    // 闪烁计数
+  24          /* 显示 */
+  25          uchar Seg_show_mode; // 0 测距显示 1 回显 2 参数设置
+  26          /* 判断 */
+  27          bit Led_blink_start; // 是否开始闪烁
+  28          bit Led_blink_flag;  // 闪烁标志位
+  29          bit Work_mode;       // 0 上一次 1 这一次+上一次
+  30          /* 键盘处理函数 */
+  31          void Key_Proc()
+  32          {
+  33   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  34   1          uint DA_out = 0;
+  35   1          if (time_all_1s % 10)
+  36   1              return;
+  37   1          Key_Val = Key_Read();
+  38   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  39   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  40   1          Key_Old = Key_Val;
+  41   1          switch (Seg_show_mode)
+  42   1          {
+  43   2          case 0:
+  44   2              /* 测距界面 */
+  45   2              if (Key_Down == 4)
+  46   2              {
+  47   3                  Led_blink_start = 1;
+  48   3                  Dis_new = Ut_Wave_Data();
+  49   3                  Dis_Data[Dis_Data_index] = Dis_new;
+  50   3                  Dis_Data_index = (++Dis_Data_index) % 10; // 0-9
+  51   3                  if (Dis_Data_index == 0)
+  52   3                  {
+  53   4                      // 这样写是为了防止溢出
+  54   4                      EEPROM_Write(&Dis_new, 10, 1);
+C51 COMPILER V9.59.0.0   MAIN                                                              04/05/2024 15:48:30 PAGE 2   
+
+  55   4                      // 这里赋值是因为可能上一次断电后有数据保存，所以要用上次的数据
+  56   4                      Dis_old = Dis_Data[9];
+  57   4                  }
+  58   3                  else
+  59   3                  {
+  60   4                      EEPROM_Write(&Dis_new, Dis_Data_index, 1);
+  61   4                      // 这里赋值是因为可能上一次断电后有数据保存，所以要用上次的数据
+  62   4                      Dis_old = Dis_Data[Dis_Data_index - 1];
+  63   4                  }
+  64   3      
+  65   3                  if (Dis_new < Blind_area)
+  66   3                      DA_out = 0;
+  67   3                  else
+  68   3                      DA_out = (Dis_new - Blind_area) * 51 * 0.02;
+  69   3                  if (DA_out >= 255)
+  70   3                      DA_out = 255;
+  71   3                  Da_Write(DA_out);
+  72   3              }
+  73   2              if (Key_Down == 7)
+  74   2                  Work_mode ^= 1;
+  75   2              if (Key_Down == 5)
+  76   2                  // 切换回显
+  77   2                  Seg_show_mode = 1;
+  78   2              if (Key_Down == 6)
+  79   2                  // 切换参数
+  80   2                  Seg_show_mode = 2;
+  81   2              break;
+  82   2      
+  83   2          case 1:
+  84   2              /* 回显界面 */
+  85   2              if (Key_Down == 5)
+  86   2                  // 切换测距
+  87   2                  Seg_show_mode = 0;
+  88   2              if (Key_Down == 7)
+  89   2                  // 翻页
+  90   2                  Dis_show_index = (++Dis_show_index) % 10;
+  91   2              break;
+  92   2          case 2:
+  93   2              /* 参数设置界面 */
+  94   2              if (Key_Down == 6)
+  95   2              {
+  96   3                  // 切换测距
+  97   3                  Seg_show_mode = 0;
+  98   3                  EEPROM_Write(&Blind_area, 0, 1);
+  99   3              }
+ 100   2              if (Key_Down == 7)
+ 101   2                  // 循环添加
+ 102   2                  Blind_area = (Blind_area == 90) ? 0 : Blind_area + 10;
+ 103   2              break;
+ 104   2          }
+ 105   1      }
+ 106          /* 数码管处理函数 */
+ 107          void Seg_Proc()
+ 108          {
+ 109   1          uint Work_data = 0;
+ 110   1      
+ 111   1          if (time_all_1s % 20)
+ 112   1              return;
+ 113   1          switch (Seg_show_mode)
+ 114   1          {
+ 115   2          case 0:
+ 116   2              /* 测距界面 */
+C51 COMPILER V9.59.0.0   MAIN                                                              04/05/2024 15:48:30 PAGE 3   
+
+ 117   2              Seg_Buf[0] = Work_mode;
+ 118   2              Seg_Buf[1] = 10;
+ 119   2              if (Work_mode)
+ 120   2                  Work_data = Dis_old + Dis_new;
+ 121   2              else
+ 122   2                  Work_data = Dis_old;
+ 123   2              Seg_Buf[2] = (Work_data / 100 % 10 == 0) ? 10
+ 124   2                                                       : Work_data / 100 % 10;
+ 125   2              Seg_Buf[3] = (Work_data / 10 % 10 == 0 &&
+ 126   2                            Seg_Buf[2] == 10)
+ 127   2                               ? 10
+ 128   2                               : Work_data / 10 % 10;
+ 129   2              Seg_Buf[4] = Work_data % 10;
+ 130   2              Seg_Buf[5] = Dis_new / 100 % 10;
+ 131   2              Seg_Buf[6] = Dis_new / 10 % 10;
+ 132   2              Seg_Buf[7] = Dis_new % 10;
+ 133   2              break;
+ 134   2      
+ 135   2          case 1:
+ 136   2              /* 回显界面 */
+ 137   2              Seg_Buf[0] = (Dis_show_index + 1) / 10 % 10;
+ 138   2              Seg_Buf[1] = (Dis_show_index + 1) % 10;
+ 139   2              Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = 10;
+ 140   2              Seg_Buf[5] = Dis_Data[Dis_show_index] / 100 % 10;
+ 141   2              Seg_Buf[6] = Dis_Data[Dis_show_index] / 10 % 10;
+ 142   2              Seg_Buf[7] = Dis_Data[Dis_show_index] % 10;
+ 143   2              break;
+ 144   2          case 2:
+ 145   2              /* 参数设置 */
+ 146   2              Seg_Buf[0] = 11; // F
+ 147   2              Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = 10;
+ 148   2              Seg_Buf[5] = (Blind_area / 100 % 10 == 0) ? 10
+ 149   2                                                        : Blind_area / 100 % 10;
+ 150   2              Seg_Buf[6] = (Blind_area / 10 % 10 == 0 &&
+ 151   2                            Seg_Buf[5] == 10)
+ 152   2                               ? 10
+ 153   2                               : Blind_area / 10 % 10;
+ 154   2              Seg_Buf[7] = Blind_area % 10;
+ 155   2              break;
+ 156   2          }
+ 157   1      }
+ 158          
+ 159          /* LED处理函数 */
+ 160          void Led_Proc()
+ 161          {
+ 162   1      
+ 163   1          ucLed[0] = Led_blink_flag;
+ 164   1          ucLed[6] = (Seg_show_mode == 2);
+ 165   1          ucLed[7] = (Seg_show_mode == 1);
+ 166   1      }
+ 167          
+ 168          /* 定时器0中断初始化 */
+ 169          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 170          {
+ 171   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 172   1          TMOD &= 0xF0; // 设置定时器模式
+ 173   1          TL0 = 0x18;   // 设置定时初始值
+ 174   1          TH0 = 0xFC;   // 设置定时初始值
+ 175   1          TF0 = 0;      // 清除TF0标志
+ 176   1          TR0 = 1;      // 定时器0开始计时
+ 177   1          ET0 = 1;
+ 178   1          EA = 1;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/05/2024 15:48:30 PAGE 4   
+
+ 179   1      }
+ 180          
+ 181          /* 定时器0中断函数 */
+ 182          void Timer0_ISR(void) interrupt 1
+ 183          {
+ 184   1          if (++time_all_1s == 1000)
+ 185   1              time_all_1s = 0;
+ 186   1          if (++Seg_Pos == 8)
+ 187   1              Seg_Pos = 0;
+ 188   1          if (Led_blink_start)
+ 189   1          {
+ 190   2              if (++time_200ms == 200)
+ 191   2              {
+ 192   3                  time_200ms = 0;
+ 193   3                  Led_blink_flag ^= 1;
+ 194   3                  Led_blink_cnt++;
+ 195   3              }
+ 196   2              if (Led_blink_cnt == 20)
+ 197   2                  Led_blink_start = 0; // 停止闪烁
+ 198   2          }
+ 199   1          else
+ 200   1          {
+ 201   2              time_200ms = 0;
+ 202   2              Led_blink_cnt = 0;
+ 203   2              Led_blink_flag = 0;
+ 204   2          }
+ 205   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 206   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 207   1      }
+ 208          
+ 209          void Delay200ms(void) //@12.000MHz
+ 210          {
+ 211   1          unsigned char data i, j, k;
+ 212   1      
+ 213   1          _nop_();
+ 214   1          _nop_();
+ 215   1          i = 10;
+ 216   1          j = 31;
+ 217   1          k = 147;
+ 218   1          do
+ 219   1          {
+ 220   2              do
+ 221   2              {
+ 222   3                  while (--k)
+ 223   3                      ;
+ 224   3              } while (--j);
+ 225   2          } while (--i);
+ 226   1      }
+ 227          
+ 228          uchar passwd = 123;
+ 229          uchar input_passwd;
+ 230          void main()
+ 231          {
+ 232   1          uchar i;
+ 233   1          System_Init();
+ 234   1          Timer0_Init();
+ 235   1          EEPROM_Read(&input_passwd,16,1);
+ 236   1          if (input_passwd != passwd) // 校验失败，之前未写入数据1/256概率出问题
+ 237   1          {
+ 238   2              EEPROM_Write(&passwd, 16, 1);
+ 239   2          }
+ 240   1          else // 校验通过，读取我们需要的数据
+C51 COMPILER V9.59.0.0   MAIN                                                              04/05/2024 15:48:30 PAGE 5   
+
+ 241   1          {
+ 242   2              EEPROM_Read(Dis_Data, 1, 7);
+ 243   2              EEPROM_Read(&Dis_Data[8], 8, 3);
+ 244   2          }
+ 245   1      
+ 246   1          while (1)
+ 247   1          {
+ 248   2              Key_Proc();
+ 249   2              Seg_Proc();
+ 250   2              Led_Proc();
+ 251   2          }
+ 252   1      }
+*** WARNING C280 IN LINE 232 OF main.c: 'i': unreferenced local variable
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    968    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     53       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
