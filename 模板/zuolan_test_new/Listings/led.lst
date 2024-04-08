@@ -1,0 +1,73 @@
+C51 COMPILER V9.59.0.0   LED                                                               04/06/2024 20:56:11 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE driver\led.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\driver;.\user) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\led.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          unsigned char temp_1=0x00;
+   3          unsigned char temp_old_1=0xff;
+   4          void Led_Disp(unsigned char addr , unsigned char enable)
+   5          {
+   6   1        static unsigned char temp=0x00;
+   7   1        static unsigned char temp_old=0xff;
+   8   1        if(enable)
+   9   1          temp |= 0x01 << addr;
+  10   1        else 
+  11   1          temp &= ~(0x01 << addr);
+  12   1        if(temp != temp_old)
+  13   1        {
+  14   2          P0 = ~temp;
+  15   2          P2 = P2 & 0x1f | 0x80;
+  16   2          P2 &= 0x1f;
+  17   2          temp_old = temp;
+  18   2        }
+  19   1      }
+  20          void Beep(bit enable)
+  21          {
+  22   1        if(enable)
+  23   1          temp_1 |= 0x40;
+  24   1        else 
+  25   1          temp_1 &= ~(0x40);
+  26   1        if(temp_1 != temp_old_1)
+  27   1        {
+  28   2          P0 = temp_1;
+  29   2          P2 = P2 & 0x1f | 0xa0;
+  30   2          P2 &= 0x1f;
+  31   2          temp_old_1 = temp_1;
+  32   2        }
+  33   1      }
+  34          void Relay(bit enable)
+  35          {
+  36   1        if(enable)
+  37   1          temp_1 |= 0x10;
+  38   1        else 
+  39   1          temp_1 &= ~(0x10);
+  40   1        if(temp_1 != temp_old_1)
+  41   1        {
+  42   2          P0 = temp_1;
+  43   2          P2 = P2 & 0x1f | 0xa0;
+  44   2          P2 &= 0x1f;
+  45   2          temp_old_1 = temp_1;
+  46   2        }
+  47   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    128    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.59.0.0   LED                                                               04/06/2024 20:56:11 PAGE 2   
+
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
