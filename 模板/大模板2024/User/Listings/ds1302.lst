@@ -1,0 +1,116 @@
+C51 COMPILER V9.59.0.0   DS1302                                                            04/09/2024 11:25:30 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN .\Objects\ds1302.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\Driver\ds1302.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\ds1302.lst) TABS(2) OBJECT(.\Objects\ds1302.obj)
+
+line level    source
+
+   1          #include "ds1302.h"
+   2          #include <intrins.h>
+   3          
+   4          sbit SCK = P1 ^ 7;
+   5          sbit SDA = P2 ^ 3;
+   6          sbit RST = P1 ^ 3;
+   7          /*  #   DS1302代码片段说明
+   8            1.  本文件夹中提供的驱动代码供参赛选手完成程序设计参考。
+   9            2.  参赛选手可以自行编写相关代码或以该代码为基础，根据所选单片机类型、运行速度和试题
+  10              中对单片机时钟频率的要求，进行代码调试和修改。
+  11          */
+  12          
+  13          //
+  14          void Write_Ds1302(unsigned char temp)
+  15          {
+  16   1        unsigned char i;
+  17   1        for (i = 0; i < 8; i++)
+  18   1        {
+  19   2          SCK = 0;
+  20   2          SDA = temp & 0x01;
+  21   2          temp >>= 1;
+  22   2          SCK = 1;
+  23   2        }
+  24   1      }
+  25          
+  26          //
+  27          void Write_Ds1302_Byte(unsigned char address, unsigned char dat)
+  28          {
+  29   1        RST = 0;
+  30   1        _nop_();
+  31   1        SCK = 0;
+  32   1        _nop_();
+  33   1        RST = 1;
+  34   1        _nop_();
+  35   1        Write_Ds1302(address);
+  36   1        Write_Ds1302(dat);
+  37   1        RST = 0;
+  38   1      }
+  39          
+  40          //
+  41          unsigned char Read_Ds1302_Byte(unsigned char address)
+  42          {
+  43   1        unsigned char i, temp = 0x00;
+  44   1        RST = 0;
+  45   1        _nop_();
+  46   1        SCK = 0;
+  47   1        _nop_();
+  48   1        RST = 1;
+  49   1        _nop_();
+  50   1        Write_Ds1302(address);
+  51   1        for (i = 0; i < 8; i++)
+  52   1        {
+  53   2          SCK = 0;
+  54   2          temp >>= 1;
+C51 COMPILER V9.59.0.0   DS1302                                                            04/09/2024 11:25:30 PAGE 2   
+
+  55   2          if (SDA)
+  56   2            temp |= 0x80;
+  57   2          SCK = 1;
+  58   2        }
+  59   1        RST = 0;
+  60   1        _nop_();
+  61   1        SCK = 0;
+  62   1        _nop_();
+  63   1        SCK = 1;
+  64   1        _nop_();
+  65   1        SDA = 0;
+  66   1        _nop_();
+  67   1        SDA = 1;
+  68   1        _nop_();
+  69   1        return (temp);
+  70   1      }
+  71          
+  72          void Set_Rtc(unsigned char *ucRtc)
+  73          {
+  74   1        unsigned char i;
+  75   1        Write_Ds1302_Byte(0x8e, 0x00);
+  76   1        for (i = 0; i < 3; i++)
+  77   1          Write_Ds1302_Byte(0x84 - 2 * i, ucRtc[i] / 10 % 10 << 4 | ucRtc[i] % 10);
+  78   1        Write_Ds1302_Byte(0x8e, 0x80);
+  79   1      }
+  80          
+  81          void Read_Rtc(unsigned char *ucRtc)
+  82          {
+  83   1        unsigned char i;
+  84   1        unsigned temp;
+  85   1        for (i = 0; i < 3; i++)
+  86   1        {
+  87   2          temp = Read_Ds1302_Byte(0x85 - 2 * i);
+  88   2          ucRtc[i] = temp / 16 * 10 + temp % 16;
+  89   2        }
+  90   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    276    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

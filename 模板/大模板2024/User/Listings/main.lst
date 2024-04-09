@@ -1,0 +1,186 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/09/2024 11:25:30 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /* 头文件声明区 */
+   2          // 包含各种硬件驱动的头文件，如I2C通信、1-Wire通信、超声波传感器、单片机寄存器、数码管和串口通信等。
+   3          #include "ds1302.h"
+   4          #include "iic.h"
+   5          #include "onewire.h"
+   6          #include "ultrasound.h"
+   7          #include "string.h"
+   8          #include "stdio.h"
+   9          #include <Init.h>     // 初始化底层驱动专用头文件
+  10          #include <Key.h>      // 按键底层驱动专用头文件
+  11          #include <Led.h>      // LED底层驱动专用头文件
+  12          #include <STC15F2K60S2.H> // 单片机寄存器专用头文件
+  13          #include <Seg.h>      // 数码管底层驱动专用头文件
+  14          #include <Uart.h>     // 串口底层驱动专用头文件
+  15          
+  16          /* 变量声明区 */
+  17          // 定义各种全局变量，包括按键状态、数码管显示数据、LED显示数据、串口接收数据等。
+  18          unsigned char Key_Val, Key_Down, Key_Old, Key_Up;      // 按键状态变量
+  19          unsigned char Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据
+  20          unsigned char Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // 数码管小数点数据
+  21          unsigned char Seg_Pos;                     // 数码管扫描位置
+  22          unsigned char ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // LED显示数据
+  23          unsigned char Uart_Recv[10];                 // 串口接收数据缓冲区
+  24          unsigned char Uart_Recv_Index;                 // 串口接收数据索引
+  25          unsigned char ucRtc[3] = {11, 12, 13};             // 实时时钟数据
+  26          unsigned int Slow_Down;                    // 减速计数器
+  27          bit Seg_Flag, Key_Flag;                    // 数码管和按键的标志位
+  28          bit Uart_Flag;                         // 串口标志位
+  29          unsigned int Time_1s;                    // 1秒钟计数器
+  30          unsigned int Freq;                       // 频率计算变量
+  31          unsigned int Sys_Tick;                     // 系统时钟计数
+  32          
+  33          /* 键盘处理函数 */
+  34          // 处理按键输入，检测按键的下降沿和上升沿，并更新按键状态。
+  35          void Key_Proc()
+  36          {
+  37   1        if (Key_Flag)return;
+  38   1        Key_Flag = 1;               // 设置标志位，防止重复进入
+  39   1        Key_Val = Key_Read();           // 读取按键值
+  40   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 检测下降沿
+  41   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 检测上升沿
+  42   1        Key_Old = Key_Val;              // 更新按键状态
+  43   1      }
+  44          
+  45          /* 信息处理函数 */
+  46          // 更新数码管显示的数据
+  47          void Seg_Proc()
+  48          {
+  49   1        if (Seg_Flag)return;
+  50   1        Seg_Flag = 1; // 设置标志位
+  51   1      }
+  52          
+  53          /* 其他显示函数 */
+  54          // LED显示处理函数，这里没有具体实现。
+C51 COMPILER V9.59.0.0   MAIN                                                              04/09/2024 11:25:30 PAGE 2   
+
+  55          void Led_Proc() {}
+  56          
+  57          /* 串口处理函数 */
+  58          // 处理串口接收到的数据，当接收到数据时更新接收索引和缓冲区。
+  59          void Uart_Proc()
+  60          {
+  61   1        if (Uart_Recv_Index == 0)return;
+  62   1        if (Sys_Tick >= 10)
+  63   1        {
+  64   2          Sys_Tick = Uart_Flag = 0;
+  65   2          // 逻辑函数
+  66   2      
+  67   2          
+  68   2          
+  69   2          
+  70   2          memset(Uart_Recv, 0, Uart_Recv_Index);
+  71   2          Uart_Recv_Index = 0; // 重置接收索引
+  72   2        }
+  73   1      }
+  74          
+  75          /* 定时器0初始化函数 */
+  76          // 初始化定时器0，用于产生1ms的时钟中断。
+  77          void Timer0_Init(void)
+  78          {
+  79   1        AUXR &= 0x7F; // 设置定时器时钟12T模式
+  80   1        TMOD &= 0xF0; // 设置定时器模式为16位定时器
+  81   1        TMOD |= 0x05;
+  82   1        TL0 = 0; // 设置定时器初始值
+  83   1        TH0 = 0; // 设置定时器初始值
+  84   1        TF0 = 0; // 清除TF0标志位
+  85   1        TR0 = 1; // 启动定时器
+  86   1      }
+  87          
+  88          /* 定时器1初始化函数 */
+  89          // 初始化定时器1，用于产生1ms的时钟中断，并允许中断。
+  90          void Timer1_Init(void)
+  91          {
+  92   1        AUXR &= 0xBF; // 设置定时器时钟12T模式
+  93   1        TMOD &= 0x0F; // 设置定时器模式为16位定时器
+  94   1        TL1 = 0x18;   // 设置定时器初始值
+  95   1        TH1 = 0xFC;   // 设置定时器初始值
+  96   1        TF1 = 0;    // 清除TF1标志位
+  97   1        TR1 = 1;    // 启动定时器
+  98   1        ET1 = 1;    // 使能定时器1中断
+  99   1        EA = 1;     // 开启全局中断
+ 100   1      }
+ 101          
+ 102          /* 定时器1中断服务函数 */
+ 103          // 定时器1的中断服务函数，用于更新系统时钟、处理按键和数码管显示。
+ 104          void Timer1_Isr(void) interrupt 3
+ 105          {
+ 106   1        if (++Slow_Down == 400)
+ 107   1        {
+ 108   2          Seg_Flag = Slow_Down = 0; // 更新数码管显示标志位
+ 109   2        }
+ 110   1        if (Slow_Down % 10 == 0)
+ 111   1        {
+ 112   2          Key_Flag = 0; // 更新按键处理标志位
+ 113   2        }
+ 114   1        if (Uart_Flag)
+ 115   1          Sys_Tick++;
+ 116   1        if (++Time_1s == 1000)
+C51 COMPILER V9.59.0.0   MAIN                                                              04/09/2024 11:25:30 PAGE 3   
+
+ 117   1        {
+ 118   2          Time_1s = 0;       // 重置1秒钟计数器
+ 119   2          Freq = TH0 << 8 | TL0; // 计算频率
+ 120   2          TH0 = 0;         // 重置定时器0的值
+ 121   2          TL0 = 0;
+ 122   2        }
+ 123   1        Seg_Disp(Slow_Down % 8, Seg_Buf[Slow_Down % 8], Seg_Point[Slow_Down % 8]); // 更新数码管显示
+ 124   1        Led_Disp(Slow_Down % 8, ucLed[Slow_Down % 8]);                 // 更新LED显示
+ 125   1      }
+ 126          
+ 127          /* 串口1中断服务函数 */
+ 128          // 串口1的中断服务函数，用于处理串口接收到的数据。
+ 129          void Uart1Server() interrupt 4
+ 130          {
+ 131   1        if (RI == 1) // 检测到串口接收中断
+ 132   1        {
+ 133   2          Uart_Flag = 1;             // 设置串口标志位
+ 134   2          Sys_Tick = 0;            // 重置系统时钟
+ 135   2          Uart_Recv[Uart_Recv_Index] = SBUF; // 保存接收到的数据
+ 136   2          Uart_Recv_Index++;           // 更新接收索引
+ 137   2          RI = 0;                // 清除中断标志位
+ 138   2        }
+ 139   1        if (Uart_Recv_Index > 10)
+ 140   1          Uart_Recv_Index = 0;
+ 141   1      }
+ 142          
+ 143          /* 主函数 */
+ 144          // 系统初始化，设置定时器和串口，然后进入主循环。
+ 145          void main()
+ 146          {
+ 147   1        System_Init();  // 系统初始化
+ 148   1        Timer1_Init();  // 初始化定时器1
+ 149   1        Set_Rtc(ucRtc); // 设置实时时钟
+ 150   1        UartInit();   // 初始化串口
+ 151   1        while (1)
+ 152   1        {
+ 153   2          Key_Proc();  // 处理按键
+ 154   2          Seg_Proc();  // 更新数码管显示
+ 155   2          Led_Proc();  // 更新LED显示
+ 156   2          Uart_Proc(); // 处理串口数据
+ 157   2        }
+ 158   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    385    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     51    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
