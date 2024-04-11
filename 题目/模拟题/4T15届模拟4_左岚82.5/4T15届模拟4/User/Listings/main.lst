@@ -1,0 +1,247 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/11/2024 17:06:10 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */
+   6          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   7          uchar Seg_Pos;                                       // 数码管指示
+   8          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // 某位是否显示小数点
+   9          
+  10          /* 时间方面 */
+  11          uchar ucRtc[3] = {0x13, 0x11, 0x11}; // 初始化时间13:11:11
+  12          
+  13          /* 时间方面 */
+  14          uint time_all_1s;
+  15          uchar time_100ms;
+  16          /* 显示 */
+  17          uchar Seg_show_mode; // 0 信号 1 温度 2 参数
+  18          /* 数据 */
+  19          uint freq;
+  20          uint T_value_10x;
+  21          uchar T_para = 25;
+  22          uchar V_out_amp;
+  23          /* 判断 */
+  24          bit Wring_flag;
+  25          bit Hot_flag;
+  26          bit Led_blink_show;
+  27          /* 数据处理函数 */
+  28          void Data_Proc()
+  29          {
+  30   1          if (time_all_1s % 500 == 0)
+  31   1          {
+  32   2              // 温度读取
+  33   2              T_value_10x = rd_temperature() * 10;
+  34   2              Wring_flag = (T_value_10x > T_para * 10);
+  35   2              Hot_flag = (T_value_10x > 300);
+  36   2          }
+  37   1      }
+  38          /* 键盘处理函数 */
+  39          void Key_Proc()
+  40          {
+  41   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  42   1          if (time_all_1s % 10)
+  43   1              return;
+  44   1          Key_Val = Key_Read();
+  45   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  46   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  47   1          Key_Old = Key_Val;
+  48   1          if (Key_Down == 4)
+  49   1              Seg_show_mode = (++Seg_show_mode) % 3;
+  50   1          if (Seg_show_mode == 2)
+  51   1          {
+  52   2              if (Key_Down == 9)
+  53   2                  T_para = (T_para == 35) ? 20 : T_para + 1;
+  54   2              else if (Key_Down == 8)
+C51 COMPILER V9.59.0.0   MAIN                                                              04/11/2024 17:06:10 PAGE 2   
+
+  55   2                  T_para = (T_para == 20) ? 35 : T_para - 1;
+  56   2          }
+  57   1      }
+  58          /* 数码管处理函数 */
+  59          void Seg_Proc()
+  60          {
+  61   1          uchar i;
+  62   1          if (time_all_1s % 20)
+  63   1              return;
+  64   1          switch (Seg_show_mode)
+  65   1          {
+  66   2          case 0:
+  67   2              /* 信号界面 */
+  68   2              Seg_Point[6] = 0;
+  69   2              Seg_Buf[0] = 11; // P
+  70   2              Seg_Buf[1] = 10;
+  71   2              Seg_Buf[2] = freq / 100000 % 10;
+  72   2              Seg_Buf[3] = freq / 10000 % 10;
+  73   2              Seg_Buf[4] = freq / 1000 % 10;
+  74   2              Seg_Buf[5] = freq / 100 % 10;
+  75   2              Seg_Buf[6] = freq / 10 % 10;
+  76   2              Seg_Buf[7] = freq % 10;
+  77   2              i = 2;
+  78   2              while (i < 7)
+  79   2              {
+  80   3                  if (Seg_Buf[i - 1] == 10 && Seg_Buf[i] == 0)
+  81   3                      Seg_Buf[i] = 10;
+  82   3                  else
+  83   3                      break;
+  84   3              }
+  85   2              break;
+  86   2      
+  87   2          case 1:
+  88   2              /* 温度界面 */
+  89   2              Seg_Point[6] = 1;
+  90   2              Seg_Buf[0] = 12; // C
+  91   2              Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = 10;
+  92   2              Seg_Buf[5] = (T_value_10x / 100 % 10 == 0) ? 10
+  93   2                                                         : T_value_10x / 100 % 10;
+  94   2              Seg_Buf[6] = T_value_10x / 10 % 10;
+  95   2              Seg_Buf[7] = T_value_10x % 10;
+  96   2              break;
+  97   2          case 2:
+  98   2              /* 参数界面 */
+  99   2              Seg_Point[6] = 0;
+ 100   2              Seg_Buf[0] = 13; // U
+ 101   2              Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = 10;
+ 102   2              Seg_Buf[5] = T_para / 100 % 10;
+ 103   2              Seg_Buf[6] = T_para / 10 % 10;
+ 104   2              Seg_Buf[7] = T_para % 10;
+ 105   2              i = 5;
+ 106   2              while (i < 7)
+ 107   2              {
+ 108   3                  if (Seg_Buf[i - 1] == 10 && Seg_Buf[i] == 0)
+ 109   3                      Seg_Buf[i] = 10;
+ 110   3                  else
+ 111   3                      break;
+ 112   3              }
+ 113   2              break;
+ 114   2          }
+ 115   1      }
+ 116          
+C51 COMPILER V9.59.0.0   MAIN                                                              04/11/2024 17:06:10 PAGE 3   
+
+ 117          /* LED处理函数 */
+ 118          void Led_Proc()
+ 119          {
+ 120   1          Da_Write(V_out_amp);
+ 121   1          Relay(Wring_flag);
+ 122   1          ucLed[0] = (Seg_show_mode == 0);
+ 123   1          ucLed[1] = (Seg_show_mode == 1);
+ 124   1          ucLed[7] = Led_blink_show;
+ 125   1      }
+ 126          
+ 127          /* 定时器0中断初始化 */
+ 128          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 129          {
+ 130   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 131   1          TMOD &= 0xF0; // 设置定时器模式
+ 132   1          TMOD |= 0x05;
+ 133   1          TL0 = 0x18; // 设置定时初始值
+ 134   1          TH0 = 0xFC; // 设置定时初始值
+ 135   1          TF0 = 0;    // 清除TF0标志
+ 136   1          TR0 = 1;    // 定时器0开始计时
+ 137   1      }
+ 138          
+ 139          void Timer1_Init(void) // 1毫秒@12.000MHz
+ 140          {
+ 141   1          AUXR &= 0xBF; // 定时器时钟12T模式
+ 142   1          TMOD &= 0x0F; // 设置定时器模式
+ 143   1          TL1 = 0x18;   // 设置定时初始值
+ 144   1          TH1 = 0xFC;   // 设置定时初始值
+ 145   1          TF1 = 0;      // 清除TF1标志
+ 146   1          TR1 = 1;      // 定时器1开始计时
+ 147   1          ET1 = 1;      // 使能定时器1中断
+ 148   1          EA = 1;
+ 149   1      }
+ 150          void Timer1_Isr(void) interrupt 3
+ 151          {
+ 152   1          if (++time_all_1s == 1000)
+ 153   1          {
+ 154   2              time_all_1s = 0;
+ 155   2              freq = TH0 << 8 | TL0;
+ 156   2              if (freq > 2000)
+ 157   2                  V_out_amp = 4.5f * 51;
+ 158   2              else if (freq < 200)
+ 159   2                  V_out_amp = 0.5f * 51;
+ 160   2              else
+ 161   2                  V_out_amp = ((float)(freq - 200) / 450.0f + 0.5f) * 51;
+ 162   2              TH0 = TL0 = 0;
+ 163   2          }
+ 164   1          if (++Seg_Pos == 8)
+ 165   1              Seg_Pos = 0;
+ 166   1          if (Hot_flag)
+ 167   1          {
+ 168   2              if (++time_100ms == 100)
+ 169   2              {
+ 170   3                  Led_blink_show ^= 1;
+ 171   3                  time_100ms = 0;
+ 172   3              }
+ 173   2          }
+ 174   1          else
+ 175   1          {
+ 176   2              time_100ms = 0;
+ 177   2              Led_blink_show = 0;
+ 178   2          }
+C51 COMPILER V9.59.0.0   MAIN                                                              04/11/2024 17:06:10 PAGE 4   
+
+ 179   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 180   1          Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 181   1      }
+ 182          
+ 183          void Delay750ms(void) //@12.000MHz
+ 184          {
+ 185   1          unsigned char data i, j, k;
+ 186   1      
+ 187   1          _nop_();
+ 188   1          _nop_();
+ 189   1          i = 35;
+ 190   1          j = 51;
+ 191   1          k = 182;
+ 192   1          do
+ 193   1          {
+ 194   2              do
+ 195   2              {
+ 196   3                  while (--k)
+ 197   3                      ;
+ 198   3              } while (--j);
+ 199   2          } while (--i);
+ 200   1      }
+ 201          
+ 202          void main()
+ 203          {
+ 204   1          System_Init();
+ 205   1          Timer1_Init();
+ 206   1          Timer0_Init();
+ 207   1      
+ 208   1          T_value_10x = rd_temperature() * 10;
+ 209   1          Delay750ms();
+ 210   1          while (1)
+ 211   1          {
+ 212   2              Data_Proc();
+ 213   2              Key_Proc();
+ 214   2              Seg_Proc();
+ 215   2              Led_Proc();
+ 216   2          }
+ 217   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    971    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     42       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

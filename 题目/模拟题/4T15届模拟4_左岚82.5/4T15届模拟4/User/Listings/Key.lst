@@ -1,0 +1,64 @@
+C51 COMPILER V9.59.0.0   KEY                                                               04/11/2024 17:06:10 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\Key.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\Driver\Key.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTE
+                    -XTEND PRINT(.\Listings\Key.lst) TABS(2) OBJECT(.\Objects\Key.obj)
+
+line level    source
+
+   1          #include "Key.h"
+   2          unsigned char Key_Read()
+   3          {
+   4   1          unsigned char temp = 0;
+   5   1          ET0 = 0;
+   6   1          P44 = 0;
+   7   1          P42 = 1;
+   8   1          P35 = 1;
+   9   1          if (P33 == 0)
+  10   1              temp = 4;
+  11   1          if (P32 == 0)
+  12   1              temp = 5;
+  13   1          if (P31 == 0)
+  14   1              temp = 6;
+  15   1          if (P30 == 0)
+  16   1              temp = 7;
+  17   1          P44 = 1;
+  18   1          P42 = 0;
+  19   1          P35 = 1;
+  20   1          if (P33 == 0)
+  21   1              temp = 8;
+  22   1          if (P32 == 0)
+  23   1              temp = 9;
+  24   1          if (P31 == 0)
+  25   1              temp = 10;
+  26   1          if (P30 == 0)
+  27   1              temp = 11;
+  28   1          P44 = 1;
+  29   1          P42 = 1;
+  30   1          P35 = 0;
+  31   1          if (P33 == 0)
+  32   1              temp = 12;
+  33   1          if (P32 == 0)
+  34   1              temp = 13;
+  35   1          if (P31 == 0)
+  36   1              temp = 14;
+  37   1          if (P30 == 0)
+  38   1              temp = 15;
+  39   1          return temp;
+  40   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     83    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
