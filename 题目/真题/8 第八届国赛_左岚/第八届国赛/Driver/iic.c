@@ -122,24 +122,6 @@ void I2CSendAck(unsigned char ackbit)
     sda = 1;
     I2C_Delay(DELAY_TIME);
 }
-
-unsigned char Ad_Read(unsigned char addr)
-{
-    unsigned char temp;
-    // 选择芯片为PCF
-    I2CStart();
-    I2CSendByte(0x90);
-    I2CWaitAck();
-    I2CSendByte(addr);
-    I2CWaitAck();
-    I2CStart();
-    I2CSendByte(0x91);
-    I2CWaitAck();
-    temp = I2CReceiveByte();
-    I2CSendAck(1);
-    I2CStop();
-    return temp;
-}
 // 写入的值是数字值0-255，而不是模拟值
 void Da_Write(unsigned char dat)
 {
@@ -175,6 +157,10 @@ void EEPROM_Write(unsigned char *EEPROM_String, unsigned char addr, unsigned cha
         I2C_Delay(200);
     }
     I2CStop();
+    I2C_Delay(255);
+    I2C_Delay(255);
+    I2C_Delay(255);
+    I2C_Delay(255);
 }
 /// @brief EEPROM 读函数
 /// @param EEPROM_String 读取的数组指针（如果只读取一个数据，那么要用&data）

@@ -15,12 +15,12 @@ uchar Key_Slow_Down;
 uint time_all_1s;
 uchar time_200ms;
 /* 数据 */
-uchar Dis_Data[10];     // 存储数组
-uchar Dis_show_index;   // 显示数组下标
-uchar Dis_Data_index;   // 存储数组下标
-uchar Dis_new, Dis_old; // 这一次和上一次测量的结果
-uchar Blind_area;       // 测量盲区
-uchar Led_blink_cnt;    // 闪烁计数
+uchar Dis_Data[16] = {0}; // 存储数组，这里直接虚构跑一波
+uchar Dis_show_index;     // 显示数组下标
+uchar Dis_Data_index;     // 存储数组下标
+uchar Dis_new, Dis_old;   // 这一次和上一次测量的结果
+uchar Blind_area;         // 测量盲区
+uchar Led_blink_cnt;      // 闪烁计数
 /* 显示 */
 uchar Seg_show_mode; // 0 测距显示 1 回显 2 参数设置
 /* 判断 */
@@ -47,21 +47,14 @@ void Key_Proc()
             Led_blink_start = 1;
             Dis_new = Ut_Wave_Data();
             Dis_Data[Dis_Data_index] = Dis_new;
-            Dis_Data_index = (++Dis_Data_index) % 10; // 0-9
+            Dis_Data[14] = Dis_Data_index;
             if (Dis_Data_index == 0)
-            {
-                // 这样写是为了防止溢出
-                EEPROM_Write(&Dis_new, 10, 1);
-                // 这里赋值是因为可能上一次断电后有数据保存，所以要用上次的数据
                 Dis_old = Dis_Data[9];
-            }
             else
-            {
-                EEPROM_Write(&Dis_new, Dis_Data_index, 1);
-                // 这里赋值是因为可能上一次断电后有数据保存，所以要用上次的数据
                 Dis_old = Dis_Data[Dis_Data_index - 1];
-            }
-
+            Dis_Data_index = (++Dis_Data_index) % 10; // 0-9
+            EEPROM_Write(Dis_Data, 0, 8);
+            EEPROM_Write(Dis_Data + 8, 8, 8);
             if (Dis_new < Blind_area)
                 DA_out = 0;
             else
@@ -95,7 +88,8 @@ void Key_Proc()
         {
             // 切换测距
             Seg_show_mode = 0;
-            EEPROM_Write(&Blind_area, 0, 1);
+            Dis_Data[15] = Blind_area;
+            EEPROM_Write(Dis_Data + 8, 8, 8);
         }
         if (Key_Down == 7)
             // 循环添加
@@ -206,41 +200,24 @@ void Timer0_ISR(void) interrupt 1
     Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
 }
 
-void Delay200ms(void) //@12.000MHz
-{
-    unsigned char data i, j, k;
-
-    _nop_();
-    _nop_();
-    i = 10;
-    j = 31;
-    k = 147;
-    do
-    {
-        do
-        {
-            while (--k)
-                ;
-        } while (--j);
-    } while (--i);
-}
-
 uchar passwd = 123;
 uchar input_passwd;
 void main()
 {
-    uchar i;
     System_Init();
     Timer0_Init();
-    EEPROM_Read(&input_passwd,16,1);
+    EEPROM_Read(&input_passwd, 16, 1);
     if (input_passwd != passwd) // 校验失败，之前未写入数据1/256概率出问题
     {
         EEPROM_Write(&passwd, 16, 1);
     }
     else // 校验通过，读取我们需要的数据
     {
-        EEPROM_Read(Dis_Data, 1, 7);
-        EEPROM_Read(&Dis_Data[8], 8, 3);
+        EEPROM_Read(Dis_Data, 0, 8);
+        EEPROM_Read(Dis_Data + 8, 8, 8);
+        Blind_area = Dis_Data[15];
+        Dis_Data_index = Dis_Data[14];
+        Dis_old = Dis_Data[Dis_Data_index];
     }
 
     while (1)
