@@ -1,0 +1,342 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/29/2024 18:40:04 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE user\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\driver;.\user) DEBUG OBJEC
+                    -TEXTEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          
+   3          /* Led与Seg相关 */
+   4          unsigned char ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   5          unsigned char Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};
+   6          unsigned char Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   7          unsigned char Seg_Pos;
+   8          /* 时间 */
+   9          unsigned int Time_1s;
+  10          unsigned char ucRtc[3] = {0x00, 0x00, 0x00};
+  11          unsigned char MAX_Rtc[3];
+  12          unsigned char Time_200ms_Freq;  // 测频界面闪烁时间200ms
+  13          unsigned char Time_200ms_Wring; // 超过阈值闪烁时间200ms
+  14          /* 数据 */
+  15          unsigned int Freq;        // 测量频率
+  16          unsigned int Freq_CAL;      // 测量频率校准值
+  17          unsigned int Freq_MAX;      // 最大频率
+  18          unsigned int Para_Limit = 2000; // 超限参数  1000 - 9000
+  19          int Para_Right = 0;       // 校准参数 -900 - 900
+  20          float Da_Out_Amp;       // 输出电压模拟值
+  21          unsigned char Da_Out_Dig;   // 输出电压数字值
+  22          /* 显示 */
+  23          unsigned char Seg_Show_Mode; // 0 频率界面 1 参数界面 2 时间界面 3 回显界面
+  24          unsigned char Para_Mode;   // 0 超限参数界面 1 校准值参数界面
+  25          unsigned char Re_Show_Mode;  // 0 频率回显 1 时间回显
+  26          /* 判断 */
+  27          bit Freq_Error;       // 小于校准参数
+  28          bit Led_Blink_Flag_Freq;  // 频率测量界面闪烁标志
+  29          bit Led_Blink_Flag_Wring; // 超出阈值闪烁标志
+  30          bit Freq_Wring;       // 超过超限参数
+  31          
+  32          void Key_Proc()
+  33          {
+  34   1        static unsigned char Key_Val, Key_Old, Key_Down, Key_Up;
+  35   1        if (Time_1s % 10)
+  36   1          return;
+  37   1        Key_Val = Key_Scan();
+  38   1        Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  39   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  40   1        Key_Old = Key_Val;
+  41   1        if (Key_Down == 4)
+  42   1        {
+  43   2          Seg_Show_Mode = (++Seg_Show_Mode) % 4;
+  44   2          Para_Mode = Re_Show_Mode = 0;
+  45   2        }
+  46   1        switch (Seg_Show_Mode)
+  47   1        {
+  48   2        case 1:
+  49   2          /* 参数页面 */
+  50   2          if (Key_Down == 5)
+  51   2            Para_Mode = (++Para_Mode) % 2;
+  52   2          switch (Para_Mode)
+  53   2          {
+  54   3          case 0:
+C51 COMPILER V9.59.0.0   MAIN                                                              04/29/2024 18:40:04 PAGE 2   
+
+  55   3            /* 超限参数 */
+  56   3            if (Key_Down == 8)
+  57   3              Para_Limit = (Para_Limit == 9000) ? 1000 : Para_Limit + 1000;
+  58   3            else if (Key_Down == 9)
+  59   3              Para_Limit = (Para_Limit == 1000) ? 9000 : Para_Limit - 1000;
+  60   3            break;
+  61   3          case 1:
+  62   3            /* 校准值参数 */
+  63   3            if (Key_Down == 8)
+  64   3              Para_Right = (Para_Right == 900) ? -900 : Para_Right + 100;
+  65   3            else if (Key_Down == 9)
+  66   3              Para_Right = (Para_Right == -900) ? 900 : Para_Right - 100;
+  67   3            break;
+  68   3            break;
+  69   3          }
+  70   2          break;
+  71   2        case 3:
+  72   2          /* 回显页面 */
+  73   2          if (Key_Down == 5)
+  74   2            Re_Show_Mode = (++Re_Show_Mode) % 2;
+  75   2          break;
+  76   2        }
+  77   1      }
+  78          void Seg_Proc()
+  79          {
+  80   1        unsigned int Para_Temp;
+  81   1        Para_Temp = -Para_Right;
+  82   1        if (Time_1s % 20)
+  83   1          return;
+  84   1        Read_Rtc(ucRtc);
+  85   1        if (Freq_CAL > Freq_MAX)
+  86   1        {
+  87   2          Freq_MAX = Freq_CAL;
+  88   2          Read_Rtc(MAX_Rtc);
+  89   2        }
+  90   1        if (Freq_Error)
+  91   1          Da_Out_Amp = 0;
+  92   1        else
+  93   1        {
+  94   2          if (Freq_CAL > Para_Limit)
+  95   2            Da_Out_Amp = 5;
+  96   2          else if (Freq_CAL < 500)
+  97   2            Da_Out_Amp = 1;
+  98   2          else
+  99   2            Da_Out_Amp = (float)Freq_CAL * 4.0 / (Para_Limit - 500.0);
+ 100   2        }
+ 101   1        Da_Out_Dig = Da_Out_Amp * 51;
+ 102   1        switch (Seg_Show_Mode)
+ 103   1        {
+ 104   2        case 0:
+ 105   2          /* 频率界面 */
+ 106   2          Seg_Buf[0] = 11; // F
+ 107   2          Seg_Buf[1] = Seg_Buf[2] = 10;
+ 108   2          if (Freq_Error)
+ 109   2          {
+ 110   3            Seg_Buf[3] = Seg_Buf[4] = Seg_Buf[5] = 10;
+ 111   3            Seg_Buf[6] = Seg_Buf[7] = 16; // L
+ 112   3          }
+ 113   2          else
+ 114   2          {
+ 115   3            Seg_Buf[3] = (Freq_CAL / 10000 % 10 == 0) ? 10
+ 116   3                                  : Freq_CAL / 10000 % 10;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/29/2024 18:40:04 PAGE 3   
+
+ 117   3            Seg_Buf[4] = (Seg_Buf[3] == 10 && Freq_CAL / 1000 % 10 == 0) ? 10
+ 118   3                                           : Freq_CAL / 1000 % 10;
+ 119   3            Seg_Buf[5] = (Seg_Buf[4] == 10 && Freq_CAL / 100 % 10 == 0) ? 10
+ 120   3                                          : Freq_CAL / 100 % 10;
+ 121   3            Seg_Buf[6] = (Seg_Buf[5] == 10 && Freq_CAL / 10 % 10 == 0) ? 10
+ 122   3                                           : Freq_CAL / 10 % 10;
+ 123   3            Seg_Buf[7] = Freq_CAL % 10;
+ 124   3          }
+ 125   2          break;
+ 126   2        case 1:
+ 127   2          /* 参数界面 */
+ 128   2          Seg_Buf[0] = 12; // P
+ 129   2          Seg_Buf[1] = Para_Mode + 1;
+ 130   2          Seg_Buf[2] = Seg_Buf[3] = 10;
+ 131   2          switch (Para_Mode)
+ 132   2          {
+ 133   3          case 0:
+ 134   3            /* 超限参数 */
+ 135   3            Seg_Buf[4] = Para_Limit / 1000 % 10;
+ 136   3            Seg_Buf[5] = Para_Limit / 100 % 10;
+ 137   3            Seg_Buf[6] = Para_Limit / 10 % 10;
+ 138   3            Seg_Buf[7] = Para_Limit % 10;
+ 139   3            break;
+ 140   3          case 1:
+ 141   3            /* 校准值 */
+ 142   3            if (Para_Right >= 0)
+ 143   3            {
+ 144   4              // 正数
+ 145   4              Seg_Buf[4] = 10;
+ 146   4              if (Para_Right != 0)
+ 147   4              {
+ 148   5                Seg_Buf[5] = Para_Right / 100 % 10;
+ 149   5                Seg_Buf[6] = Para_Right / 10 % 10;
+ 150   5                Seg_Buf[7] = Para_Right % 10;
+ 151   5              }
+ 152   4              else
+ 153   4              {
+ 154   5                Seg_Buf[5] = Seg_Buf[6] = 10;
+ 155   5                Seg_Buf[7] = 0;
+ 156   5              }
+ 157   4            }
+ 158   3            else
+ 159   3            {
+ 160   4              // 负数
+ 161   4              Seg_Buf[4] = 13;
+ 162   4              Seg_Buf[5] = Para_Temp / 100 % 10;
+ 163   4              Seg_Buf[6] = Para_Temp / 10 % 10;
+ 164   4              Seg_Buf[7] = Para_Temp % 10;
+ 165   4            }
+ 166   3            break;
+ 167   3          }
+ 168   2          break;
+ 169   2        case 2:
+ 170   2          /* 时间界面 */
+ 171   2          Seg_Buf[0] = ucRtc[0] / 16;
+ 172   2          Seg_Buf[1] = ucRtc[0] % 16;
+ 173   2          Seg_Buf[2] = 13; //-
+ 174   2          Seg_Buf[3] = ucRtc[1] / 16;
+ 175   2          Seg_Buf[4] = ucRtc[1] % 16;
+ 176   2          Seg_Buf[5] = 13; //-
+ 177   2          Seg_Buf[6] = ucRtc[2] / 16;
+ 178   2          Seg_Buf[7] = ucRtc[2] % 16;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/29/2024 18:40:04 PAGE 4   
+
+ 179   2          break;
+ 180   2        case 3:
+ 181   2          /* 回显界面 */
+ 182   2          Seg_Buf[0] = 14; // H
+ 183   2          switch (Re_Show_Mode)
+ 184   2          {
+ 185   3          case 0:
+ 186   3            /* 频率回显 */
+ 187   3            Seg_Buf[1] = 11; // F
+ 188   3            Seg_Buf[2] = 10;
+ 189   3            Seg_Buf[3] = (Freq_MAX / 10000 % 10 == 0) ? 10
+ 190   3                                  : Freq_MAX / 10000 % 10;
+ 191   3            Seg_Buf[4] = (Seg_Buf[3] == 10 && Freq_MAX / 1000 % 10 == 0) ? 10
+ 192   3                                           : Freq_MAX / 1000 % 10;
+ 193   3            Seg_Buf[5] = (Seg_Buf[4] == 10 && Freq_MAX / 100 % 10 == 0) ? 10
+ 194   3                                          : Freq_MAX / 100 % 10;
+ 195   3            Seg_Buf[6] = (Seg_Buf[5] == 10 && Freq_MAX / 10 % 10 == 0) ? 10
+ 196   3                                           : Freq_MAX / 10 % 10;
+ 197   3            Seg_Buf[7] = Freq_MAX % 10;
+ 198   3            break;
+ 199   3          case 1:
+ 200   3            /* 时间回显 */
+ 201   3            Seg_Buf[1] = 15; // A
+ 202   3            Seg_Buf[2] = MAX_Rtc[0] / 16;
+ 203   3            Seg_Buf[3] = MAX_Rtc[0] % 16;
+ 204   3            Seg_Buf[4] = MAX_Rtc[1] / 16;
+ 205   3            Seg_Buf[5] = MAX_Rtc[1] % 16;
+ 206   3            Seg_Buf[6] = MAX_Rtc[2] / 16;
+ 207   3            Seg_Buf[7] = MAX_Rtc[2] % 16;
+ 208   3            break;
+ 209   3          }
+ 210   2        }
+ 211   1      }
+ 212          void Led_Proc()
+ 213          {
+ 214   1        ucLed[0] = Led_Blink_Flag_Freq;
+ 215   1        ucLed[1] = Led_Blink_Flag_Wring;
+ 216   1        Da_Write(Da_Out_Dig);
+ 217   1      }
+ 218          void Timer0Init(void) // 100微秒@12.000MHz
+ 219          {
+ 220   1        AUXR &= 0x7F; // 定时器时钟12T模式
+ 221   1        TMOD &= 0xF0; // 设置定时器模式
+ 222   1        TMOD |= 0x05;
+ 223   1        TL0 = 0x00; // 设置定时初值
+ 224   1        TH0 = 0x00; // 设置定时初值
+ 225   1        TF0 = 0;  // 清除TF0标志
+ 226   1        TR0 = 1;  // 定时器0开始计时
+ 227   1      }
+ 228          void Timer1Init(void) // 1毫秒@12.000MHz
+ 229          {
+ 230   1        AUXR &= 0xBF; // 定时器时钟12T模式
+ 231   1        TMOD &= 0x0F; // 设置定时器模式
+ 232   1        TL1 = 0x18;   // 设置定时初值
+ 233   1        TH1 = 0xFC;   // 设置定时初值
+ 234   1        TF1 = 0;    // 清除TF1标志
+ 235   1        TR1 = 1;    // 定时器1开始计时
+ 236   1        ET1 = 1;
+ 237   1        EA = 1;
+ 238   1      }
+ 239          void Timer1Isr(void) interrupt 3
+ 240          {
+C51 COMPILER V9.59.0.0   MAIN                                                              04/29/2024 18:40:04 PAGE 5   
+
+ 241   1        unsigned char i;
+ 242   1        unsigned int Para_Temp;
+ 243   1        Para_Temp = -Para_Right;
+ 244   1        if (++Time_1s == 1000)
+ 245   1        {
+ 246   2          Time_1s = 0;
+ 247   2          Freq = TH0 << 8 | TL0;
+ 248   2          if (Para_Right < 0 && Para_Temp > Freq)
+ 249   2          {
+ 250   3            Freq_Error = 1;
+ 251   3            Freq = 0;
+ 252   3          }
+ 253   2          else
+ 254   2          {
+ 255   3            Freq_Error = 0;
+ 256   3            Freq_CAL = Freq + Para_Right;
+ 257   3          }
+ 258   2          TH0 = TL0 = 0;
+ 259   2        }
+ 260   1        if (Seg_Show_Mode == 0)
+ 261   1        {
+ 262   2          if (++Time_200ms_Freq == 200)
+ 263   2          {
+ 264   3            Time_200ms_Freq = 0;
+ 265   3            Led_Blink_Flag_Freq ^= 1;
+ 266   3          }
+ 267   2        }
+ 268   1        else
+ 269   1        {
+ 270   2          Time_200ms_Freq = 0;
+ 271   2          Led_Blink_Flag_Freq = 0;
+ 272   2        }
+ 273   1        if (Freq_Error)
+ 274   1        {
+ 275   2          Time_200ms_Wring = 0;
+ 276   2          Led_Blink_Flag_Wring = 1;
+ 277   2        }
+ 278   1        else if (Freq > Para_Limit)
+ 279   1        {
+ 280   2          if (++Time_200ms_Wring == 200)
+ 281   2          {
+ 282   3            Time_200ms_Wring = 0;
+ 283   3            Led_Blink_Flag_Wring ^= 1;
+ 284   3          }
+ 285   2        }
+ 286   1        else
+ 287   1        {
+ 288   2          Time_200ms_Wring = 0;
+ 289   2          Led_Blink_Flag_Wring = 0;
+ 290   2        }
+ 291   1        Seg_Pos = (++Seg_Pos) % 8;
+ 292   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 293   1        for (i = 0; i < 8; i++)
+ 294   1          Led_Disp(i, ucLed[i]);
+ 295   1      }
+ 296          void main()
+ 297          {
+ 298   1        System_Init();
+ 299   1        Timer0Init();
+ 300   1        Timer1Init();
+ 301   1        Set_Rtc(ucRtc);
+ 302   1        while (1)
+C51 COMPILER V9.59.0.0   MAIN                                                              04/29/2024 18:40:04 PAGE 6   
+
+ 303   1        {
+ 304   2          Key_Proc();
+ 305   2          Seg_Proc();
+ 306   2          Led_Proc();
+ 307   2        }
+ 308   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1631    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     57       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

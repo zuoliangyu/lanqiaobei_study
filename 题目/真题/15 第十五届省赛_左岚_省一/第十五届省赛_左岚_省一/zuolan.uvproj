@@ -146,7 +146,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
+          <TargetSelection>10</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -160,7 +160,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>BIN\VDM51.DLL</Driver>
+            <Driver>BIN\STCMON51.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -309,7 +309,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\Driver</IncludePath>
+              <IncludePath>.\driver;.\user</IncludePath>
             </VariousControls>
           </C51>
           <Ax51>
@@ -359,47 +359,52 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>User</GroupName>
+          <GroupName>user</GroupName>
           <Files>
+            <File>
+              <FileName>STARTUP.A51</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\STARTUP.A51</FilePath>
+            </File>
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\main.c</FilePath>
+              <FilePath>.\user\main.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>Driver</GroupName>
+          <GroupName>driver</GroupName>
           <Files>
+            <File>
+              <FileName>Key.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\driver\Key.c</FilePath>
+            </File>
             <File>
               <FileName>Led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Driver\Led.c</FilePath>
+              <FilePath>.\driver\Led.c</FilePath>
             </File>
             <File>
               <FileName>Seg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Driver\Seg.c</FilePath>
+              <FilePath>.\driver\Seg.c</FilePath>
             </File>
             <File>
-              <FileName>Key.c</FileName>
+              <FileName>init.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Driver\Key.c</FilePath>
+              <FilePath>.\driver\init.c</FilePath>
             </File>
             <File>
-              <FileName>Init.c</FileName>
+              <FileName>ds1302.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Driver\Init.c</FilePath>
+              <FilePath>.\driver\ds1302.c</FilePath>
             </File>
             <File>
               <FileName>iic.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Driver\iic.c</FilePath>
-            </File>
-            <File>
-              <FileName>onewire.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Driver\onewire.c</FilePath>
+              <FilePath>.\driver\iic.c</FilePath>
             </File>
           </Files>
         </Group>

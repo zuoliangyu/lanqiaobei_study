@@ -1,0 +1,41 @@
+C51 COMPILER V9.59.0.0   LED                                                               04/29/2024 18:40:04 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\Led.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE driver\Led.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\driver;.\user) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\Led.lst) TABS(2) OBJECT(.\Objects\Led.obj)
+
+line level    source
+
+   1          #include "Led.h"
+   2          void Led_Disp(unsigned char addr,unsigned char enable)
+   3          {
+   4   1        static unsigned char temp=0x00;
+   5   1        static unsigned char temp_old=0xff;
+   6   1        if(enable)
+   7   1          temp |= 1<<addr;
+   8   1        else 
+   9   1          temp &= ~(1<<addr);
+  10   1        if(temp!=temp_old)
+  11   1        {
+  12   2          P0 = ~temp;
+  13   2          P2 = P2 & 0x1f| 0x80;
+  14   2          P2 &= 0x1f;
+  15   2          temp_old = temp;
+  16   2        }
+  17   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     58    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

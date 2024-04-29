@@ -1,0 +1,10 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\Key.obj",
+".\Objects\Led.obj",
+".\Objects\Seg.obj",
+".\Objects\init.obj",
+".\Objects\ds1302.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\zuolan" 
+PRINT(".\Listings\zuolan.m51") RAMSIZE(256) 

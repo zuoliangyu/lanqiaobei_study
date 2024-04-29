@@ -28,7 +28,7 @@
     <TargetOption>
       <CLK51>35000000</CLK51>
       <OPTTT>
-        <gFlags>0</gFlags>
+        <gFlags>1</gFlags>
         <BeepAtEnd>1</BeepAtEnd>
         <RunSim>1</RunSim>
         <RunTarget>0</RunTarget>
@@ -100,7 +100,7 @@
         <tRSysVw>1</tRSysVw>
         <sRunDeb>0</sRunDeb>
         <sLrtime>0</sLrtime>
-        <nTsel>-1</nTsel>
+        <nTsel>10</nTsel>
         <sDll></sDll>
         <sDllPa></sDllPa>
         <sDlgDll></sDlgDll>
@@ -111,7 +111,7 @@
         <tDlgDll></tDlgDll>
         <tDlgPa></tDlgPa>
         <tIfile></tIfile>
-        <pMon>BIN\VDM51.DLL</pMon>
+        <pMon>BIN\STCMON51.DLL</pMon>
       </DebugOpt>
       <Breakpoint/>
       <Tracepoint>
@@ -149,7 +149,7 @@
   </Target>
 
   <Group>
-    <GroupName>User</GroupName>
+    <GroupName>user</GroupName>
     <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
@@ -157,12 +157,25 @@
     <File>
       <GroupNumber>1</GroupNumber>
       <FileNumber>1</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>1</tvExp>
+      <FileType>2</FileType>
+      <tvExp>0</tvExp>
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\main.c</PathWithFileName>
+      <PathWithFileName>.\STARTUP.A51</PathWithFileName>
+      <FilenameWithoutPath>STARTUP.A51</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>1</GroupNumber>
+      <FileNumber>2</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <Focus>0</Focus>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\user\main.c</PathWithFileName>
       <FilenameWithoutPath>main.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -170,24 +183,11 @@
   </Group>
 
   <Group>
-    <GroupName>Driver</GroupName>
-    <tvExp>1</tvExp>
+    <GroupName>driver</GroupName>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
-    <File>
-      <GroupNumber>2</GroupNumber>
-      <FileNumber>2</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>1</tvExp>
-      <Focus>0</Focus>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>..\Driver\Led.c</PathWithFileName>
-      <FilenameWithoutPath>Led.c</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
     <File>
       <GroupNumber>2</GroupNumber>
       <FileNumber>3</FileNumber>
@@ -196,8 +196,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Driver\Seg.c</PathWithFileName>
-      <FilenameWithoutPath>Seg.c</FilenameWithoutPath>
+      <PathWithFileName>.\driver\Key.c</PathWithFileName>
+      <FilenameWithoutPath>Key.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -209,8 +209,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Driver\Key.c</PathWithFileName>
-      <FilenameWithoutPath>Key.c</FilenameWithoutPath>
+      <PathWithFileName>.\driver\Led.c</PathWithFileName>
+      <FilenameWithoutPath>Led.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -222,8 +222,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Driver\Init.c</PathWithFileName>
-      <FilenameWithoutPath>Init.c</FilenameWithoutPath>
+      <PathWithFileName>.\driver\Seg.c</PathWithFileName>
+      <FilenameWithoutPath>Seg.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -235,8 +235,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Driver\iic.c</PathWithFileName>
-      <FilenameWithoutPath>iic.c</FilenameWithoutPath>
+      <PathWithFileName>.\driver\init.c</PathWithFileName>
+      <FilenameWithoutPath>init.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -248,8 +248,21 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Driver\onewire.c</PathWithFileName>
-      <FilenameWithoutPath>onewire.c</FilenameWithoutPath>
+      <PathWithFileName>.\driver\ds1302.c</PathWithFileName>
+      <FilenameWithoutPath>ds1302.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>2</GroupNumber>
+      <FileNumber>8</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <Focus>0</Focus>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\driver\iic.c</PathWithFileName>
+      <FilenameWithoutPath>iic.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
