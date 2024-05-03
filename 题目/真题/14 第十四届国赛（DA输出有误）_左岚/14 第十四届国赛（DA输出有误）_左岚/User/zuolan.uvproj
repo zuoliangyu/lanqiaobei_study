@@ -392,9 +392,19 @@
               <FilePath>..\Driver\Init.c</FilePath>
             </File>
             <File>
+              <FileName>iic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Driver\iic.c</FilePath>
+            </File>
+            <File>
               <FileName>onewire.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Driver\onewire.c</FilePath>
+            </File>
+            <File>
+              <FileName>Ultrasonic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Driver\Ultrasonic.c</FilePath>
             </File>
           </Files>
         </Group>

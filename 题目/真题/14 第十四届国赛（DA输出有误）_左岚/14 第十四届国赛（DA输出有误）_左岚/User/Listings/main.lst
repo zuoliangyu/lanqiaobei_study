@@ -1,0 +1,464 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          /* LED显示 */
+   3          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   4          
+   5          /* 数码管显示 */                                     // 数码管减速
+   6          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示的值
+   7          uchar Seg_Pos;                                       // 数码管指示
+   8          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // 某位是否显示小数点
+   9          /* 数据 */
+  10          uint T_value_10x;    // 温度测量值10倍
+  11          uint Dis_value;      // 默认为cm
+  12          uchar Para_Dis;      // 距离参数
+  13          uchar Para_T;        // 温度参数
+  14          char Dis_Cail;       // 距离校准值
+  15          uint Speed;          // 介质速度
+  16          uchar DAC_limit_10x; // 10倍dac下限
+  17          uint Record_Data[12];
+  18          uchar Record_Data_Index;
+  19          /* 显示 */
+  20          uchar Seg_show_mode;  // 0 测距 1 参数 2 工厂
+  21          uchar Dis_show_mode;  // 0 cm 1 m
+  22          uchar Para_show_mode; // 0 距离 1 温度
+  23          uchar FAC_show_mode;  // 0 校准 1 介质 2 DAC下限
+  24          /* 时间 */
+  25          uint time_all_1s;
+  26          uint time_6s;
+  27          uint time_2s;
+  28          uchar time_100ms;
+  29          uchar time_500ms;
+  30          /* 判断 */
+  31          bit Record_flag;        // 正在记录的标志
+  32          bit Key_lock;           // 键盘锁住
+  33          bit Key_Two_Press;      // 双按键按下
+  34          bit Led_Blink_flag;     // LED闪烁标志
+  35          bit Output_Record_flag; // 输出记录数据
+  36          void Recover_Sys()
+  37          {
+  38   1          Seg_show_mode = 0;
+  39   1          Para_Dis = 40;
+  40   1          Para_T = 30;
+  41   1          Dis_Cail = 0;
+  42   1          Speed = 340;
+  43   1          DAC_limit_10x = 10;
+  44   1      }
+  45          /* 数据处理函数 */
+  46          void Data_Proc()
+  47          {
+  48   1          uchar DAC_temp_100x;
+  49   1          if (time_all_1s % 500 == 0)
+  50   1          {
+  51   2              // 测距读取
+  52   2              Dis_value = Ut_Wave_Data(Dis_Cail, Speed);
+  53   2              if (Record_flag)
+  54   2              {
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 2   
+
+  55   3                  if (Dis_value < 10)
+  56   3                      DAC_temp_100x = DAC_limit_10x * 10;
+  57   3                  else if (Dis_value >= 90)
+  58   3                      DAC_temp_100x = 500;
+  59   3                  else
+  60   3                      DAC_temp_100x = (5 - DAC_limit_10x) * (Dis_value - 90) * 100 / 80 + 500;
+  61   3                  Record_Data[Record_Data_Index] = DAC_temp_100x;
+  62   3                  Record_Data_Index = (++Record_Data_Index) % 12;
+  63   3              }
+  64   2          }
+  65   1          if (time_all_1s % 500 == 0)
+  66   1          {
+  67   2              // 温度读取
+  68   2              T_value_10x = rd_temperature() * 10;
+  69   2          }
+  70   1      }
+  71          /* 键盘处理函数 */
+  72          void Key_Proc()
+  73          {
+  74   1          static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  75   1          // 正在记录，直接让所有动作失效
+  76   1          if (Record_flag)
+  77   1              return;
+  78   1          if (time_all_1s % 10)
+  79   1              return;
+  80   1          Key_Val = Key_Read();
+  81   1          Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  82   1          Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  83   1          Key_Old = Key_Val;
+  84   1          if (Key_Old == 89)
+  85   1          {
+  86   2              // 现在开始长按
+  87   2              Key_lock = 1;
+  88   2              Key_Two_Press = 1;
+  89   2              if (time_2s > 2000)
+  90   2                  Recover_Sys();
+  91   2          }
+  92   1          // 锁键盘，避免误操作
+  93   1          if (Key_lock && Key_Old)
+  94   1              return;
+  95   1          Key_lock = 0;
+  96   1          if (Key_Down == 4)
+  97   1          {
+  98   2              Seg_show_mode = (++Seg_show_mode) % 3;
+  99   2              Dis_show_mode = FAC_show_mode = Para_show_mode = 0;
+ 100   2          }
+ 101   1          switch (Seg_show_mode)
+ 102   1          {
+ 103   2          case 0:
+ 104   2              /* 测距 */
+ 105   2              if (Key_Down == 5)
+ 106   2                  Dis_show_mode = (++Dis_show_mode) % 2;
+ 107   2              if (Key_Down == 8)
+ 108   2                  Record_flag = 1;
+ 109   2              if (Key_Down == 9)
+ 110   2              {
+ 111   3                  Output_Record_flag = 1;
+ 112   3                  Record_Data_Index = 11;
+ 113   3              }
+ 114   2              break;
+ 115   2          case 1:
+ 116   2              /* 参数 */
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 3   
+
+ 117   2              if (Key_Down == 5)
+ 118   2                  Para_show_mode = (++Para_show_mode) % 2;
+ 119   2              switch (Para_show_mode)
+ 120   2              {
+ 121   3              case 0:
+ 122   3                  /* 距离 */
+ 123   3                  if (Key_Down == 8)
+ 124   3                      Para_Dis = (Para_Dis == 90) ? 10
+ 125   3                                                  : Para_Dis + 10;
+ 126   3                  else if (Key_Down == 9)
+ 127   3                      Para_Dis = (Para_Dis == 10) ? 90
+ 128   3                                                  : Para_Dis - 10;
+ 129   3                  break;
+ 130   3      
+ 131   3              case 1:
+ 132   3                  /* 温度 */
+ 133   3                  if (Key_Down == 8)
+ 134   3                      Para_T = (Para_T == 80) ? 0
+ 135   3                                              : Para_T + 1;
+ 136   3                  else if (Key_Down == 9)
+ 137   3                      Para_T = (Para_T == 0) ? 80
+ 138   3                                             : Para_T - 1;
+ 139   3                  break;
+ 140   3              }
+ 141   2              break;
+ 142   2          case 2:
+ 143   2              /* 工厂 */
+ 144   2              if (Key_Down == 5)
+ 145   2                  FAC_show_mode = (++FAC_show_mode) % 3;
+ 146   2              switch (FAC_show_mode)
+ 147   2              {
+ 148   3              case 0:
+ 149   3                  /* 校准值 */
+ 150   3                  if (Key_Down == 8)
+ 151   3                      Dis_Cail = (Dis_Cail == 90) ? -90
+ 152   3                                                  : Dis_Cail + 5;
+ 153   3                  else if (Key_Down == 9)
+ 154   3                      Dis_Cail = (Dis_Cail == -90) ? 90
+ 155   3                                                   : Dis_Cail - 5;
+ 156   3                  break;
+ 157   3              case 1:
+ 158   3                  /* 介质 */
+ 159   3                  if (Key_Down == 8)
+ 160   3                      Speed = (Speed == 9990) ? 0
+ 161   3                                              : Speed + 10;
+ 162   3                  else if (Key_Down == 9)
+ 163   3                      Speed = (Speed == 10) ? 9990
+ 164   3                                            : Speed - 10;
+ 165   3                  break;
+ 166   3              case 2:
+ 167   3                  /* DAC下限 */
+ 168   3                  if (Key_Down == 8)
+ 169   3                      DAC_limit_10x = (DAC_limit_10x == 20) ? 1
+ 170   3                                                            : DAC_limit_10x + 1;
+ 171   3                  else if (Key_Down == 9)
+ 172   3                      DAC_limit_10x = (DAC_limit_10x == 1) ? 20
+ 173   3                                                           : DAC_limit_10x - 1;
+ 174   3                  break;
+ 175   3              }
+ 176   2              break;
+ 177   2          }
+ 178   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 4   
+
+ 179          /* 数码管处理函数 */
+ 180          void Seg_Proc()
+ 181          {
+ 182   1          uchar Dis_Cail_Temp;
+ 183   1          Dis_Cail_Temp = -Dis_Cail;
+ 184   1          if (time_all_1s % 20)
+ 185   1              return;
+ 186   1          switch (Seg_show_mode)
+ 187   1          {
+ 188   2          case 0:
+ 189   2              /* 测距 */
+ 190   2              Seg_Point[1] = 1;
+ 191   2              Seg_Point[6] = 0;
+ 192   2              Seg_Buf[0] = T_value_10x / 100 % 10;
+ 193   2              Seg_Buf[1] = T_value_10x / 10 % 10;
+ 194   2              Seg_Buf[2] = T_value_10x % 10;
+ 195   2              Seg_Buf[3] = 11; //-
+ 196   2              if (Dis_show_mode == 0)
+ 197   2              {
+ 198   3                  Seg_Point[5] = 0;
+ 199   3                  // 显示cm
+ 200   3                  Seg_Buf[4] = (Dis_value / 1000 == 0) ? 10
+ 201   3                                                       : Dis_value / 1000;
+ 202   3                  Seg_Buf[5] = (Seg_Buf[4] == 10 && Dis_value / 100 % 10 == 0) ? 10
+ 203   3                                                                               : Dis_value / 100 % 10;
+ 204   3                  Seg_Buf[6] = (Seg_Buf[5] == 10 && Dis_value / 10 % 10 == 0) ? 10
+ 205   3                                                                              : Dis_value / 10 % 10;
+ 206   3                  Seg_Buf[7] = Dis_value % 10;
+ 207   3              }
+ 208   2              else
+ 209   2              {
+ 210   3                  Seg_Point[5] = 1;
+ 211   3                  // 显示m
+ 212   3                  Seg_Buf[4] = (Dis_value < 1000) ? 10
+ 213   3                                                  : Dis_value / 1000;
+ 214   3                  Seg_Buf[5] = Dis_value / 100 % 10;
+ 215   3                  Seg_Buf[6] = Dis_value / 10 % 10;
+ 216   3                  Seg_Buf[7] = Dis_value % 10;
+ 217   3              }
+ 218   2              break;
+ 219   2      
+ 220   2          case 1:
+ 221   2              Seg_Point[1] = Seg_Point[5] = Seg_Point[6] = 0;
+ 222   2              Seg_Buf[0] = 12; // P
+ 223   2              Seg_Buf[1] = Para_show_mode + 1;
+ 224   2              Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = Seg_Buf[5] = 10;
+ 225   2              Seg_Buf[6] = (Para_show_mode == 0) ? Para_Dis / 10
+ 226   2                                                 : Para_T / 10;
+ 227   2              Seg_Buf[7] = (Para_show_mode == 0) ? Para_Dis % 10
+ 228   2                                                 : Para_T % 10;
+ 229   2      
+ 230   2              break;
+ 231   2          case 2:
+ 232   2              Seg_Buf[0] = 13; // F
+ 233   2              Seg_Buf[1] = FAC_show_mode + 1;
+ 234   2              switch (FAC_show_mode)
+ 235   2              {
+ 236   3              case 0:
+ 237   3                  Seg_Point[1] = Seg_Point[5] = Seg_Point[6] = 0;
+ 238   3                  /* 校准 */
+ 239   3                  Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = 10;
+ 240   3                  if (Dis_Cail <= -10)
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 5   
+
+ 241   3                  {
+ 242   4                      Seg_Buf[5] = 11; //-
+ 243   4                      Seg_Buf[6] = Dis_Cail_Temp / 10 % 10;
+ 244   4                      Seg_Buf[7] = Dis_Cail_Temp % 10;
+ 245   4                  }
+ 246   3                  else if (Dis_Cail < 0)
+ 247   3                  {
+ 248   4                      Seg_Buf[5] = 10;
+ 249   4                      Seg_Buf[6] = 11; //-
+ 250   4                      Seg_Buf[7] = Dis_Cail_Temp % 10;
+ 251   4                  }
+ 252   3                  else
+ 253   3                  {
+ 254   4                      Seg_Buf[5] = 50;
+ 255   4                      Seg_Buf[6] = (Dis_Cail / 10 % 10 == 0) ? 10
+ 256   4                                                             : Dis_Cail / 10 % 10;
+ 257   4                      Seg_Buf[7] = Dis_Cail % 10;
+ 258   4                  }
+ 259   3                  break;
+ 260   3      
+ 261   3              case 1:
+ 262   3                  Seg_Point[1] = Seg_Point[5] = Seg_Point[6] = 0;
+ 263   3                  /* 介质 */
+ 264   3                  Seg_Buf[2] = Seg_Buf[3] = 10;
+ 265   3                  Seg_Buf[4] = (Speed / 1000 % 10 == 0) ? 10
+ 266   3                                                        : Speed / 1000 % 10;
+ 267   3                  Seg_Buf[5] = (Seg_Buf[4] == 10 && Speed / 100 % 10 == 0) ? 10
+ 268   3                                                                           : Speed / 100 % 10;
+ 269   3                  Seg_Buf[6] = Speed / 10 % 10;
+ 270   3                  Seg_Buf[7] = Speed % 10;
+ 271   3                  break;
+ 272   3              case 2:
+ 273   3                  Seg_Point[1] = Seg_Point[5] = 0;
+ 274   3                  Seg_Point[6] = 1;
+ 275   3                  /* DAC下限 */
+ 276   3                  Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = Seg_Buf[5] = 10;
+ 277   3                  Seg_Buf[6] = DAC_limit_10x / 10 % 10;
+ 278   3                  Seg_Buf[7] = DAC_limit_10x % 10;
+ 279   3                  break;
+ 280   3              }
+ 281   2              break;
+ 282   2          }
+ 283   1      }
+ 284          
+ 285          /* LED处理函数 */
+ 286          void Led_Proc()
+ 287          {
+ 288   1          uchar i;
+ 289   1          if (Output_Record_flag)
+ 290   1              Da_Write(Record_Data[11 - Record_Data_Index] * 51 / 100);
+ 291   1          switch (Seg_show_mode)
+ 292   1          {
+ 293   2          case 0:
+ 294   2              /* 测距 */
+ 295   2              if (Dis_value > 255)
+ 296   2                  memset(ucLed, 1, 8);
+ 297   2              else
+ 298   2              {
+ 299   3                  for (i = 0; i < 8; i++)
+ 300   3                  {
+ 301   4                      ucLed[i] = Dis_value & (0x01 << i);
+ 302   4                  }
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 6   
+
+ 303   3              }
+ 304   2              break;
+ 305   2      
+ 306   2          case 1:
+ 307   2              /*  参数 */
+ 308   2              memset(ucLed, 0, 7);
+ 309   2              ucLed[7] = 1;
+ 310   2              break;
+ 311   2      
+ 312   2          case 2:
+ 313   2              /* 工厂 */
+ 314   2              memset(ucLed + 1, 0, 7);
+ 315   2              ucLed[0] = Led_Blink_flag;
+ 316   2              break;
+ 317   2          }
+ 318   1          Relay(Dis_value <= Para_Dis + 5 &&
+ 319   1                Dis_value >= Para_Dis - 5 &&
+ 320   1                T_value_10x < Para_T * 10);
+ 321   1      }
+ 322          
+ 323          /* 定时器0中断初始化 */
+ 324          void Timer0_Init(void) // 1毫秒@12.000MHz
+ 325          {
+ 326   1          AUXR &= 0x7F; // 定时器时钟12T模式
+ 327   1          TMOD &= 0xF0; // 设置定时器模式
+ 328   1          TL0 = 0x18;   // 设置定时初始值
+ 329   1          TH0 = 0xFC;   // 设置定时初始值
+ 330   1          TF0 = 0;      // 清除TF0标志
+ 331   1          TR0 = 1;      // 定时器0开始计时
+ 332   1          ET0 = 1;
+ 333   1          EA = 1;
+ 334   1      }
+ 335          
+ 336          /* 定时器0中断函数 */
+ 337          void Timer0_ISR(void) interrupt 1
+ 338          {
+ 339   1          uchar i;
+ 340   1          if (++time_all_1s == 1000)
+ 341   1              time_all_1s = 0;
+ 342   1          Seg_Pos = (++Seg_Pos) % 8;
+ 343   1          if (Output_Record_flag)
+ 344   1          {
+ 345   2              if (Record_Data_Index == 0)
+ 346   2              {
+ 347   3                  Output_Record_flag = 0;
+ 348   3                  time_500ms = 0;
+ 349   3              }
+ 350   2              // 输出计时
+ 351   2              if (++time_500ms == 500)
+ 352   2              {
+ 353   3                  Record_Data_Index--;
+ 354   3                  time_500ms = 0;
+ 355   3              }
+ 356   2          }
+ 357   1          else
+ 358   1          {
+ 359   2              time_500ms = 0;
+ 360   2          }
+ 361   1          // 当双按键按下的时候开始计时
+ 362   1          if (Key_Two_Press)
+ 363   1          {
+ 364   2              if (++time_2s >= 2000)
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 7   
+
+ 365   2                  time_2s = 2001;
+ 366   2          }
+ 367   1          else
+ 368   1          {
+ 369   2              time_2s = 0;
+ 370   2          }
+ 371   1          // 开始记录
+ 372   1          if (Record_flag)
+ 373   1          {
+ 374   2              if (++time_6s == 6000)
+ 375   2              {
+ 376   3                  time_6s = 0;
+ 377   3                  Record_flag = 0;
+ 378   3              }
+ 379   2          }
+ 380   1          else
+ 381   1          {
+ 382   2              time_6s = 0;
+ 383   2          }
+ 384   1          if (++time_100ms == 100)
+ 385   1          {
+ 386   2              time_100ms = 0;
+ 387   2              Led_Blink_flag ^= 1;
+ 388   2          }
+ 389   1          Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 390   1          for (i = 0; i < 8; i++)
+ 391   1              Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
+ 392   1      }
+ 393          void Delay750ms(void) //@12.000MHz
+ 394          {
+ 395   1          unsigned char data i, j, k;
+ 396   1      
+ 397   1          _nop_();
+ 398   1          _nop_();
+ 399   1          i = 35;
+ 400   1          j = 51;
+ 401   1          k = 182;
+ 402   1          do
+ 403   1          {
+ 404   2              do
+ 405   2              {
+ 406   3                  while (--k)
+ 407   3                      ;
+ 408   3              } while (--j);
+ 409   2          } while (--i);
+ 410   1      }
+ 411          
+ 412          void main()
+ 413          {
+ 414   1          System_Init();
+ 415   1          Recover_Sys();
+ 416   1          rd_temperature();
+ 417   1          Delay750ms();
+ 418   1          Timer0_Init();
+ 419   1          while (1)
+ 420   1          {
+ 421   2              Data_Proc();
+ 422   2              Key_Proc();
+ 423   2              Seg_Proc();
+ 424   2              Led_Proc();
+ 425   2          }
+ 426   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              05/02/2024 16:37:54 PAGE 8   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1938    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     76       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

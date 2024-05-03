@@ -1,0 +1,82 @@
+C51 COMPILER V9.59.0.0   ULTRASONIC                                                        05/02/2024 16:37:56 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ULTRASONIC
+OBJECT MODULE PLACED IN .\Objects\Ultrasonic.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\Driver\Ultrasonic.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Driver) DEBUG 
+                    -OBJECTEXTEND PRINT(.\Listings\Ultrasonic.lst) TABS(2) OBJECT(.\Objects\Ultrasonic.obj)
+
+line level    source
+
+   1          #include "Ultrasonic.h"
+   2          #include "intrins.h"
+   3          
+   4          sbit Tx = P1 ^ 0;
+   5          sbit Rx = P1 ^ 1;
+   6          void Delay12us(void) //@12.000MHz
+   7          {
+   8   1          unsigned char data i;
+   9   1      
+  10   1          _nop_();
+  11   1          _nop_();
+  12   1          i = 33; // 38
+  13   1          while (--i)
+  14   1              ;
+  15   1      }
+  16          
+  17          void Ut_Wave_Init()
+  18          {
+  19   1          unsigned char i;
+  20   1          // 发送8个40kHz的方波
+  21   1          // f=40kHz->T=1/f=0.000025s=25us
+  22   1          // 12.5us 1 12.5us 0
+  23   1          for (i = 0; i < 8; i++)
+  24   1          {
+  25   2              Tx = 1;
+  26   2              Delay12us();
+  27   2              Tx = 0;
+  28   2              Delay12us();
+  29   2          }
+  30   1      }
+  31          
+  32          unsigned int Ut_Wave_Data(char Cail, unsigned int speed)
+  33          {
+  34   1          unsigned int time;
+  35   1          CH = CL = 0; // 清空PCA寄存器计数值
+  36   1          CCON = 0;    // 初始化PCA控制寄存器/PCA定时器停止/清除CF/
+  37   1      
+  38   1         // EA = 0;           // 关闭总中断
+  39   1          Ut_Wave_Init();   // 发送超声波驱动信号
+  40   1        //  EA = 1;           // 开启总中断
+  41   1          CR = 1;           // PCA开始计数
+  42   1          while (Rx && !CF) // TF1
+  43   1              ;             // 等待接收
+  44   1          CR = 0;           // PCA停止计数
+  45   1          if (CF == 0)
+  46   1          {
+  47   2              time = CH << 8 | CL; // 单位为毫秒
+  48   2              // V->m/s T->us
+  49   2              return ((float)time / 20000 * speed + Cail); // 返回的单位是cm
+  50   2          }
+  51   1          else
+  52   1          {
+  53   2              CF = 0;
+  54   2              return 0;
+C51 COMPILER V9.59.0.0   ULTRASONIC                                                        05/02/2024 16:37:56 PAGE 2   
+
+  55   2          }
+  56   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    148    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

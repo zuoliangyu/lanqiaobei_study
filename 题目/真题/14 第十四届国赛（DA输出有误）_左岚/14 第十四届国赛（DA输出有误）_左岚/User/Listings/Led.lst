@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   LED                                                               05/02/2024 15:57:34 PAGE 1   
+C51 COMPILER V9.59.0.0   LED                                                               05/02/2024 16:37:54 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
@@ -29,16 +29,16 @@ line level    source
   19   2              temp_old = temp;
   20   2          }
   21   1      }
-  22          /// @brief 蜂鸣器
+  22          /// @brief 继电器
   23          /// @param enable 0 关 1 开
-  24          void Beep(bit enable)
+  24          void Relay(bit enable)
   25          {
   26   1          static unsigned char temp = 0x00;
   27   1          static unsigned char temp_old = 0xff;
   28   1          if (enable)
-  29   1              temp |= 0x40;
+  29   1              temp |= 0x10;
   30   1          else
-  31   1              temp &= ~(0x40);
+  31   1              temp &= ~(0x10);
   32   1          if (temp != temp_old)
   33   1          {
   34   2              P0 = temp;
@@ -47,54 +47,16 @@ line level    source
   37   2              temp_old = temp;
   38   2          }
   39   1      }
-  40          /// @brief 继电器
-  41          /// @param enable 0 关 1 开
-  42          void Relay(bit enable)
-  43          {
-  44   1          static unsigned char temp = 0x00;
-  45   1          static unsigned char temp_old = 0xff;
-  46   1          if (enable)
-  47   1              temp |= 0x10;
-  48   1          else
-  49   1              temp &= ~(0x10);
-  50   1          if (temp != temp_old)
-  51   1          {
-  52   2              P0 = temp;
-  53   2              P2 = P2 & 0x1f | 0xa0;
-  54   2              P2 &= 0x1f;
-C51 COMPILER V9.59.0.0   LED                                                               05/02/2024 15:57:34 PAGE 2   
-
-  55   2              temp_old = temp;
-  56   2          }
-  57   1      }
-  58          /// @brief 引脚输出方波的高还是低电平
-  59          /// @param enable 0 关 1 开
-  60          void MOTOR(bit enable)
-  61          {
-  62   1          static unsigned char temp = 0x00;
-  63   1          static unsigned char temp_old = 0xff;
-  64   1          if (enable)
-  65   1              temp |= 0x20;
-  66   1          else
-  67   1              temp &= ~(0x20);
-  68   1          if (temp != temp_old)
-  69   1          {
-  70   2              P0 = temp;
-  71   2              P2 = P2 & 0x1f | 0xa0;
-  72   2              P2 &= 0x1f;
-  73   2              temp_old = temp;
-  74   2          }
-  75   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    163    ----
+   CODE SIZE        =     93    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =      8    ----
+   DATA SIZE        =      4    ----
    IDATA SIZE       =   ----    ----
-   BIT SIZE         =   ----       3
+   BIT SIZE         =   ----       1
 END OF MODULE INFORMATION.
 
 
