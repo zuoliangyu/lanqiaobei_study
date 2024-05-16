@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              02/08/2024 11:19:18 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              05/15/2024 16:51:09 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -9,286 +9,303 @@ COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE 
 line level    source
 
    1          #include "main.h"
-   2          /* 变量声明区 */
-   3          uchar Key_Slow_Down;                 // 按键减速专用变量
-   4          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
-   5          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // 数码管小数点数据存放数组
-   6          uchar Seg_Pos;                     // 数码管扫描专用变量
-   7          uint Seg_Slow_Down;                  // 数码管减速专用变量
-   8          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // Led显示数据存放数组
-   9          uchar ucRtc[3] = {0x16, 0x59, 0x50};         // 时间存放
-  10          /* 数据 */
-  11          uint light_100x;
-  12          uint temperature_10x;
-  13          uchar para_hour = 17;    // 时间参数
-  14          uchar para_temperature = 25; // 温度参数
-  15          uchar para_led = 4;
-  16          
-  17          /* 数码管显示模式 */
-  18          uchar Seg_show_mode;  // 0数据界面 1参数界面
-  19          uchar data_show_mode; // 0时间 1温度 2亮暗
-  20          uchar para_show_mode; // 0时间 1温度 2指示灯
-  21          
-  22          /* 时间 */
-  23          uint time_dark_3s;
-  24          uint time_light_3s;
-  25          bit dark_flag; // 0亮 1暗
-  26          void init_Seg(uchar start, uchar end)
-  27          {
-  28   1        uchar i;
-  29   1        for (i = start; i < end; i++)
-  30   1        {
-  31   2          Seg_Buf[i] = 10;
-  32   2          Seg_Point[i] = 0;
-  33   2        }
-  34   1      }
-  35          /* 键盘处理函数 */
-  36          void Key_Proc()
-  37          {
-  38   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
-  39   1        if (Key_Slow_Down)
-  40   1          return;
-  41   1        Key_Slow_Down = 1; // 键盘减速程序
-  42   1      
-  43   1        Key_Val = Key_Read();           // 实时读取键码值
-  44   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 捕捉按键下降沿
-  45   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键上降沿
-  46   1        Key_Old = Key_Val;              // 辅助扫描变量
-  47   1        if (Key_Down == 4)
-  48   1        {
-  49   2          init_Seg(0, 8);
-  50   2          Seg_show_mode = (++Seg_show_mode) % 2;
-  51   2          data_show_mode = para_show_mode = 0;
-  52   2        }
-  53   1        if (Key_Down == 5)
-  54   1        {
-C51 COMPILER V9.59.0.0   MAIN                                                              02/08/2024 11:19:18 PAGE 2   
+   2          
+   3          /* LED显示 */
+   4          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   5          
+   6          /* 数码管显示 */                                      // 数码管减速
+   7          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};  // 数码管显示的值
+   8          uchar Seg_Pos;                                        // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // 某位是否显示小数点
+  10          
+  11          /* 时间方面 */
+  12          uchar ucRtc[3] = {16, 59, 50};  // 初始化时间13:11:11
+  13          
+  14          /* 时间方面 */
+  15          uint time_all_1s;
+  16          uint time_light_3s;
+  17          uint time_dark_3s;
+  18          /* 界面 */
+  19          uchar Seg_show_mode;   // 0 数据 1 参数
+  20          uchar Data_show_mode;  // 0 时间 1 温度 2 光暗状态
+  21          uchar Para_show_mode;  // 0 时间 1 温度 2 指示灯
+  22          /* 数据 */
+  23          uint T_value_10x;      // 温度的10倍
+  24          uint V_value_100x;     // 光敏电阻分压100倍
+  25          uchar Para_hour = 17;  // 小时参数(0-23)
+  26          uchar Para_T = 25;     // 温度参数(0-99)
+  27          uchar Para_Led = 4;    // 指示灯参数 实际(3-7) -> 显示 (4-8)
+  28          uchar Para_hour_temp;  // 设置小时参数(0-23)
+  29          uchar Para_T_temp;     // 设置温度参数(0-99)
+  30          uchar Para_Led_temp;   // 设置指示灯参数 实际(3-7) -> 显示 (4-8)
+  31          
+  32          /* 判断 */
+  33          bit dark_flag;  // 0 亮 1 暗
+  34          bit cold_flag;  // 0 正常 1 低于参数
+  35          /* 数据处理函数 */
+  36          void Data_Proc() {
+  37   1        if (time_all_1s % 99 == 0) {
+  38   2          // 时间读取
+  39   2          Read_Rtc(ucRtc);
+  40   2        }
+  41   1        if (time_all_1s % 199 == 0) {
+  42   2          // AD读取
+  43   2          V_value_100x = Ad_Read(0x01) * 100 / 51;
+  44   2          // 当光敏电阻分压小于1V时，判断为暗
+  45   2          dark_flag = (V_value_100x < 100);
+  46   2        }
+  47   1        if (time_all_1s % 499 == 0) {
+  48   2          // 温度读取
+  49   2          T_value_10x = rd_temperature() * 10;
+  50   2          cold_flag = (Para_T * 10 > T_value_10x);
+  51   2        }
+  52   1      }
+  53          /* 键盘处理函数 */
+  54          void Key_Proc() {
+C51 COMPILER V9.59.0.0   MAIN                                                              05/15/2024 16:51:09 PAGE 2   
 
-  55   2          if (Seg_show_mode == 0)
-  56   2          {
-  57   3            init_Seg(0, 8);
-  58   3            data_show_mode = (++data_show_mode) % 3;
-  59   3          }
-  60   2          else
-  61   2          {
-  62   3            init_Seg(2, 8);
-  63   3            para_show_mode = (++para_show_mode) % 3;
-  64   3          }
-  65   2        }
-  66   1        if (Seg_show_mode == 1)
-  67   1        {
-  68   2          if (Key_Down == 8)
-  69   2          {
-  70   3            switch (para_show_mode)
-  71   3            {
-  72   4            case 0:
-  73   4              para_hour = (--para_hour >= 0) ? para_hour : 0;
-  74   4              break;
-  75   4            case 1:
-  76   4              para_temperature = (--para_temperature >= 0) ? para_temperature : 0;
-  77   4              break;
-  78   4            case 2:
-  79   4              para_led = (--para_led >= 4) ? para_led : 4;
-  80   4            }
-  81   3          }
-  82   2          if (Key_Down == 9)
-  83   2          {
-  84   3            switch (para_show_mode)
-  85   3            {
-  86   4            case 0:
-  87   4              para_hour = (++para_hour <= 23) ? para_hour : 23;
-  88   4              break;
-  89   4            case 1:
-  90   4              para_temperature = (++para_temperature <= 99) ? para_temperature : 99;
-  91   4              break;
-  92   4            case 2:
-  93   4              para_led = (++para_led <= 8) ? para_led : 8;
-  94   4            }
-  95   3          }
-  96   2        }
-  97   1      }
-  98          
-  99          /* 信息处理函数 */
- 100          void Seg_Proc()
- 101          {
- 102   1        if (Seg_Slow_Down)
- 103   1          return;
- 104   1        Seg_Slow_Down = 1; // 数码管减速程序
- 105   1        Read_Rtc(ucRtc);   // 读取实时时钟
- 106   1        temperature_10x = rd_temperature() * 10;
- 107   1        light_100x = Ad_Read(0x01) * 100 / 51;
- 108   1        dark_flag = (light_100x < 50) ? 1 : 0;
- 109   1        switch (Seg_show_mode)
- 110   1        {
- 111   2        case 0:
- 112   2          /* 数据界面 */
- 113   2          switch (data_show_mode)
- 114   2          {
- 115   3          case 0:
- 116   3            /* 时间数据 */
-C51 COMPILER V9.59.0.0   MAIN                                                              02/08/2024 11:19:18 PAGE 3   
+  55   1        static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+  56   1        if (time_all_1s % 10) return;
+  57   1        Key_Val = Key_Read();
+  58   1        Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  59   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  60   1        Key_Old = Key_Val;
+  61   1        if (Key_Down == 4) {
+  62   2          Seg_show_mode = (++Seg_show_mode) % 2;
+  63   2          Data_show_mode = 0;
+  64   2          Para_show_mode = 0;
+  65   2          // 现在进入参数界面，将全部值给过去
+  66   2          if (Seg_show_mode == 1) {
+  67   3            Para_hour_temp = Para_hour;
+  68   3            Para_T_temp = Para_T;
+  69   3            Para_Led_temp = Para_Led;
+  70   3          }
+  71   2          // 现在进入数据界面，将全部值给过去
+  72   2          else {
+  73   3            Para_hour = Para_hour_temp;
+  74   3            Para_T = Para_T_temp;
+  75   3            Para_Led = Para_Led_temp;
+  76   3          }
+  77   2        }
+  78   1        switch (Seg_show_mode) {
+  79   2          case 0:
+  80   2            /* 数据 */
+  81   2            if (Key_Down == 5) Data_show_mode = (++Data_show_mode) % 3;
+  82   2            break;
+  83   2      
+  84   2          case 1:
+  85   2            /* 参数 */
+  86   2            if (Key_Down == 5) Para_show_mode = (++Para_show_mode) % 3;
+  87   2            switch (Para_show_mode) {
+  88   3              case 0:
+  89   3                /* 时间 */
+  90   3                if (Key_Down == 8)
+  91   3                  Para_hour_temp = (Para_hour_temp == 0) ? 23 : Para_hour_temp - 1;
+  92   3                else if (Key_Down == 9)
+  93   3                  Para_hour_temp = (Para_hour_temp == 23) ? 0 : Para_hour_temp + 1;
+  94   3                break;
+  95   3              case 1:
+  96   3                /* 温度 */
+  97   3                if (Key_Down == 8)
+  98   3                  Para_T_temp = (Para_T_temp == 0) ? 99 : Para_T_temp - 1;
+  99   3                else if (Key_Down == 9)
+ 100   3                  Para_T_temp = (Para_T_temp == 99) ? 0 : Para_T_temp + 1;
+ 101   3                break;
+ 102   3      
+ 103   3              case 2:
+ 104   3                /* Led指示灯*/
+ 105   3                if (Key_Down == 8)
+ 106   3                  Para_Led_temp = (Para_Led_temp == 3) ? 7 : Para_Led_temp - 1;
+ 107   3                else if (Key_Down == 9)
+ 108   3                  Para_Led_temp = (Para_Led_temp == 7) ? 3 : Para_Led_temp + 1;
+ 109   3                break;
+ 110   3            }
+ 111   2            break;
+ 112   2        }
+ 113   1      }
+ 114          /* 数码管处理函数 */
+ 115          void Seg_Proc() {
+ 116   1        if (time_all_1s % 20) return;
+C51 COMPILER V9.59.0.0   MAIN                                                              05/15/2024 16:51:09 PAGE 3   
 
- 117   3            Seg_Buf[0] = ucRtc[0] / 16;
- 118   3            Seg_Buf[1] = ucRtc[0] % 16;
- 119   3            Seg_Buf[2] = 11; //-
- 120   3            Seg_Buf[3] = ucRtc[1] / 16;
- 121   3            Seg_Buf[4] = ucRtc[1] % 16;
- 122   3            Seg_Buf[5] = 11; //-
- 123   3            Seg_Buf[6] = ucRtc[2] / 16;
- 124   3            Seg_Buf[7] = ucRtc[2] % 16;
- 125   3            break;
- 126   3      
- 127   3          case 1:
- 128   3            /* 温度显示 */
- 129   3            Seg_Buf[0] = 12; // C
- 130   3            Seg_Buf[5] = temperature_10x / 100 % 10;
- 131   3            Seg_Buf[6] = temperature_10x / 10 % 10;
- 132   3            Seg_Buf[7] = temperature_10x % 10;
- 133   3            Seg_Point[6] = 1;
- 134   3            break;
- 135   3          case 2:
- 136   3            /* 亮暗显示 */
- 137   3            Seg_Buf[0] = 13; // E
- 138   3            Seg_Buf[2] = light_100x / 100 % 10;
- 139   3            Seg_Buf[3] = light_100x / 10 % 10;
- 140   3            Seg_Buf[4] = light_100x % 10;
- 141   3            Seg_Point[2] = 1;
- 142   3            Seg_Buf[7] = dark_flag;
- 143   3            break;
- 144   3          }
- 145   2          break;
- 146   2      
- 147   2        case 1:
- 148   2          /* 参数界面 */
- 149   2          Seg_Buf[0] = 14; // P
- 150   2          Seg_Buf[1] = para_show_mode + 1;
- 151   2          switch (para_show_mode)
- 152   2          {
- 153   3          case 0:
- 154   3            /* 时间参数 */
- 155   3            Seg_Buf[6] = para_hour / 10 % 10;
- 156   3            Seg_Buf[7] = para_hour % 10;
- 157   3            break;
- 158   3          case 1:
- 159   3            /* 温度参数 */
- 160   3            Seg_Buf[6] = para_temperature / 10 % 10;
- 161   3            Seg_Buf[7] = para_temperature % 10;
- 162   3            break;
- 163   3          case 2:
- 164   3            /* 指示灯参数 */
- 165   3            Seg_Buf[7] = para_led % 10;
- 166   3          }
- 167   2          break;
- 168   2        }
- 169   1      }
- 170          
- 171          /* 其他显示函数 */
- 172          void Led_Proc()
- 173          {
- 174   1        uchar hour;
- 175   1        hour = ucLed[0] / 16 * 10 + ucLed[0] % 16;
- 176   1        ucLed[0] = ((para_hour <= hour) && (hour < 8 + 24));
- 177   1        ucLed[1] = (temperature_10x < para_temperature * 10);
- 178   1        if (dark_flag && time_dark_3s >= 3000)
-C51 COMPILER V9.59.0.0   MAIN                                                              02/08/2024 11:19:18 PAGE 4   
+ 117   1        switch (Seg_show_mode) {
+ 118   2          case 0:
+ 119   2            /* 数据 */
+ 120   2            switch (Data_show_mode) {
+ 121   3              case 0:
+ 122   3                /* 时间 */
+ 123   3                Seg_Point[2] = 0;
+ 124   3                Seg_Point[6] = 0;
+ 125   3                Seg_Buf[0] = ucRtc[0] / 10;
+ 126   3                Seg_Buf[1] = ucRtc[0] % 10;
+ 127   3                Seg_Buf[2] = 11;  //-
+ 128   3                Seg_Buf[3] = ucRtc[1] / 10;
+ 129   3                Seg_Buf[4] = ucRtc[1] % 10;
+ 130   3                Seg_Buf[5] = 11;  //-
+ 131   3                Seg_Buf[6] = ucRtc[2] / 10;
+ 132   3                Seg_Buf[7] = ucRtc[2] % 10;
+ 133   3                break;
+ 134   3      
+ 135   3              case 1:
+ 136   3                /* 温度 */
+ 137   3                Seg_Point[2] = 0;
+ 138   3                Seg_Point[6] = 1;
+ 139   3                Seg_Buf[0] = 12;  // C
+ 140   3                Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = 10;
+ 141   3                Seg_Buf[5] = T_value_10x / 100 % 10;
+ 142   3                Seg_Buf[6] = T_value_10x / 10 % 10;
+ 143   3                Seg_Buf[7] = T_value_10x % 10;
+ 144   3                break;
+ 145   3      
+ 146   3              case 2:
+ 147   3                /* 光暗状态 */
+ 148   3                Seg_Point[2] = 1;
+ 149   3                Seg_Point[6] = 0;
+ 150   3                Seg_Buf[0] = 13;  // E
+ 151   3                Seg_Buf[1] = 10;
+ 152   3                Seg_Buf[2] = V_value_100x / 100 % 10;
+ 153   3                Seg_Buf[3] = V_value_100x / 10 % 10;
+ 154   3                Seg_Buf[4] = V_value_100x % 10;
+ 155   3                Seg_Buf[5] = Seg_Buf[6] = 10;
+ 156   3                Seg_Buf[7] = dark_flag;
+ 157   3                break;
+ 158   3            }
+ 159   2            break;
+ 160   2      
+ 161   2          case 1:
+ 162   2            /* 参数 */
+ 163   2            Seg_Point[2] = 0;
+ 164   2            Seg_Point[6] = 0;
+ 165   2            Seg_Buf[0] = 14;  // P
+ 166   2            Seg_Buf[1] = Para_show_mode + 1;
+ 167   2            Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = Seg_Buf[5] = 10;
+ 168   2            switch (Para_show_mode) {
+ 169   3              case 0:
+ 170   3                /* 时间 */
+ 171   3                Seg_Buf[6] = Para_hour_temp / 10;
+ 172   3                Seg_Buf[7] = Para_hour_temp % 10;
+ 173   3                break;
+ 174   3      
+ 175   3              case 1:
+ 176   3                /* 温度 */
+ 177   3                Seg_Buf[6] = Para_T_temp / 10;
+ 178   3                Seg_Buf[7] = Para_T_temp % 10;
+C51 COMPILER V9.59.0.0   MAIN                                                              05/15/2024 16:51:09 PAGE 4   
 
- 179   1        {
- 180   2          ucLed[2] = 1;
- 181   2        }
- 182   1        else if (!dark_flag && time_light_3s >= 3000)
- 183   1        {
- 184   2          ucLed[2] = 0;
- 185   2        }
- 186   1        if (dark_flag)
- 187   1          ucLed[para_led - 1] = 1;
- 188   1      }
- 189          
- 190          /* 定时器0中断初始化函数 */
- 191          void Timer0Init(void) // 1毫秒@12.000MHz
- 192          {
- 193   1        AUXR &= 0x7F; // 定时器时钟12T模式
- 194   1        TMOD &= 0xF0; // 设置定时器模式
- 195   1        TL0 = 0x18;   // 设置定时初始值
- 196   1        TH0 = 0xFC;   // 设置定时初始值
- 197   1        TF0 = 0;    // 清除TF0标志
- 198   1        TR0 = 1;    // 定时器0开始计时
- 199   1        ET0 = 1;    // 定时器中断0打开
- 200   1        EA = 1;     // 总中断打开
- 201   1      }
- 202          
- 203          /* 定时器0中断服务函数 */
- 204          void Timer0Server() interrupt 1
- 205          {
- 206   1        if (++Key_Slow_Down == 10)
- 207   1          Key_Slow_Down = 0; // 键盘减速专用
- 208   1        if (++Seg_Slow_Down == 500)
- 209   1          Seg_Slow_Down = 0; // 数码管减速专用
- 210   1        if (++Seg_Pos == 8)
- 211   1          Seg_Pos = 0; // 数码管显示专用
- 212   1        if (dark_flag)   // 被遮挡
- 213   1        {
- 214   2          time_light_3s = 0;
- 215   2          if (++time_dark_3s >= 3000)
- 216   2            time_dark_3s = 3001;
- 217   2        }
- 218   1        else // 未被遮挡
- 219   1        {
- 220   2          time_dark_3s = 0;
- 221   2          if (++time_light_3s >= 3000)
- 222   2            time_light_3s = 3001;
- 223   2        }
- 224   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
- 225   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
- 226   1      }
- 227          
- 228          void Delay750ms() //@12MHz
- 229          {
- 230   1        unsigned char i, j, k;
- 231   1      
- 232   1        _nop_();
- 233   1        _nop_();
- 234   1        i = 35;
- 235   1        j = 51;
- 236   1        k = 182;
- 237   1        do
- 238   1        {
- 239   2          do
- 240   2          {
-C51 COMPILER V9.59.0.0   MAIN                                                              02/08/2024 11:19:18 PAGE 5   
+ 179   3                break;
+ 180   3      
+ 181   3              case 2:
+ 182   3                /* 指示灯 */
+ 183   3                Seg_Buf[6] = 10;
+ 184   3                Seg_Buf[7] = Para_Led_temp + 1;
+ 185   3                break;
+ 186   3            }
+ 187   2            break;
+ 188   2        }
+ 189   1      }
+ 190          
+ 191          /* LED处理函数 */
+ 192          void Led_Proc() {
+ 193   1        uchar i;
+ 194   1        if (Para_hour <= 8) {
+ 195   2          // 小时小于8并且大于参数，或者小时等于参数但是不是整点
+ 196   2          if ((ucRtc[0] < 8 && ucRtc[0] > Para_hour) ||
+ 197   2              !(ucRtc[0] == Para_hour && ucRtc[1] == 0 && ucRtc[2] == 0))
+ 198   2            ucLed[0] = 1;
+ 199   2          else
+ 200   2            ucLed[0] = 0;
+ 201   2        } else {
+ 202   2          // 小时大于参数，或者小时小于8，或者小时等于参数但不是整点
+ 203   2          if (ucRtc[0] < 8 || ucRtc[0] > Para_hour ||
+ 204   2              !(ucRtc[0] == Para_hour && ucRtc[1] == 0 && ucRtc[2] == 0))
+ 205   2            ucLed[0] = 1;
+ 206   2          else
+ 207   2            ucLed[0] = 0;
+ 208   2        }
+ 209   1        ucLed[1] = cold_flag;
+ 210   1        ucLed[2] = (time_dark_3s >= 3000 || time_light_3s <= 3000);
+ 211   1        for (i = 3; i < 8; i++) {
+ 212   2          ucLed[i] = (dark_flag) ? (i == Para_Led) : 0;
+ 213   2        }
+ 214   1      }
+ 215          
+ 216          /* 定时器0中断初始化 */
+ 217          void Timer0_Init(void)  // 1毫秒@12.000MHz
+ 218          {
+ 219   1        AUXR &= 0x7F;  // 定时器时钟12T模式
+ 220   1        TMOD &= 0xF0;  // 设置定时器模式
+ 221   1        TL0 = 0x18;    // 设置定时初始值
+ 222   1        TH0 = 0xFC;    // 设置定时初始值
+ 223   1        TF0 = 0;       // 清除TF0标志
+ 224   1        TR0 = 1;       // 定时器0开始计时
+ 225   1        ET0 = 1;
+ 226   1        EA = 1;
+ 227   1      }
+ 228          
+ 229          /* 定时器0中断函数 */
+ 230          void Timer0_ISR(void) interrupt 1 {
+ 231   1        uchar i;
+ 232   1        if (++time_all_1s == 1000) time_all_1s = 0;
+ 233   1        Seg_Pos = (++Seg_Pos) % 8;
+ 234   1        if (dark_flag) {
+ 235   2          // 处于黑暗状态开始计时，停止光明计时，并且将黑暗计时卡死
+ 236   2          time_light_3s = 0;
+ 237   2          if (++time_dark_3s >= 3000) {
+ 238   3            time_dark_3s = 3001;
+ 239   3          }
+ 240   2        } else {
+C51 COMPILER V9.59.0.0   MAIN                                                              05/15/2024 16:51:09 PAGE 5   
 
- 241   3            while (--k)
- 242   3              ;
- 243   3          } while (--j);
- 244   2        } while (--i);
- 245   1      }
- 246          
- 247          /* Main */
- 248          void main()
- 249          {
- 250   1        // 如果有温度读取的话
- 251   1        rd_temperature();
- 252   1        Delay750ms();
- 253   1      
- 254   1        System_Init();
- 255   1        Timer0Init();
- 256   1        Set_Rtc(ucRtc);
- 257   1        while (1)
- 258   1        {
- 259   2          Key_Proc();
- 260   2          Seg_Proc();
- 261   2          Led_Proc();
- 262   2        }
- 263   1      }
+ 241   2          // 处于光明状态开始计时，停止黑暗计时，并且将光明计时卡死
+ 242   2          time_dark_3s = 0;
+ 243   2          if (++time_light_3s >= 3000) {
+ 244   3            time_light_3s = 3001;
+ 245   3          }
+ 246   2        }
+ 247   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 248   1        for (i = 0; i < 8; i++) {
+ 249   2          Led_Disp(i, ucLed[i]);
+ 250   2        }
+ 251   1      }
+ 252          
+ 253          void Delay750ms(void)  //@12.000MHz
+ 254          {
+ 255   1        unsigned char data i, j, k;
+ 256   1      
+ 257   1        _nop_();
+ 258   1        _nop_();
+ 259   1        i = 35;
+ 260   1        j = 51;
+ 261   1        k = 182;
+ 262   1        do {
+ 263   2          do {
+ 264   3            while (--k);
+ 265   3          } while (--j);
+ 266   2        } while (--i);
+ 267   1      }
+ 268          void main() {
+ 269   1        System_Init();
+ 270   1        Timer0_Init();
+ 271   1        Set_Rtc(ucRtc);
+ 272   1        rd_temperature();
+ 273   1        Delay750ms();
+ 274   1        while (1) {
+ 275   2          Data_Proc();
+ 276   2          Key_Proc();
+ 277   2          Seg_Proc();
+ 278   2          Led_Proc();
+ 279   2        }
+ 280   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1022    ----
+   CODE SIZE        =   1188    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     49    ----
+   DATA SIZE        =     51       1
    IDATA SIZE       =   ----    ----
-   BIT SIZE         =      1    ----
+   BIT SIZE         =      2    ----
 END OF MODULE INFORMATION.
 
 

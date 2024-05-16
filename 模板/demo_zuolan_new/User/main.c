@@ -1,4 +1,5 @@
 #include "main.h"
+
 /* LEDœ‘ æ */
 uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 

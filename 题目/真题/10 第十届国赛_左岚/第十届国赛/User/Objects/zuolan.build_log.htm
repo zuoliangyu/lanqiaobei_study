@@ -5,7 +5,7 @@
 <h2>Tool Versions:</h2>
 IDE-Version: μVision V5.14.0.0
 Copyright (C) 2015 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: 1 1, 1, LIC=SDJT4-FUS7S-7EXHC-79UJQ-6CJLW-REJ2H
+License Information: 1 1, 1, LIC=NQZI6-DWZWI-JUT4W-QWG7Q-0NQ0X-JEAU7
  
 Tool Versions:
 Toolchain:       PK51 Prof. Developers Kit  Version: 9.59.0.0
@@ -17,45 +17,38 @@ Library Manager: LIB51.exe V4.30.1.0
 Hex Converter:   OH51.exe V2.7.0.0
 CPU DLL:         S8051.DLL V3.122.0.0
 Dialog DLL:      DP51.DLL V2.66.0.0
-    Target DLL: VDM51.DLL
+Target DLL:      STCMON51.DLL V0, 1, 0, 19
 Dialog DLL:      TP51.DLL V2.60.0.0
  
 <h2>Project:</h2>
-C:\Users\haze\Desktop\blue-bridge-cup-learning\真题\第十届国赛\第十届国赛\User\zuolan.uvproj
-Project File Date:  01/25/2024
+F:\competition\蓝桥杯\blue-bridge-cup-learning\题目\真题\10 第十届国赛_左岚\第十届国赛\User\zuolan.uvproj
+Project File Date:  05/08/2024
 
 <h2>Output:</h2>
 Rebuild target 'zuolan'
 compiling main.c...
-main.c(58): warning C182: pointer to different objects
-main.c(66): warning C182: pointer to different objects
-main.c(304): warning C182: pointer to different objects
+main.c(110): warning C182: pointer to different objects
+main.c(323): warning C182: pointer to different objects
 compiling Led.c...
 compiling Seg.c...
 compiling Key.c...
 compiling Init.c...
 compiling Uart.c...
-compiling ds1302.c...
 compiling iic.c...
 compiling onewire.c...
-compiling ultrasound.c...
+compiling Ultrasonic.c...
 linking...
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_BEEP?LED
+    SEGMENT: ?PR?BEEP?LED
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_RELAY?LED
+    SEGMENT: ?PR?RELAY?LED
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_SET_RTC?DS1302
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_READ_RTC?DS1302
+    SEGMENT: ?PR?MOTOR?LED
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
     SEGMENT: ?PR?_AD_READ?IIC
-*** ERROR L107: ADDRESS SPACE OVERFLOW
-    SPACE:   DATA    
-    SEGMENT: ?DT?_READ_RTC?DS1302
-    LENGTH:  0003H
-Program Size: data=129.6 xdata=0 code=5635
-Target not created.
+Program Size: data=106.1 xdata=0 code=5579
+creating hex file from ".\Objects\zuolan"...
+".\Objects\zuolan" - 0 Error(s), 6 Warning(s).
 </pre>
 </body>
 </html>

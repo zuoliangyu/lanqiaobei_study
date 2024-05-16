@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 23:16:25 PAGE 1   
+C51 COMPILER V9.59.0.0   MAIN                                                              05/16/2024 09:11:53 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
@@ -9,341 +9,361 @@ COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE 
 line level    source
 
    1          #include "main.h"
-   2          /* 变量声明区 */
-   3          uchar Key_Slow_Down;                 // 按键减速专用变量
-   4          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; // 数码管显示数据存放数组
-   5          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};     // 数码管小数点数据存放数组
-   6          uchar Seg_Pos;                     // 数码管扫描专用变量
-   7          uint Seg_Slow_Down;                  // 数码管减速专用变量
-   8          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};       // Led显示数据存放数组
-   9          uchar Uart_Slow_Down;                // 串口减速专用变量
-  10          uchar Uart_Recv[10];                 // 串口接收数据储存数组 默认10个字节 若接收数据较长 可更改最大字节数
-  11          uchar Uart_Recv_Index;                 // 串口接收数组指针
-  12          /*时间*/
-  13          uint time_1s_reset;
-  14          uint time_1s_DAC;
-  15          bit reset_count_flag;
-  16          bit DAC_change_flag;
-  17          bit DAC_out_mode;
-  18          
-  19          /* 界面切换 */
-  20          bit Seg_show_mode;    // 0数据界面 1参数界面
-  21          uchar data_show_mode; // 0温度数据 1距离数据 2变更次数
-  22          bit para_show_mode;   // 0温度参数 1距离参数
-  23          
-  24          /* 数据记录 */
-  25          uint temperature_100x;  // 100倍的温度数据
-  26          uchar dis_value;    // 距离数据
-  27          uint change_count;    // 变更次数
-  28          uchar temperature_demo; // 温度参数
-  29          uchar dis_demo;     // 距离参数
-  30          void init_Seg()
-  31          {
-  32   1        uchar i;
-  33   1        for (i = 0; i < 8; i++)
-  34   1        {
-  35   2          Seg_Buf[i] = 10;  // 数码管显示数据初始化
-  36   2          Seg_Point[i] = 0; // 数码管小数点数据初始化
-  37   2        }
-  38   1      }
-  39          /* 键盘处理函数 */
-  40          void Key_Proc()
-  41          {
-  42   1        static uchar Key_Val, Key_Down, Key_Old, Key_Up; // 按键专用变量
-  43   1        if (Key_Slow_Down)
-  44   1          return;
-  45   1        Key_Slow_Down = 1; // 键盘减速程序
-  46   1      
-  47   1        Key_Val = Key_Read();           // 实时读取键码值
-  48   1        Key_Down = Key_Val & (Key_Old ^ Key_Val); // 捕捉按键下降沿
-  49   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);  // 捕捉按键上降沿
-  50   1        Key_Old = Key_Val;              // 辅助扫描变量
-  51   1        if (Key_Down == 13)
-  52   1          reset_count_flag = 1;
-  53   1        if (Key_Up == 13)
-  54   1        {
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 23:16:25 PAGE 2   
+   2          
+   3          /* LED显示 */
+   4          uchar ucLed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+   5          
+   6          /* 数码管显示 */
+   7          uchar Seg_Buf[8] = {10, 10, 10, 10, 10, 10, 10, 10};  // 数码管显示的值
+   8          uchar Seg_Pos;                                        // 数码管指示
+   9          uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // 某位是否显示小数点
+  10          
+  11          /* 串口方面 */
+  12          uchar Uart_Buf[6];    // 串口接收到的数据
+  13          uchar Uart_Rx_Index;  // 串口接收到的数据的指针
+  14          
+  15          /* 时间方面 */
+  16          uint time_all_1s;
+  17          uint long_press_1s_12;  // 长按1s的计时器
+  18          uint long_press_1s_13;  // 长按1s的计时器
+  19          uchar Sys_Tick;         // 嘀嗒计时，超时解析
+  20          /* 界面 */
+  21          uchar Seg_show_mode;   // 0 数据 1 参数
+  22          uchar Data_show_mode;  // 0 温度 1 距离 2 变更次数
+  23          uchar Para_show_mode;  // 0 温度 1 距离
+  24          uchar Out_mode;        // 0 启动 1 停止
+  25          /* 数据 */
+  26          uint T_value_100x;    // 温度的100倍
+  27          uchar Dis_value;      // 距离
+  28          uint Change_times;    // 变更次数
+  29          uchar Para_T = 30;    // 温度参数
+  30          uchar Para_Dis = 35;  // 距离参数
+  31          uchar Para_T_temp;
+  32          uchar Para_Dis_temp;
+  33          /* 判断*/
+  34          bit press_12;   // 按下12
+  35          bit press_13;   // 按下13
+  36          bit Uart_flag;  // 是否接收到信息
+  37          bit out_range;  // 是否超出范围
+  38          bit hot_T;      // 是否温度过高
+  39          /* 数据处理函数 */
+  40          void Data_Proc() {
+  41   1        if (time_all_1s % 100 == 0) {
+  42   2          // 距离读取
+  43   2          Dis_value = Ut_Wave_Data();
+  44   2          out_range = Dis_value > Para_Dis;
+  45   2        }
+  46   1        if (time_all_1s % 500 == 0) {
+  47   2          // 温度读取
+  48   2          T_value_100x = rd_temperature() * 100;
+  49   2          hot_T = (T_value_100x > Para_T * 100);
+  50   2        }
+  51   1      }
+  52          /* 键盘处理函数 */
+  53          void Key_Proc() {
+  54   1        static uchar Key_Val, Key_Down, Key_Up, Key_Old;
+C51 COMPILER V9.59.0.0   MAIN                                                              05/16/2024 09:11:53 PAGE 2   
 
-  55   2          if (time_1s_reset >= 1000)
-  56   2          {
-  57   3            change_count = 0;
-  58   3            EEPROM_Write(&change_count, 0, 1);
-*** WARNING C182 IN LINE 58 OF main.c: pointer to different objects
-  59   3          }
-  60   2          else
-  61   2          {
-  62   3            init_Seg();
-  63   3            if (Seg_show_mode)
-  64   3            {
-  65   4              change_count++;
-  66   4              EEPROM_Write(&change_count, 0, 1);
-*** WARNING C182 IN LINE 66 OF main.c: pointer to different objects
-  67   4            }
-  68   3            Seg_show_mode ^= 1;
-  69   3            data_show_mode = para_show_mode = 0;
-  70   3          }
-  71   2          reset_count_flag = time_1s_reset = 0;
-  72   2        }
-  73   1        if (Key_Down == 12)
-  74   1        {
-  75   2          DAC_change_flag = 1;
-  76   2        }
-  77   1        if (Key_Up == 12)
-  78   1        {
-  79   2          if (time_1s_DAC >= 1000)
-  80   2            DAC_out_mode ^= 1;
-  81   2          else
-  82   2          {
-  83   3            if (Seg_show_mode)
-  84   3              /* 参数界面*/
-  85   3              para_show_mode ^= 1;
-  86   3            else
-  87   3            {
-  88   4              /* 数据界面*/
-  89   4              init_Seg();
-  90   4              data_show_mode = (++data_show_mode) % 3;
-  91   4            }
-  92   3          }
-  93   2        }
-  94   1        if (Seg_show_mode)
-  95   1        {
-  96   2          if (para_show_mode)
-  97   2          {
-  98   3            /* 距离参数 */
-  99   3            if (Key_Down == 16)
- 100   3              dis_demo = (dis_demo - 5 < 0) ? 0 : (dis_demo - 5);
- 101   3            if (Key_Down == 17)
- 102   3              dis_demo = (dis_demo + 5 > 99) ? 99 : (dis_demo + 5);
- 103   3          }
- 104   2          else
- 105   2          {
- 106   3            /* 温度参数 */
- 107   3            if (Key_Down == 16)
- 108   3              temperature_demo = (temperature_demo - 2 < 0) ? 0 : (temperature_demo - 2);
- 109   3            if (Key_Down == 17)
- 110   3              temperature_demo = (temperature_demo + 2 > 99) ? 99 : (temperature_demo + 2);
- 111   3          }
- 112   2        }
- 113   1      }
- 114          
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 23:16:25 PAGE 3   
+  55   1        if (time_all_1s % 10) return;
+  56   1        Key_Val = Key_Read();
+  57   1        Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  58   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  59   1        Key_Old = Key_Val;
+  60   1      
+  61   1        if (Key_Down == 12) {
+  62   2          press_12 = 1;  // 按下12
+  63   2        }
+  64   1        // 到达时间
+  65   1        if (long_press_1s_12 >= 1000) {
+  66   2          press_12 = 0;
+  67   2          // 执行长按1s的操作
+  68   2          Change_times = 0;
+  69   2        }
+  70   1        // 抬起12，并且时间没有到达1s
+  71   1        if (Key_Up == 12 && press_12) {
+  72   2          press_12 = 0;  // 松开12
+  73   2          // 时间未到就松开，代表短按
+  74   2          switch (Seg_show_mode) {
+  75   3            case 0:
+  76   3              /* 数据 */
+  77   3              Data_show_mode = (++Data_show_mode) % 3;
+  78   3              break;
+  79   3      
+  80   3            case 1:
+  81   3              /* 参数 */
+  82   3              Para_show_mode = (++Para_show_mode) % 2;
+  83   3              break;
+  84   3          }
+  85   2        }
+  86   1        if (Key_Down == 13) {
+  87   2          press_13 = 1;  // 按下13
+  88   2        }
+  89   1        // 到达时间
+  90   1        if (long_press_1s_13 >= 1000) {
+  91   2          press_13 = 0;
+  92   2          // 执行长按操作
+  93   2          Out_mode = (++Out_mode) % 2;
+  94   2        }
+  95   1        // 抬起13，并且时间没有到达1s
+  96   1        if (Key_Up == 13 & press_13) {
+  97   2          press_13 = 0;  // 松开13
+  98   2          // 时间未到就松开，代表短按
+  99   2          Seg_show_mode = (++Seg_show_mode) % 2;
+ 100   2          Data_show_mode = 0;
+ 101   2          Para_show_mode = 0;
+ 102   2          if (Seg_show_mode == 1) {
+ 103   3            // 进入参数页面
+ 104   3            Para_Dis_temp = Para_Dis;
+ 105   3            Para_T_temp = Para_T;
+ 106   3          } else {
+ 107   3            // 退出参数页面
+ 108   3            if (Para_Dis_temp != Para_Dis || Para_T_temp != Para_T) {
+ 109   4              Change_times = (Change_times == 65535) ? 65535 : Change_times + 1;
+ 110   4              EEPROM_Write(&Change_times, 0, 2);
+*** WARNING C182 IN LINE 110 OF main.c: pointer to different objects
+ 111   4            }
+ 112   3            Para_Dis = Para_Dis_temp;
+ 113   3            Para_T = Para_T_temp;
+ 114   3          }
+ 115   2        }
+C51 COMPILER V9.59.0.0   MAIN                                                              05/16/2024 09:11:53 PAGE 3   
 
- 115          /* 信息处理函数 */
- 116          void Seg_Proc()
- 117          {
- 118   1        uchar i;
- 119   1        if (Seg_Slow_Down)
- 120   1          return;
- 121   1        Seg_Slow_Down = 1; // 数码管减速程序
- 122   1        temperature_100x = rd_temperature() * 100;
- 123   1        dis_value = Ut_Wave_Data();
- 124   1        if (Seg_show_mode)
- 125   1        {
- 126   2          /* 参数界面 */
- 127   2          switch (data_show_mode)
- 128   2          {
- 129   3          case 0:
- 130   3            /* 温度数据 */
- 131   3            Seg_Buf[0] = 11; // C
- 132   3            Seg_Buf[4] = temperature_100x / 1000 % 10;
- 133   3            Seg_Buf[5] = temperature_100x / 100 % 10;
- 134   3            Seg_Buf[6] = temperature_100x / 10 % 10;
- 135   3            Seg_Buf[7] = temperature_100x % 10;
- 136   3            Seg_Point[5] = 1;
- 137   3            break;
- 138   3          case 1:
- 139   3            /* 距离数据 */
- 140   3            Seg_Buf[0] = 12; // L
- 141   3            Seg_Buf[6] = dis_value / 10 % 10;
- 142   3            Seg_Buf[7] = dis_value % 10;
- 143   3            break;
- 144   3          case 2:
- 145   3            /* 变更次数 */
- 146   3            Seg_Buf[0] = 13; // N
- 147   3            Seg_Buf[3] = change_count / 10000 % 10;
- 148   3            Seg_Buf[4] = change_count / 1000 % 10;
- 149   3            Seg_Buf[5] = change_count / 100 % 10;
- 150   3            Seg_Buf[6] = change_count / 10 % 10;
- 151   3            Seg_Buf[7] = change_count % 10;
- 152   3            for (i = 3; i < 6; i++)
- 153   3            {
- 154   4              if (Seg_Buf[i] != 0)
- 155   4                break;
- 156   4              Seg_Buf[i] = 10;
- 157   4            }
- 158   3      
- 159   3            break;
- 160   3          }
- 161   2        }
- 162   1        else
- 163   1        {
- 164   2          /* 数据界面 */
- 165   2          Seg_Buf[0] = 14; // P
- 166   2          Seg_Buf[3] = (uchar)para_show_mode + 1;
- 167   2          if (para_show_mode)
- 168   2          {
- 169   3            /* 距离参数 */
- 170   3            Seg_Buf[6] = dis_demo / 10; // 十位
- 171   3            Seg_Buf[7] = dis_demo % 10; // 个位
- 172   3          }
- 173   2          else
- 174   2          {
- 175   3            /* 温度参数 */
- 176   3            Seg_Buf[6] = temperature_demo / 10; // 十位
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 23:16:25 PAGE 4   
+ 116   1        switch (Para_show_mode) {
+ 117   2          case 0:
+ 118   2            /* 温度 */
+ 119   2            if (Key_Down == 16) Para_T = (Para_T == 0) ? 99 : Para_T - 2;
+ 120   2            if (Key_Down == 17) Para_T = (Para_T == 99) ? 0 : Para_T + 2;
+ 121   2            break;
+ 122   2      
+ 123   2          case 1:
+ 124   2            /* 距离 */
+ 125   2            if (Key_Down == 16) Para_Dis = (Para_Dis == 0) ? 99 : Para_Dis - 5;
+ 126   2            if (Key_Down == 17) Para_Dis = (Para_Dis == 99) ? 0 : Para_Dis + 5;
+ 127   2            break;
+ 128   2        }
+ 129   1      }
+ 130          /* 数码管处理函数 */
+ 131          void Seg_Proc() {
+ 132   1        if (time_all_1s % 20) return;
+ 133   1        switch (Seg_show_mode) {
+ 134   2          case 0:
+ 135   2            /* 数据 */
+ 136   2            switch (Data_show_mode) {
+ 137   3              case 0:
+ 138   3                /* 温度 */
+ 139   3                Seg_Point[5] = 1;
+ 140   3                Seg_Buf[0] = 11;  // C
+ 141   3                Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = 10;
+ 142   3                Seg_Buf[4] = T_value_100x / 1000 % 10;
+ 143   3                Seg_Buf[5] = T_value_100x / 100 % 10;
+ 144   3                Seg_Buf[6] = T_value_100x / 10 % 10;
+ 145   3                Seg_Buf[7] = T_value_100x % 10;
+ 146   3                break;
+ 147   3      
+ 148   3              case 1:
+ 149   3                /* 距离 */
+ 150   3                Seg_Point[5] = 0;
+ 151   3                Seg_Buf[0] = 12;  // L
+ 152   3                Seg_Buf[1] = Seg_Buf[2] = Seg_Buf[3] = Seg_Buf[4] = Seg_Buf[5] = 10;
+ 153   3                Seg_Buf[6] = Dis_value / 10 % 10;
+ 154   3                Seg_Buf[7] = Dis_value % 10;
+ 155   3                break;
+ 156   3      
+ 157   3              case 2:
+ 158   3                /* 变更次数 */
+ 159   3                Seg_Point[5] = 0;
+ 160   3                Seg_Buf[0] = 13;  // n
+ 161   3                Seg_Buf[1] = Seg_Buf[2] = 10;
+ 162   3                Seg_Buf[3] =
+ 163   3                    (Change_times / 10000 % 10 == 0) ? 10 : Change_times / 10000 % 10;
+ 164   3                Seg_Buf[4] = (Seg_Buf[3] == 10 && (Change_times / 1000 % 10 == 0))
+ 165   3                                 ? 10
+ 166   3                                 : Change_times / 1000 % 10;
+ 167   3                Seg_Buf[5] = (Seg_Buf[4] == 10 && (Change_times / 100 % 10 == 0))
+ 168   3                                 ? 10
+ 169   3                                 : Change_times / 100 % 10;
+ 170   3                Seg_Buf[6] = (Seg_Buf[5] == 10 && (Change_times / 10 % 10 == 0))
+ 171   3                                 ? 10
+ 172   3                                 : Change_times / 10 % 10;
+ 173   3                Seg_Buf[7] = Change_times % 10;
+ 174   3                break;
+ 175   3            }
+ 176   2            break;
+ 177   2      
+C51 COMPILER V9.59.0.0   MAIN                                                              05/16/2024 09:11:53 PAGE 4   
 
- 177   3            Seg_Buf[7] = temperature_demo % 10; // 个位
- 178   3          }
- 179   2        }
- 180   1      }
- 181          
- 182          /* 其他显示函数 */
- 183          void Led_Proc()
- 184          {
- 185   1        if (DAC_out_mode)
- 186   1        {
- 187   2          if (dis_value <= dis_demo)
- 188   2            Da_Write(102); // 2*51
- 189   2          else
- 190   2            Da_Write(204); // 4*51
- 191   2        }
- 192   1        else
- 193   1          Da_Write(20); // 0.4*51
- 194   1        ucLed[0] = (temperature_100x / 100.0 >= temperature_demo);
- 195   1        ucLed[1] = (dis_value < dis_demo);
- 196   1        ucLed[2] = DAC_out_mode;
- 197   1      }
- 198          /* 串口处理函数 */
- 199          void Uart_Proc()
- 200          {
- 201   1        if (Uart_Slow_Down)
- 202   1          return;
- 203   1        Uart_Slow_Down = 1; // 串口减速程序
- 204   1        // 当有数据输入的时候
- 205   1        if (Uart_Recv[0] != NULL)
- 206   1        {
- 207   2          if (Uart_Recv[0] == 'S' && Uart_Recv[1] == 'T' && Uart_Recv[2] == '\r' && Uart_Recv[3] == '\n')
- 208   2            printf("$%d,%0.2f\r\n", (uint)dis_value, (float)temperature_100x / 100.0);
- 209   2          else if (Uart_Recv[0] == 'P' && Uart_Recv[1] == 'A' && Uart_Recv[2] == 'R' && Uart_Recv[3] == 'A' &&
- 210   2               Uart_Recv[4] == '\r' && Uart_Recv[5] == '\n')
- 211   2            printf("#%d,%d\r\n", dis_demo, temperature_demo);
- 212   2          else
- 213   2            printf("error\r\n");
- 214   2          memset(Uart_Recv, 0, sizeof(Uart_Recv));
- 215   2          Uart_Recv_Index = 0;
- 216   2        }
- 217   1      }
- 218          
- 219          /* 定时器0中断初始化函数 */
- 220          void Timer0Init(void) // 1毫秒@12.000MHz
- 221          {
- 222   1        AUXR &= 0x7F; // 定时器时钟12T模式
- 223   1        TMOD &= 0xF0; // 设置定时器模式
- 224   1        TL0 = 0x18;   // 设置定时初始值
- 225   1        TH0 = 0xFC;   // 设置定时初始值
- 226   1        TF0 = 0;    // 清除TF0标志
- 227   1        TR0 = 1;    // 定时器0开始计时
- 228   1        ET0 = 1;    // 定时器中断0打开
- 229   1        EA = 1;     // 总中断打开
- 230   1      }
- 231          
- 232          /* 定时器0中断服务函数 */
- 233          void Timer0Server() interrupt 1
- 234          {
- 235   1        if (++Key_Slow_Down == 10)
- 236   1          Key_Slow_Down = 0; // 键盘减速专用
- 237   1        if (++Seg_Slow_Down == 500)
- 238   1          Seg_Slow_Down = 0; // 数码管减速专用
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 23:16:25 PAGE 5   
+ 178   2          case 1:
+ 179   2            /* 参数 */
+ 180   2            Seg_Point[5] = 0;
+ 181   2            Seg_Buf[0] = 14;  // P
+ 182   2            Seg_Buf[1] = Seg_Buf[2] = 10;
+ 183   2            Seg_Buf[3] = Para_show_mode + 1;
+ 184   2            Seg_Buf[4] = Seg_Buf[5] = 10;
+ 185   2            switch (Para_show_mode) {
+ 186   3              case 0:
+ 187   3                /* 温度 */
+ 188   3                Seg_Buf[6] = Para_T_temp / 10 % 10;
+ 189   3                Seg_Buf[7] = Para_T_temp % 10;
+ 190   3                break;
+ 191   3      
+ 192   3              case 1:
+ 193   3                /* 距离 */
+ 194   3                Seg_Buf[6] = Para_Dis_temp / 10 % 10;
+ 195   3                Seg_Buf[7] = Para_Dis_temp % 10;
+ 196   3                break;
+ 197   3            }
+ 198   2            break;
+ 199   2        }
+ 200   1      }
+ 201          
+ 202          /* LED处理函数 */
+ 203          void Led_Proc() {
+ 204   1        switch (Out_mode) {
+ 205   2          case 0:
+ 206   2            /* 启动 */
+ 207   2            if (out_range)
+ 208   2              Da_Write(4 * 51);  // 超出范围，输出4V
+ 209   2            else
+ 210   2              Da_Write(2 * 51);  // 没超范围，输出2V
+ 211   2            break;
+ 212   2      
+ 213   2          case 1:
+ 214   2            /* 停止 */
+ 215   2            Da_Write(0.4 * 51);  // 停止状态，输出0.4V
+ 216   2            break;
+ 217   2        }
+ 218   1        ucLed[0] = hot_T;
+ 219   1        ucLed[1] = !out_range;
+ 220   1        ucLed[2] = !Out_mode;
+ 221   1      }
+ 222          
+ 223          /* 串口处理函数 */
+ 224          void Uart_Proc() {
+ 225   1        if (Uart_Rx_Index == 0) return;
+ 226   1        // 超过10ms没有收到数据
+ 227   1        if (Sys_Tick >= 10) {
+ 228   2          Sys_Tick = Uart_flag = 0;
+ 229   2          if (Uart_Buf[0] == 'S' && Uart_Buf[1] == 'T') {
+ 230   3            printf("$%bu,%5.2f\r\n", Dis_value, (float)T_value_100x / 100.0);
+ 231   3          } else if (Uart_Buf[0] == 'P' && Uart_Buf[1] == 'A' && Uart_Buf[2] == 'R' &&
+ 232   2                     Uart_Buf[3] == 'A') {
+ 233   3            printf("#%bu,%bu\r\n", Para_Dis, Para_T);
+ 234   3          } else {
+ 235   3            printf("ERROR\r\n");
+ 236   3          }
+ 237   2          memset(Uart_Buf, 0, Uart_Rx_Index);
+ 238   2          Uart_Rx_Index = 0;
+ 239   2        }
+C51 COMPILER V9.59.0.0   MAIN                                                              05/16/2024 09:11:53 PAGE 5   
 
- 239   1        if (++Uart_Slow_Down == 200)
- 240   1          Uart_Slow_Down = 0; // 串口减速专用
- 241   1        if (++Seg_Pos == 8)
- 242   1          Seg_Pos = 0; // 数码管显示专用
- 243   1        if (reset_count_flag)
- 244   1        {
- 245   2          if (++time_1s_reset >= 1000)
- 246   2            time_1s_reset = 1000;
- 247   2        }
- 248   1        else
- 249   1        {
- 250   2          time_1s_reset = 0;
- 251   2        }
- 252   1        if (DAC_change_flag)
- 253   1        {
- 254   2          if (++time_1s_DAC >= 1000)
- 255   2            time_1s_DAC = 1000;
- 256   2        }
- 257   1        else
- 258   1        {
- 259   2          time_1s_DAC = 0;
- 260   2        }
- 261   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
- 262   1        Led_Disp(Seg_Pos, ucLed[Seg_Pos]);
- 263   1      }
- 264          
- 265          /* 串口1中断服务函数 */
- 266          void Uart1Server() interrupt 4
- 267          {
- 268   1        if (RI == 1) // 串口接收数据
- 269   1        {
- 270   2          Uart_Recv[Uart_Recv_Index] = SBUF;
- 271   2          Uart_Recv_Index++;
- 272   2          RI = 0;
+ 240   1      }
+ 241          
+ 242          /* 定时器0中断初始化 */
+ 243          void Timer0_Init(void)  // 1毫秒@12.000MHz
+ 244          {
+ 245   1        AUXR &= 0x7F;  // 定时器时钟12T模式
+ 246   1        TMOD &= 0xF0;  // 设置定时器模式
+ 247   1        TL0 = 0x18;    // 设置定时初始值
+ 248   1        TH0 = 0xFC;    // 设置定时初始值
+ 249   1        TF0 = 0;       // 清除TF0标志
+ 250   1        TR0 = 1;       // 定时器0开始计时
+ 251   1        ET0 = 1;
+ 252   1        EA = 1;
+ 253   1      }
+ 254          
+ 255          /* 定时器0中断函数 */
+ 256          void Timer0_ISR(void) interrupt 1 {
+ 257   1        uchar i;
+ 258   1        if (++time_all_1s == 1000) time_all_1s = 0;
+ 259   1        // 长按计时部分
+ 260   1        if (press_12) {
+ 261   2          if (++long_press_1s_12 >= 1000) {
+ 262   3            long_press_1s_12 = 1001;
+ 263   3          }
+ 264   2        } else {
+ 265   2          long_press_1s_12 = 0;
+ 266   2        }
+ 267   1        if (press_13) {
+ 268   2          if (++long_press_1s_13 >= 1000) {
+ 269   3            long_press_1s_13 = 1001;
+ 270   3          }
+ 271   2        } else {
+ 272   2          long_press_1s_13 = 0;
  273   2        }
- 274   1      }
- 275          void Delay750ms() //@12MHz
- 276          {
- 277   1        unsigned char i, j, k;
- 278   1      
- 279   1        _nop_();
- 280   1        _nop_();
- 281   1        i = 35;
- 282   1        j = 51;
- 283   1        k = 182;
- 284   1        do
+ 274   1      
+ 275   1        // 串口嘀嗒部分
+ 276   1        if (Uart_flag) Sys_Tick++;
+ 277   1        Seg_Pos = (++Seg_Pos) % 8;
+ 278   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 279   1        for (i = 0; i < 8; i++) Led_Disp(i, ucLed[i]);
+ 280   1      }
+ 281          
+ 282          /* 串口中断服务函数 */
+ 283          void Uart_ISR(void) interrupt 4 {
+ 284   1        if (RI == 1)  // 串口接收到数据
  285   1        {
- 286   2          do
- 287   2          {
- 288   3            while (--k)
- 289   3              ;
- 290   3          } while (--j);
- 291   2        } while (--i);
- 292   1      }
- 293          
- 294          /* Main */
- 295          void main()
- 296          {
- 297   1        // 如果有温度读取的话
- 298   1        rd_temperature();
- 299   1        Delay750ms();
- 300   1      
-C51 COMPILER V9.59.0.0   MAIN                                                              02/06/2024 23:16:25 PAGE 6   
+ 286   2          Uart_flag = 1;
+ 287   2          Sys_Tick = 0;  // 接受计时
+ 288   2          Uart_Buf[Uart_Rx_Index] = SBUF;
+ 289   2          Uart_Rx_Index++;
+ 290   2          RI = 0;
+ 291   2        }
+ 292   1        if (Uart_Rx_Index > 6) Uart_Rx_Index = 0;
+ 293   1      }
+ 294          void Delay750ms(void)  //@12.000MHz
+ 295          {
+ 296   1        unsigned char data i, j, k;
+ 297   1      
+ 298   1        _nop_();
+ 299   1        _nop_();
+ 300   1        i = 35;
+ 301   1        j = 51;
+C51 COMPILER V9.59.0.0   MAIN                                                              05/16/2024 09:11:53 PAGE 6   
 
- 301   1        System_Init();
- 302   1        Timer0Init();
- 303   1        Uart1_Init();
- 304   1        EEPROM_Read(&change_count, 0, 1);
-*** WARNING C182 IN LINE 304 OF main.c: pointer to different objects
- 305   1        while (1)
- 306   1        {
- 307   2          Key_Proc();
- 308   2          Seg_Proc();
- 309   2          Led_Proc();
- 310   2          Uart_Proc();
- 311   2        }
- 312   1      }
+ 302   1        k = 182;
+ 303   1        do {
+ 304   2          do {
+ 305   3            while (--k);
+ 306   3          } while (--j);
+ 307   2        } while (--i);
+ 308   1      }
+ 309          uchar passwd = 155;
+ 310          uchar input_passwd;
+ 311          void main() {
+ 312   1        System_Init();
+ 313   1        Timer0_Init();
+ 314   1        Uart1_Init();
+ 315   1        rd_temperature();
+ 316   1        Delay750ms();
+ 317   1        EEPROM_Read(&input_passwd, 8, 1);  // 用不会写入的地方做校验
+ 318   1        if (input_passwd != passwd)  // 校验失败，之前未写入数据1/256概率出问题
+ 319   1        {
+ 320   2          EEPROM_Write(&passwd, 8, 1);
+ 321   2        } else  // 校验通过，读取我们需要的数据
+ 322   1        {
+ 323   2          EEPROM_Read(&Change_times, 0, 2);
+*** WARNING C182 IN LINE 323 OF main.c: pointer to different objects
+ 324   2        }
+ 325   1        T_value_100x = rd_temperature() * 100;
+ 326   1        while (1) {
+ 327   2          Data_Proc();
+ 328   2          Key_Proc();
+ 329   2          Seg_Proc();
+ 330   2          Uart_Proc();
+ 331   2          Led_Proc();
+ 332   2        }
+ 333   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1268    ----
-   CONSTANT SIZE    =     29    ----
+   CODE SIZE        =   1486    ----
+   CONSTANT SIZE    =     32    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     56    ----
+   DATA SIZE        =     58       1
    IDATA SIZE       =   ----    ----
    BIT SIZE         =      5    ----
 END OF MODULE INFORMATION.
 
 
-C51 COMPILATION COMPLETE.  3 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

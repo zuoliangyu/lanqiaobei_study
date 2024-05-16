@@ -146,7 +146,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
+          <TargetSelection>10</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -160,7 +160,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>BIN\VDM51.DLL</Driver>
+            <Driver>BIN\STCMON51.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -397,11 +397,6 @@
               <FilePath>..\Driver\Uart.c</FilePath>
             </File>
             <File>
-              <FileName>ds1302.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Driver\ds1302.c</FilePath>
-            </File>
-            <File>
               <FileName>iic.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Driver\iic.c</FilePath>
@@ -412,9 +407,9 @@
               <FilePath>..\Driver\onewire.c</FilePath>
             </File>
             <File>
-              <FileName>ultrasound.c</FileName>
+              <FileName>Ultrasonic.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Driver\ultrasound.c</FilePath>
+              <FilePath>..\Driver\Ultrasonic.c</FilePath>
             </File>
           </Files>
         </Group>

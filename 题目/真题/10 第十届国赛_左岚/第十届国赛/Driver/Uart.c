@@ -1,23 +1,21 @@
-#include <Uart.h>
-
-/* ä¸²å£åˆå§‹åŒ–å‡½æ•° */
-void Uart1_Init(void) // 4800bps@12MHz
+#include "Uart.h"
+void Uart1_Init(void)  // 4800bps@12.000MHz
 {
-    SCON = 0x50;  // 8ä½æ•°æ®,å¯å˜æ³¢ç‰¹çŽ‡
-    AUXR |= 0x01; // ä¸²å£1é€‰æ‹©å®šæ—¶å™¨2ä¸ºæ³¢ç‰¹çŽ‡å‘ç”Ÿå™¨
-    AUXR &= 0xFB; // å®šæ—¶å™¨æ—¶é’Ÿ12Tæ¨¡å¼
-    T2L = 0xCC;   // è®¾ç½®å®šæ—¶åˆå§‹å€¼
-    T2H = 0xFF;   // è®¾ç½®å®šæ—¶åˆå§‹å€¼
-    AUXR |= 0x10; // å®šæ—¶å™¨2å¼€å§‹è®¡æ—¶
-    ES = 1;
-    EA = 1;
+  SCON = 0x50;   // 8Î»Êý¾Ý,¿É±ä²¨ÌØÂÊ
+  AUXR &= 0xBF;  // ¶¨Ê±Æ÷Ê±ÖÓ12TÄ£Ê½
+  AUXR &= 0xFE;  // ´®¿Ú1Ñ¡Ôñ¶¨Ê±Æ÷1Îª²¨ÌØÂÊ·¢ÉúÆ÷
+  TMOD &= 0x0F;  // ÉèÖÃ¶¨Ê±Æ÷Ä£Ê½
+  TL1 = 0xCC;    // ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+  TH1 = 0xFF;    // ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+  ET1 = 0;       // ½ûÖ¹¶¨Ê±Æ÷ÖÐ¶Ï
+  TR1 = 1;       // ¶¨Ê±Æ÷1¿ªÊ¼¼ÆÊ±
+  ES = 1;        // Ê¹ÄÜ´®¿Ú1ÖÐ¶Ï
+  EA = 1;
 }
 
-extern char putchar(char ch)
-{
-    SBUF = ch;
-    while (TI == 0)
-        ;
-    TI = 0;
-    return ch;
+extern char putchar(char ch) {
+  SBUF = ch;        // ½«chÐ´ÈëSBUF£¬·¢³öÊý¾Ý
+  while (TI == 0);  // µÈ´ý·¢ËÍÍê³É
+  TI = 0;           // Çå³ý·¢ËÍÍê³É±êÖ¾
+  return ch;
 }

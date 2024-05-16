@@ -1,196 +1,194 @@
-/*
-  ³ÌĞòËµÃ÷: IIC×ÜÏßÇı¶¯³ÌĞò
-  Èí¼ş»·¾³: Keil uVision 4.10
-  Ó²¼ş»·¾³: CT107µ¥Æ¬»ú×ÛºÏÊµÑµÆ½Ì¨ 8051£¬12MHz
-  ÈÕ    ÆÚ: 2011-8-9
+/*	#   I2Cä»£ç ç‰‡æ®µè¯´æ˜
+    1. 	æœ¬æ–‡ä»¶å¤¹ä¸­æä¾›çš„é©±åŠ¨ä»£ç ä¾›å‚èµ›é€‰æ‰‹å®Œæˆç¨‹åºè®¾è®¡å‚è€ƒã€‚
+    2.
+   å‚èµ›é€‰æ‰‹å¯ä»¥è‡ªè¡Œç¼–å†™ç›¸å…³ä»£ç æˆ–ä»¥è¯¥ä»£ç ä¸ºåŸºç¡€ï¼Œæ ¹æ®æ‰€é€‰å•ç‰‡æœºç±»å‹ã€è¿è¡Œé€Ÿåº¦å’Œè¯•é¢˜
+        ä¸­å¯¹å•ç‰‡æœºæ—¶é’Ÿé¢‘ç‡çš„è¦æ±‚ï¼Œè¿›è¡Œä»£ç è°ƒè¯•å’Œä¿®æ”¹ã€‚
 */
-
 #include "iic.h"
 
-
 #include "intrins.h"
-
 #define DELAY_TIME 5
+sbit scl = P2 ^ 0;
+sbit sda = P2 ^ 1;
+//
+static void I2C_Delay(unsigned char n) {
+  do {
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+    _nop_();
+  } while (n--);
+}
 
-#define Photo_Res_Channel 0x41
-#define Adj_Res_Channel 0x43
+//
+void I2CStart(void) {
+  sda = 1;
+  scl = 1;
+  I2C_Delay(DELAY_TIME);
+  sda = 0;
+  I2C_Delay(DELAY_TIME);
+  scl = 0;
+}
 
+//
+void I2CStop(void) {
+  sda = 0;
+  scl = 1;
+  I2C_Delay(DELAY_TIME);
+  sda = 1;
+  I2C_Delay(DELAY_TIME);
+}
 
-//×ÜÏßÒı½Å¶¨Òå
-sbit SDA = P2^1;  /* Êı¾İÏß */
-sbit SCL = P2^0;  /* Ê±ÖÓÏß */
+//
+void I2CSendByte(unsigned char byt) {
+  unsigned char i;
 
-void IIC_Delay(unsigned char i)
-{
-    do {
-        _nop_();
+  for (i = 0; i < 8; i++) {
+    scl = 0;
+    I2C_Delay(DELAY_TIME);
+    if (byt & 0x80) {
+      sda = 1;
+    } else {
+      sda = 0;
     }
-    while(i--);
+    I2C_Delay(DELAY_TIME);
+    scl = 1;
+    byt <<= 1;
+    I2C_Delay(DELAY_TIME);
+  }
+
+  scl = 0;
 }
 
-//×ÜÏßÆô¶¯Ìõ¼ş
-void IIC_Start(void)
-{
-    SDA = 1;
-    SCL = 1;
-    IIC_Delay(DELAY_TIME);
-    SDA = 0;
-    IIC_Delay(DELAY_TIME);
-    SCL = 0;
+//
+unsigned char I2CReceiveByte(void) {
+  unsigned char da;
+  unsigned char i;
+  for (i = 0; i < 8; i++) {
+    scl = 1;
+    I2C_Delay(DELAY_TIME);
+    da <<= 1;
+    if (sda) da |= 0x01;
+    scl = 0;
+    I2C_Delay(DELAY_TIME);
+  }
+  return da;
 }
 
-//×ÜÏßÍ£Ö¹Ìõ¼ş
-void IIC_Stop(void)
-{
-    SDA = 0;
-    SCL = 1;
-    IIC_Delay(DELAY_TIME);
-    SDA = 1;
-    IIC_Delay(DELAY_TIME);
+//
+unsigned char I2CWaitAck(void) {
+  unsigned char ackbit;
+
+  scl = 1;
+  I2C_Delay(DELAY_TIME);
+  ackbit = sda;
+  scl = 0;
+  I2C_Delay(DELAY_TIME);
+
+  return ackbit;
 }
 
-//·¢ËÍÓ¦´ğ
-void IIC_SendAck(bit ackbit)
-{
-    SCL = 0;
-    SDA = ackbit;  					// 0£ºÓ¦´ğ£¬1£º·ÇÓ¦´ğ
-    IIC_Delay(DELAY_TIME);
-    SCL = 1;
-    IIC_Delay(DELAY_TIME);
-    SCL = 0;
-    SDA = 1;
-    IIC_Delay(DELAY_TIME);
+//
+void I2CSendAck(unsigned char ackbit) {
+  scl = 0;
+  sda = ackbit;
+  I2C_Delay(DELAY_TIME);
+  scl = 1;
+  I2C_Delay(DELAY_TIME);
+  scl = 0;
+  sda = 1;
+  I2C_Delay(DELAY_TIME);
 }
 
-//µÈ´ıÓ¦´ğ
-bit IIC_WaitAck(void)
-{
-    bit ackbit;
+unsigned char Ad_Read(unsigned char addr) {
+  unsigned char temp;
+  // é€‰æ‹©èŠ¯ç‰‡ä¸ºPCF
+  I2CStart();
+  I2CSendByte(0x90);
+  I2CWaitAck();
+  I2CSendByte(addr);
+  I2CWaitAck();
+  I2CStart();
+  I2CSendByte(0x91);
+  I2CWaitAck();
+  temp = I2CReceiveByte();
+  I2CSendAck(1);
+  I2CStop();
+  return temp;
+}
+// å†™å…¥çš„å€¼æ˜¯æ•°å­—å€¼0-255ï¼Œè€Œä¸æ˜¯æ¨¡æ‹Ÿå€¼
+void Da_Write(unsigned char dat) {
+  // é€‰æ‹©èŠ¯ç‰‡ä¸ºPCF
+  I2CStart();
+  I2CSendByte(0x90);
+  I2CWaitAck();
 
-    SCL  = 1;
-    IIC_Delay(DELAY_TIME);
-    ackbit = SDA;
-    SCL = 0;
-    IIC_Delay(DELAY_TIME);
-    return ackbit;
+  I2CSendByte(0x41);
+  I2CWaitAck();
+  I2CSendByte(dat);
+  I2CWaitAck();
+  I2CStop();
 }
 
-//Í¨¹ıI2C×ÜÏß·¢ËÍÊı¾İ
-void IIC_SendByte(unsigned char byt)
-{
-    unsigned char i;
+/// @brief EEPROM å†™å‡½æ•°
+/// @param EEPROM_String å†™å…¥çš„æ•°ç»„æŒ‡é’ˆï¼ˆå¦‚æœåªå†™å…¥ä¸€ä¸ªæ•°æ®ï¼Œé‚£ä¹ˆè¦ç”¨&dataï¼‰
+/// @param addr 8çš„å€æ•°
+/// @param num å†™å…¥çš„æ•°ç»„å¤§å°
+void EEPROM_Write(unsigned char *EEPROM_String, unsigned char addr,
+                  unsigned char num) {
+  // é€‰æ‹©èŠ¯ç‰‡ä¸ºEEPROMï¼Œæ¨¡å¼ä¸ºå†™
+  I2CStart();
+  I2CSendByte(0xA0);
+  I2CWaitAck();
 
-    for(i=0; i<8; i++)
-    {
-        SCL  = 0;
-        IIC_Delay(DELAY_TIME);
-        if(byt & 0x80) SDA  = 1;
-        else SDA  = 0;
-        IIC_Delay(DELAY_TIME);
-        SCL = 1;
-        byt <<= 1;
-        IIC_Delay(DELAY_TIME);
-    }
-    SCL  = 0;
+  I2CSendByte(addr);  // å†™å…¥çš„æ•°æ®çš„åœ°å€
+  I2CWaitAck();
+  while (num--) {
+    I2CSendByte(*EEPROM_String++);
+    I2CWaitAck();
+    I2C_Delay(200);
+  }
+  I2C_Delay(255);
+  I2C_Delay(255);
+  I2C_Delay(255);
+  I2C_Delay(255);
+  I2CStop();
 }
+/// @brief EEPROM è¯»å‡½æ•°
+/// @param EEPROM_String è¯»å–çš„æ•°ç»„æŒ‡é’ˆï¼ˆå¦‚æœåªè¯»å–ä¸€ä¸ªæ•°æ®ï¼Œé‚£ä¹ˆè¦ç”¨&dataï¼‰
+/// @param addr 8çš„å€æ•°
+/// @param num è¯»å–çš„æ•°ç»„å¤§å°
+void EEPROM_Read(unsigned char *EEPROM_String, unsigned char addr,
+                 unsigned char num) {
+  // é€‰æ‹©èŠ¯ç‰‡ä¸ºEEPROMï¼Œæ¨¡å¼ä¸ºå†™
+  I2CStart();
+  I2CSendByte(0xA0);
+  I2CWaitAck();
 
-//´ÓI2C×ÜÏßÉÏ½ÓÊÕÊı¾İ
-unsigned char IIC_RecByte(void)
-{
-    unsigned char i, da;
-    for(i=0; i<8; i++)
-    {
-        SCL = 1;
-        IIC_Delay(DELAY_TIME);
-        da <<= 1;
-        if(SDA) da |= 1;
-        SCL = 0;
-        IIC_Delay(DELAY_TIME);
-    }
-    return da;
-}
+  I2CSendByte(addr);
+  I2CWaitAck();
 
-
-
-
-
-unsigned char Ad_Read(unsigned char addr)
-{
-    unsigned char temp;
-    IIC_Start();
-    IIC_SendByte(0x90);
-    IIC_WaitAck();
-    IIC_SendByte(addr);
-    IIC_WaitAck();
-    IIC_Start();
-    IIC_SendByte(0x91);
-    IIC_WaitAck();
-    temp = IIC_RecByte();
-    IIC_SendAck(1);
-    IIC_Stop();
-    return temp;
-}
-
-void Da_Write(unsigned char dat)
-{
-    IIC_Start();
-    IIC_SendByte(0x90);
-    IIC_WaitAck();
-    IIC_SendByte(0x41);
-    IIC_WaitAck();
-    IIC_SendByte(dat);
-    IIC_WaitAck();
-    IIC_Stop();
-}
-
-
-
-//º¯ÊıÃû£ºĞ´EEPROMº¯Êı
-//Èë¿Ú²ÎÊı£ºĞèÒªĞ´ÈëµÄ×Ö·û´®£¬Ğ´ÈëµÄµØÖ·(Îñ±ØÎª8µÄ±¶Êı)£¬Ğ´ÈëÊıÁ¿
-//·µ»ØÖµ£ºÎŞ
-//º¯Êı¹¦ÄÜ£ºÏòEERPOMµÄÄ³¸öµØÖ·Ğ´Èë×Ö·û´®ÖĞÌØ¶¨ÊıÁ¿µÄ×Ö·û¡£
-void EEPROM_Write(unsigned char* EEPROM_String, unsigned char addr, unsigned char num)
-{
-    IIC_Start();//·¢ËÍ¿ªÆôĞÅºÅ
-    IIC_SendByte(0xA0);//Ñ¡ÔñEEPROMĞ¾Æ¬£¬È·¶¨Ğ´µÄÄ£Ê½
-    IIC_WaitAck();//µÈ´ıEEPROM·´À¡
-
-    IIC_SendByte(addr);//Ğ´ÈëÒª´æ´¢µÄÊı¾İµØÖ·
-    IIC_WaitAck();//µÈ´ıEEPROM·´À¡
-
-    while(num--)
-    {
-        IIC_SendByte(*EEPROM_String++);//½«ÒªĞ´ÈëµÄĞÅÏ¢Ğ´Èë
-        IIC_WaitAck();//µÈ´ıEEPROM·´À¡
-        IIC_Delay(200);
-    }
-    IIC_Stop();//Í£Ö¹·¢ËÍ
-}
-
-
-//º¯ÊıÃû£º¶ÁEEPROMº¯Êı
-//Èë¿Ú²ÎÊı£º¶Áµ½µÄÊı¾İĞèÒª´æ´¢µÄ×Ö·û´®£¬¶ÁÈ¡µÄµØÖ·(Îñ±ØÎª8µÄ±¶Êı)£¬¶ÁÈ¡µÄÊıÁ¿
-//·µ»ØÖµ£ºÎŞ
-//º¯Êı¹¦ÄÜ£º¶ÁÈ¡EERPOMµÄÄ³¸öµØÖ·ÖĞµÄÊı¾İ£¬²¢´æ·ÅÔÚ×Ö·û´®Êı×éÖĞ¡£
-void EEPROM_Read(unsigned char* EEPROM_String, unsigned char addr, unsigned char num)
-{
-    IIC_Start();//·¢ËÍ¿ªÆôĞÅºÅ
-    IIC_SendByte(0xA0);//Ñ¡ÔñEEPROMĞ¾Æ¬£¬È·¶¨Ğ´µÄÄ£Ê½
-    IIC_WaitAck();//µÈ´ıEEPROM·´À¡
-
-    IIC_SendByte(addr);//Ğ´ÈëÒª¶ÁÈ¡µÄÊı¾İµØÖ·
-    IIC_WaitAck();//µÈ´ıEEPROM·´À¡
-
-    IIC_Start();//·¢ËÍ¿ªÆôĞÅºÅ
-    IIC_SendByte(0xA1);//Ñ¡ÔñEEPROMĞ¾Æ¬£¬È·¶¨¶ÁµÄÄ£Ê½
-    IIC_WaitAck();//µÈ´ıEEPROM·´À¡
-
-    while(num--)
-    {
-        *EEPROM_String++ = IIC_RecByte();//½«ÒªĞ´ÈëµÄĞÅÏ¢Ğ´Èë
-        if(num) IIC_SendAck(0);//·¢ËÍÓ¦´ğ
-        else IIC_SendAck(1);//²»Ó¦´ğ
-    }
-
-    IIC_Stop();//Í£Ö¹·¢ËÍ
+  // é€‰æ‹©èŠ¯ç‰‡ä¸ºEEPROMï¼Œæ¨¡å¼ä¸ºè¯»
+  I2CStart();
+  I2CSendByte(0xA1);
+  I2CWaitAck();
+  while (num--) {
+    *EEPROM_String++ = I2CReceiveByte();
+    if (num)
+      I2CSendAck(0);
+    else
+      I2CSendAck(1);  // åœæ­¢è¯»å–
+  }
+  I2CStop();
 }
