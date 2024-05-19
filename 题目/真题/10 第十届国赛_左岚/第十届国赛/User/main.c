@@ -116,14 +116,14 @@ void Key_Proc() {
   switch (Para_show_mode) {
     case 0:
       /* Œ¬∂» */
-      if (Key_Down == 16) Para_T = (Para_T == 0) ? 99 : Para_T - 2;
-      if (Key_Down == 17) Para_T = (Para_T == 99) ? 0 : Para_T + 2;
+      if (Key_Down == 16) Para_T = (Para_T <= 1) ? 99 : Para_T - 2;
+      if (Key_Down == 17) Para_T = (Para_T >= 98) ? 0 : Para_T + 2;
       break;
 
     case 1:
       /* æ‡¿Î */
-      if (Key_Down == 16) Para_Dis = (Para_Dis == 0) ? 99 : Para_Dis - 5;
-      if (Key_Down == 17) Para_Dis = (Para_Dis == 99) ? 0 : Para_Dis + 5;
+      if (Key_Down == 16) Para_Dis = (Para_Dis <= 4) ? 99 : Para_Dis - 5;
+      if (Key_Down == 17) Para_Dis = (Para_Dis >= 95) ? 0 : Para_Dis + 5;
       break;
   }
 }
@@ -322,7 +322,7 @@ void main() {
   {
     EEPROM_Read(&Change_times, 0, 2);
   }
-	T_value_100x = rd_temperature() * 100;
+  T_value_100x = rd_temperature() * 100;
   while (1) {
     Data_Proc();
     Key_Proc();

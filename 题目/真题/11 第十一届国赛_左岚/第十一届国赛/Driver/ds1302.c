@@ -63,7 +63,6 @@ unsigned char Read_Ds1302_Byte(unsigned char address) {
   _nop_();
   return (temp);
 }
-
 void Set_Rtc(unsigned char *ucRtc) {
   unsigned char i;
   unsigned char temp1;

@@ -9,7 +9,7 @@ uchar Seg_Pos;                                        // 数码管指示
 uchar Seg_Point[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // 某位是否显示小数点
 
 /* 时间方面 */
-uchar ucRtc[3] = {16, 59, 50};  // 初始化时间13:11:11
+uchar ucRtc[3] = {16, 59, 50};  // 初始化时间16:59:50
 
 /* 时间方面 */
 uint time_all_1s;
@@ -24,7 +24,7 @@ uint T_value_10x;      // 温度的10倍
 uint V_value_100x;     // 光敏电阻分压100倍
 uchar Para_hour = 17;  // 小时参数(0-23)
 uchar Para_T = 25;     // 温度参数(0-99)
-uchar Para_Led = 4;    // 指示灯参数 实际(3-7) -> 显示 (4-8)
+uchar Para_Led = 3;    // 指示灯参数 实际(3-7) -> 显示 (4-8)
 uchar Para_hour_temp;  // 设置小时参数(0-23)
 uchar Para_T_temp;     // 设置温度参数(0-99)
 uchar Para_Led_temp;   // 设置指示灯参数 实际(3-7) -> 显示 (4-8)

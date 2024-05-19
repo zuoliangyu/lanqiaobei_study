@@ -1,4 +1,4 @@
-C51 COMPILER V9.59.0.0   IIC                                                               02/24/2024 21:37:53 PAGE 1   
+C51 COMPILER V9.59.0.0   IIC                                                               05/19/2024 20:54:51 PAGE 1   
 
 
 C51 COMPILER V9.59.0.0, COMPILATION OF MODULE IIC
@@ -62,7 +62,7 @@ line level    source
   51   1          sda = 1;
   52   1          I2C_Delay(DELAY_TIME);
   53   1      }
-C51 COMPILER V9.59.0.0   IIC                                                               02/24/2024 21:37:53 PAGE 2   
+C51 COMPILER V9.59.0.0   IIC                                                               05/19/2024 20:54:51 PAGE 2   
 
   54          
   55          //
@@ -126,7 +126,7 @@ line level    source
  113          //
  114          void I2CSendAck(unsigned char ackbit)
  115          {
-C51 COMPILER V9.59.0.0   IIC                                                               02/24/2024 21:37:53 PAGE 3   
+C51 COMPILER V9.59.0.0   IIC                                                               05/19/2024 20:54:51 PAGE 3   
 
  116   1          scl = 0;
  117   1          sda = ackbit;
@@ -190,7 +190,7 @@ line level    source
  175   2              I2C_Delay(200);
  176   2          }
  177   1          I2CStop();
-C51 COMPILER V9.59.0.0   IIC                                                               02/24/2024 21:37:53 PAGE 4   
+C51 COMPILER V9.59.0.0   IIC                                                               05/19/2024 20:54:51 PAGE 4   
 
  178   1      }
  179          /// @brief EEPROM 读函数
