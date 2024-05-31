@@ -1,0 +1,81 @@
+C51 COMPILER V9.59.0.0   LED                                                               05/31/2024 15:31:15 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE driver\led.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\driver;.\user) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\led.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          
+   3          void Led_Disp(unsigned char addr,unsigned char enable)
+   4          {
+   5   1        static unsigned char temp = 0x00;
+   6   1        static unsigned char temp_old = 0xff;
+   7   1        if(enable) temp |= 0x01 <<addr;
+   8   1        else temp &= ~(0x01 <<addr);
+   9   1        if(temp != temp_old)
+  10   1        {
+  11   2          P0 = ~temp;
+  12   2          P2 = P2 & 0x1f | 0x80;
+  13   2          P2 &= 0x1f;
+  14   2          temp_old = temp;
+  15   2        }
+  16   1      }
+  17          
+  18          unsigned char temp_0 = 0x00;
+  19          unsigned char temp_old_0 = 0xff;
+  20          void Beep(bit enable)
+  21          {
+  22   1        if(enable) temp_0 |= 0x40;
+  23   1        else temp_0 &= ~(0x40);
+  24   1        if(temp_0 != temp_old_0)
+  25   1        {
+  26   2          P0 = temp_0;
+  27   2          P2 = P2 & 0x1f | 0xa0;
+  28   2          P2 &= 0x1f;
+  29   2          temp_old_0 = temp_0;
+  30   2        }
+  31   1      }
+  32          void Relay(bit enable)
+  33          {
+  34   1        if(enable) temp_0 |= 0x10;
+  35   1        else temp_0 &= ~(0x10);
+  36   1        if(temp_0 != temp_old_0)
+  37   1        {
+  38   2          P0 = temp_0;
+  39   2          P2 = P2 & 0x1f | 0xa0;
+  40   2          P2 &= 0x1f;
+  41   2          temp_old_0 = temp_0;
+  42   2        }
+  43   1      }
+  44          void MOTOR(bit enable)
+  45          {
+  46   1        if(enable) temp_0 |= 0x20;
+  47   1        else temp_0 &= ~(0x20);
+  48   1        if(temp_0 != temp_old_0)
+  49   1        {
+  50   2          P0 = temp_0;
+  51   2          P2 = P2 & 0x1f | 0xa0;
+  52   2          P2 &= 0x1f;
+  53   2          temp_old_0 = temp_0;
+  54   2        }
+C51 COMPILER V9.59.0.0   LED                                                               05/31/2024 15:31:15 PAGE 2   
+
+  55   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    163    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

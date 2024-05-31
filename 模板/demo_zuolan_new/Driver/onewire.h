@@ -1,1 +1,0 @@
-float rd_temperature();

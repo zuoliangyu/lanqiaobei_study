@@ -1,0 +1,210 @@
+C51 COMPILER V9.59.0.0   IIC                                                               05/31/2024 15:31:15 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE IIC
+OBJECT MODULE PLACED IN .\Objects\iic.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE driver\iic.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\driver;.\user) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\iic.lst) TABS(2) OBJECT(.\Objects\iic.obj)
+
+line level    source
+
+   1          /*  #   I2C代码片段说明
+   2            1.  本文件夹中提供的驱动代码供参赛选手完成程序设计参考。
+   3            2.  参赛选手可以自行编写相关代码或以该代码为基础，根据所选单片机类型、�
+             -�行速度和试题
+   4              中对单片机时钟频率的要求，进行代码调试和修改。
+   5          */
+   6          #include "iic.h"
+   7          #include "intrins.h"
+   8          #define DELAY_TIME  5
+   9          sbit scl = P2 ^ 0;
+  10          sbit sda = P2 ^ 1;
+  11          //
+  12          static void I2C_Delay(unsigned char n)
+  13          {
+  14   1          do
+  15   1          {
+  16   2              _nop_();_nop_();_nop_();_nop_();_nop_();
+  17   2              _nop_();_nop_();_nop_();_nop_();_nop_();
+  18   2              _nop_();_nop_();_nop_();_nop_();_nop_();    
+  19   2          }
+  20   1          while(n--);       
+  21   1      }
+  22          
+  23          //
+  24          void I2CStart(void)
+  25          {
+  26   1          sda = 1;
+  27   1          scl = 1;
+  28   1        I2C_Delay(DELAY_TIME);
+  29   1          sda = 0;
+  30   1        I2C_Delay(DELAY_TIME);
+  31   1          scl = 0;    
+  32   1      }
+  33          
+  34          //
+  35          void I2CStop(void)
+  36          {
+  37   1          sda = 0;
+  38   1          scl = 1;
+  39   1        I2C_Delay(DELAY_TIME);
+  40   1          sda = 1;
+  41   1        I2C_Delay(DELAY_TIME);
+  42   1      }
+  43          
+  44          //
+  45          void I2CSendByte(unsigned char byt)
+  46          {
+  47   1          unsigned char i;
+  48   1        
+  49   1          for(i=0; i<8; i++){
+  50   2              scl = 0;
+  51   2          I2C_Delay(DELAY_TIME);
+  52   2              if(byt & 0x80){
+  53   3                  sda = 1;
+C51 COMPILER V9.59.0.0   IIC                                                               05/31/2024 15:31:15 PAGE 2   
+
+  54   3              }
+  55   2              else{
+  56   3                  sda = 0;
+  57   3              }
+  58   2          I2C_Delay(DELAY_TIME);
+  59   2              scl = 1;
+  60   2              byt <<= 1;
+  61   2          I2C_Delay(DELAY_TIME);
+  62   2          }
+  63   1        
+  64   1          scl = 0;  
+  65   1      }
+  66          
+  67          //
+  68          unsigned char I2CReceiveByte(void)
+  69          {
+  70   1        unsigned char da;
+  71   1        unsigned char i;
+  72   1        for(i=0;i<8;i++){   
+  73   2          scl = 1;
+  74   2          I2C_Delay(DELAY_TIME);
+  75   2          da <<= 1;
+  76   2          if(sda) 
+  77   2            da |= 0x01;
+  78   2          scl = 0;
+  79   2          I2C_Delay(DELAY_TIME);
+  80   2        }
+  81   1        return da;    
+  82   1      }
+  83          
+  84          //
+  85          unsigned char I2CWaitAck(void)
+  86          {
+  87   1        unsigned char ackbit;
+  88   1        
+  89   1          scl = 1;
+  90   1        I2C_Delay(DELAY_TIME);
+  91   1          ackbit = sda; 
+  92   1          scl = 0;
+  93   1        I2C_Delay(DELAY_TIME);
+  94   1        
+  95   1        return ackbit;
+  96   1      }
+  97          
+  98          //
+  99          void I2CSendAck(unsigned char ackbit)
+ 100          {
+ 101   1          scl = 0;
+ 102   1          sda = ackbit; 
+ 103   1        I2C_Delay(DELAY_TIME);
+ 104   1          scl = 1;
+ 105   1        I2C_Delay(DELAY_TIME);
+ 106   1          scl = 0; 
+ 107   1        sda = 1;
+ 108   1        I2C_Delay(DELAY_TIME);
+ 109   1      }
+ 110          
+ 111          unsigned char Ad_Read(unsigned char addr)
+ 112          {
+ 113   1        unsigned char temp;
+ 114   1        //选择芯片为PCF
+ 115   1        I2CStart();
+C51 COMPILER V9.59.0.0   IIC                                                               05/31/2024 15:31:15 PAGE 3   
+
+ 116   1        I2CSendByte(0x90);
+ 117   1        I2CWaitAck();
+ 118   1        I2CSendByte(addr);
+ 119   1        I2CWaitAck();
+ 120   1        
+ 121   1        I2CStart();
+ 122   1        I2CSendByte(0x91);
+ 123   1        I2CWaitAck();
+ 124   1        temp = I2CReceiveByte();
+ 125   1        I2CSendAck(1);
+ 126   1        I2CStop();
+ 127   1        return temp;
+ 128   1      }
+ 129          // 数字电压255->5V
+ 130          void Da_Write(unsigned char dat)
+ 131          {
+ 132   1        //选择芯片为PCF
+ 133   1        I2CStart();
+ 134   1        I2CSendByte(0x90);
+ 135   1        I2CWaitAck();
+ 136   1        I2CSendByte(0x41);
+ 137   1        I2CWaitAck();
+ 138   1        I2CSendByte(dat);
+ 139   1        I2CWaitAck();
+ 140   1      }
+ 141          void EEPROM_Write(unsigned char *str,unsigned char addr,unsigned char num)
+ 142          {
+ 143   1        I2CStart();
+ 144   1        I2CSendByte(0xa0);
+ 145   1        I2CWaitAck();
+ 146   1        I2CSendByte(addr);
+ 147   1        I2CWaitAck();
+ 148   1        
+ 149   1        while(num--)
+ 150   1        {
+ 151   2          I2CSendByte(*str++);
+ 152   2          I2CWaitAck();
+ 153   2          I2C_Delay(200);
+ 154   2        }
+ 155   1        I2CStop();
+ 156   1        I2C_Delay(255);
+ 157   1        I2C_Delay(255);
+ 158   1        I2C_Delay(255);
+ 159   1        I2C_Delay(255);
+ 160   1      }
+ 161          void EEPROM_Read(unsigned char *str,unsigned char addr,unsigned char num)
+ 162          {
+ 163   1        I2CStart();
+ 164   1        I2CSendByte(0xa0);
+ 165   1        I2CWaitAck();
+ 166   1        I2CSendByte(addr);
+ 167   1        I2CWaitAck();
+ 168   1        
+ 169   1        I2CStart();
+ 170   1        I2CSendByte(0xa1);
+ 171   1        I2CWaitAck();
+ 172   1        while(num--)
+ 173   1        {
+ 174   2          *str++ = I2CReceiveByte();
+ 175   2          if(num) I2CSendAck(0);
+ 176   2          else I2CSendAck(1);
+ 177   2        }
+C51 COMPILER V9.59.0.0   IIC                                                               05/31/2024 15:31:15 PAGE 4   
+
+ 178   1        I2CStop();
+ 179   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    406    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      10
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

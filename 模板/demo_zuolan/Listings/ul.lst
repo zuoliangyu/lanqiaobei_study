@@ -1,0 +1,77 @@
+C51 COMPILER V9.59.0.0   UL                                                                05/31/2024 15:31:15 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE UL
+OBJECT MODULE PLACED IN .\Objects\ul.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE driver\ul.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\driver;.\user) DEBUG OBJEC
+                    -TEXTEND PRINT(.\Listings\ul.lst) TABS(2) OBJECT(.\Objects\ul.obj)
+
+line level    source
+
+   1          #include "ul.h"
+   2          #include "intrins.h"
+   3          sbit Tx = P1 ^ 0;
+   4          sbit Rx = P1 ^ 1;
+   5          void Delay12us(void)  //@12.000MHz
+   6          {
+   7   1        unsigned char data i;
+   8   1      
+   9   1        _nop_();
+  10   1        _nop_();
+  11   1        i = 33;//38
+  12   1        while (--i);
+  13   1      }
+  14          void Ut_Wave_Init()
+  15          {
+  16   1        unsigned char i;
+  17   1        for (i = 0; i < 8; i++)
+  18   1        {
+  19   2          Tx =1;
+  20   2          Delay12us();
+  21   2          Rx =1;
+  22   2          Delay12us();
+  23   2        }
+  24   1      }
+  25          unsigned char  Ut_Wave_Data()
+  26          {
+  27   1        unsigned int time;
+  28   1        CH = CL = 0;
+  29   1        CMOD = 0x00;
+  30   1        
+  31   1        EA = 0;
+  32   1        Ut_Wave_Init();
+  33   1        EA = 1;
+  34   1        
+  35   1        CR = 1;
+  36   1        while(Rx && !CF);
+  37   1        CR = 0;
+  38   1        if(!CF)
+  39   1        {//us -> s 10^(-6)
+  40   2          //m -> cm 10^2
+  41   2          // 10^(-4)
+  42   2          //L = V*T/2=340*time/2=170*10^(-4)*time=0.017*time
+  43   2          time = CH << 8 | CL; //µ¥Î»Îªus
+  44   2          return (0.017*time);
+  45   2        }
+  46   1        else
+  47   1        {
+  48   2          CF = 0;
+  49   2          return 0;
+  50   2        }
+  51   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.59.0.0   UL                                                                05/31/2024 15:31:15 PAGE 2   
+
+   CODE SIZE        =     93    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
