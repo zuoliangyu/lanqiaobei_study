@@ -1,0 +1,18 @@
+{
+  "files.associations": {
+    "main.h": "c",
+    "onewire.h": "c",
+    "string.h": "c",
+    "led.h": "c",
+    "stc15f2k60s2.h": "c",
+    "STC15F2K60S2.H": "cpp",
+    "key.h": "c",
+    "seg.h": "c",
+    "intrins.h": "c",
+    "iic.h": "c",
+    "uart.h": "c",
+    "INTRINS.H": "cpp",
+    "ul.h": "c",
+    "init.h": "c"
+  }
+}
