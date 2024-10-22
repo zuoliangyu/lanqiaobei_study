@@ -1,0 +1,13 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\ds1302.obj",
+".\Objects\iic.obj",
+".\Objects\init.obj",
+".\Objects\key.obj",
+".\Objects\led.obj",
+".\Objects\onewire.obj",
+".\Objects\seg.obj",
+".\Objects\uart.obj",
+".\Objects\ul.obj" 
+TO ".\Objects\demo_zuolan" 
+PRINT(".\Listings\demo_zuolan.m51") RAMSIZE(256) 

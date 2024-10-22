@@ -1,0 +1,89 @@
+C51 COMPILER V9.60.7.0   LED                                                               10/22/2024 12:53:45 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\driver\led.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\driver;..\user) DEBUG
+                    - OBJECTEXTEND PRINT(.\Listings\led.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          /// @brief Led扫描
+   3          /// @param addr 需要控制的Led的地址（0-7）
+   4          /// @param enable 控制该地址的Led是否点亮
+   5          void Led_Disp(unsigned char addr, unsigned char enable) {
+   6   1        static unsigned char temp = 0x00;
+   7   1        static unsigned char temp_old = 0xff;
+   8   1        if (enable)
+   9   1          temp |= 0x01 << addr;
+  10   1        else
+  11   1          temp &= ~(0x01 << addr);
+  12   1        if (temp != temp_old) {
+  13   2          P0 = ~temp;
+  14   2          P2 = P2 & 0x1f | 0x80;
+  15   2          P2 &= 0x1f;
+  16   2          temp_old = temp;
+  17   2        }
+  18   1      }
+  19          
+  20          unsigned char temp_0 = 0x00;
+  21          unsigned char temp_old_0 = 0xff;
+  22          /// @brief 蜂鸣器控制
+  23          /// @param enable
+  24          void Beep(bit enable) {
+  25   1        if (enable)
+  26   1          temp_0 |= 0x40;
+  27   1        else
+  28   1          temp_0 &= ~(0x40);
+  29   1        if (temp_0 != temp_old_0) {
+  30   2          P0 = temp_0;
+  31   2          P2 = P2 & 0x1f | 0xa0;
+  32   2          P2 &= 0x1f;
+  33   2          temp_old_0 = temp_0;
+  34   2        }
+  35   1      }
+  36          /// @brief 继电器控制
+  37          /// @param enable
+  38          void Relay(bit enable) {
+  39   1        if (enable)
+  40   1          temp_0 |= 0x10;
+  41   1        else
+  42   1          temp_0 &= ~(0x10);
+  43   1        if (temp_0 != temp_old_0) {
+  44   2          P0 = temp_0;
+  45   2          P2 = P2 & 0x1f | 0xa0;
+  46   2          P2 &= 0x1f;
+  47   2          temp_old_0 = temp_0;
+  48   2        }
+  49   1      }
+  50          /// @brief MOTOR控制
+  51          /// @param enable
+  52          void MOTOR(bit enable) {
+  53   1        if (enable)
+  54   1          temp_0 |= 0x20;
+C51 COMPILER V9.60.7.0   LED                                                               10/22/2024 12:53:45 PAGE 2   
+
+  55   1        else
+  56   1          temp_0 &= ~(0x20);
+  57   1        if (temp_0 != temp_old_0) {
+  58   2          P0 = temp_0;
+  59   2          P2 = P2 & 0x1f | 0xa0;
+  60   2          P2 &= 0x1f;
+  61   2          temp_old_0 = temp_0;
+  62   2        }
+  63   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    163    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
