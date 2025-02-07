@@ -76,7 +76,8 @@ void Set_Rtc(unsigned char *ucRtc)
   Write_Ds1302_Byte(0x8e, 0x00);
   for (i = 0; i < 3; i++)
   {
-    temp = ((ucRtc[i] / 10) << 4) | ucRtc[i] % 10;
+
+    temp = (ucRtc[i] / 10) * 16 + ucRtc[i] % 10;
     Write_Ds1302_Byte(0x84 - 2 * i, temp);
   }
   Write_Ds1302_Byte(0x8e, 0x80);
@@ -89,6 +90,6 @@ void Read_Rtc(unsigned char *ucRtc)
   for (i = 0; i < 3; i++)
   {
     temp = Read_Ds1302_Byte(0x85 - 2 * i);
-    ucRtc[i] = (temp >> 4) * 10 | (temp & 0x0f);
+    ucRtc[i] = temp / 16 * 10 + temp % 16;
   }
 }

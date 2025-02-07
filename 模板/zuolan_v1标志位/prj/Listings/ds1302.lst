@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   DS1302                                                            02/07/2025 11:55:29 PAGE 1   
+C51 COMPILER V9.60.7.0   DS1302                                                            02/07/2025 17:00:32 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE DS1302
@@ -62,7 +62,7 @@ line level    source
   51   1        for (i = 0; i < 8; i++)
   52   1        {
   53   2          SCK = 0;
-C51 COMPILER V9.60.7.0   DS1302                                                            02/07/2025 11:55:29 PAGE 2   
+C51 COMPILER V9.60.7.0   DS1302                                                            02/07/2025 17:00:32 PAGE 2   
 
   54   2          temp >>= 1;
   55   2          if (SDA)
@@ -89,22 +89,23 @@ line level    source
   76   1        Write_Ds1302_Byte(0x8e, 0x00);
   77   1        for (i = 0; i < 3; i++)
   78   1        {
-  79   2          temp = ((ucRtc[i] / 10) << 4) | ucRtc[i] % 10;
-  80   2          Write_Ds1302_Byte(0x84 - 2 * i, temp);
-  81   2        }
-  82   1        Write_Ds1302_Byte(0x8e, 0x80);
-  83   1      }
-  84          // 十进制 0x11 -> 11
-  85          void Read_Rtc(unsigned char *ucRtc)
-  86          {
-  87   1        unsigned char i;
-  88   1        unsigned char temp;
-  89   1        for (i = 0; i < 3; i++)
-  90   1        {
-  91   2          temp = Read_Ds1302_Byte(0x85 - 2 * i);
-  92   2          ucRtc[i] = (temp >> 4) * 10 | (temp & 0x0f);
-  93   2        }
-  94   1      }
+  79   2      
+  80   2          temp = (ucRtc[i] / 10) * 16 + ucRtc[i] % 10;
+  81   2          Write_Ds1302_Byte(0x84 - 2 * i, temp);
+  82   2        }
+  83   1        Write_Ds1302_Byte(0x8e, 0x80);
+  84   1      }
+  85          // 十进制 0x11 -> 11
+  86          void Read_Rtc(unsigned char *ucRtc)
+  87          {
+  88   1        unsigned char i;
+  89   1        unsigned char temp;
+  90   1        for (i = 0; i < 3; i++)
+  91   1        {
+  92   2          temp = Read_Ds1302_Byte(0x85 - 2 * i);
+  93   2          ucRtc[i] = temp / 16 * 10 + temp % 16;
+  94   2        }
+  95   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
