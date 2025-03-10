@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              02/07/2025 17:00:32 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              03/10/2025 18:03:53 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -27,126 +27,150 @@ line level    source
   17          /* 数据 */
   18          unsigned int Freq;
   19          
-  20          void Data_Proc() {
-  21   1        if (time_all_1s % 50 == 0) {
-  22   2          // 时间读取
-  23   2        }
-  24   1        if (time_all_1s % 100 == 0) {
-  25   2          // AD读取
-  26   2        }
-  27   1        if (time_all_1s % 500 == 0) {
-  28   2          // 温度读取
+  20          void Data_Proc()
+  21          {
+  22   1        if (time_all_1s % 50 == 0)
+  23   1        {
+  24   2          // 时间读取
+  25   2        }
+  26   1        if (time_all_1s % 100 == 0)
+  27   1        {
+  28   2          // AD读取
   29   2        }
-  30   1      }
-  31          /* 键盘处理*/
-  32          void Key_Proc() {
-  33   1        static unsigned char Key_Val, Key_Down, Key_Up, Key_Old;
-  34   1        if (time_all_1s % 10) return;
-  35   1        Key_Val = Key_Read();
-  36   1        Key_Down = Key_Val & (Key_Old ^ Key_Val);
-  37   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
-  38   1        Key_Old = Key_Val;
-  39   1      }
-  40          
-  41          /* 数码管处理*/
-  42          void Seg_Proc() {
-  43   1        if (time_all_1s % 20) return;
-  44   1      }
-  45          void Led_Proc() {}
-  46          void Uart_Proc() {
-  47   1        if (Uart_Rx_Index == 0) return;
-  48   1        if (Sys_Tick >= 10) {
-  49   2          Sys_Tick = Uart_flag = 0;
-  50   2      
-  51   2          memset(Uart_Buf, 0, Uart_Rx_Index);
-  52   2          Uart_Rx_Index = 0;
-  53   2        }
-  54   1      }
-C51 COMPILER V9.60.7.0   MAIN                                                              02/07/2025 17:00:32 PAGE 2   
+  30   1        if (time_all_1s % 500 == 0)
+  31   1        {
+  32   2          // 温度读取
+  33   2        }
+  34   1      }
+  35          /* 键盘处理*/
+  36          void Key_Proc()
+  37          {
+  38   1        static unsigned char Key_Val, Key_Down, Key_Up, Key_Old;
+  39   1        if (time_all_1s % 10)
+  40   1          return;
+  41   1        Key_Val = Key_Read();
+  42   1        Key_Down = Key_Val & (Key_Old ^ Key_Val);
+  43   1        Key_Up = ~Key_Val & (Key_Old ^ Key_Val);
+  44   1        Key_Old = Key_Val;
+  45   1      }
+  46          
+  47          /* 数码管处理*/
+  48          void Seg_Proc()
+  49          {
+  50   1        if (time_all_1s % 20)
+  51   1          return;
+  52   1      }
+  53          void Led_Proc() {}
+  54          void Uart_Proc()
+C51 COMPILER V9.60.7.0   MAIN                                                              03/10/2025 18:03:53 PAGE 2   
 
-  55          void Timer0_Init(void)  // 1毫秒@12.000MHz
-  56          {
-  57   1        AUXR &= 0x7F;  // 定时器时钟12T模式
-  58   1        TMOD &= 0xF0;  // 设置定时器模式
-  59   1        TMOD |= 0x05;
-  60   1        TL0 = 0;  // 设置定时初始值
-  61   1        TH0 = 0;  // 设置定时初始值
-  62   1        TF0 = 0;  // 清除TF0标志
-  63   1        TR0 = 1;  // 定时器0开始计时
-  64   1        EA = 1;
+  55          {
+  56   1        if (Uart_Rx_Index == 0)
+  57   1          return;
+  58   1        if (Sys_Tick >= 10)
+  59   1        {
+  60   2          Sys_Tick = Uart_flag = 0;
+  61   2      
+  62   2          memset(Uart_Buf, 0, Uart_Rx_Index);
+  63   2          Uart_Rx_Index = 0;
+  64   2        }
   65   1      }
-  66          
-  67          void Timer1_Init(void)  // 1毫秒@12.000MHz
-  68          {
-  69   1        AUXR &= 0xBF;  // 定时器时钟12T模式
-  70   1        TMOD &= 0x0F;  // 设置定时器模式
-  71   1        TL1 = 0x18;    // 设置定时初始值
-  72   1        TH1 = 0xFC;    // 设置定时初始值
-  73   1        TF1 = 0;       // 清除TF1标志
-  74   1        TR1 = 1;       // 定时器1开始计时
-  75   1        ET1 = 1;       // 使能定时器1中断
-  76   1        EA = 1;
-  77   1      }
-  78          
-  79          void Timer1_Isr(void) interrupt 3 {
-  80   1        unsigned char i;
-  81   1        if (++time_all_1s == 1000) {
-  82   2          time_all_1s = 0;
-  83   2          Freq = TH0 << 8 | TL0;
-  84   2          TH0 = TL0 = 0;
-  85   2        }
-  86   1        if (Uart_flag) Sys_Tick++;
-  87   1        Seg_Pos = (++Seg_Pos) % 8;
-  88   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
-  89   1        for (i = 0; i < 8; i++) Led_Disp(i, ucLed[i]);
-  90   1      }
-  91          void Uart1_Isr(void) interrupt 4 {
-  92   1        if (RI) {
-  93   2          Uart_flag = 1;
-  94   2          Sys_Tick = 0;
-  95   2          Uart_Buf[Uart_Rx_Index] = SBUF;
-  96   2          Uart_Rx_Index++;
-  97   2          RI = 0;
+  66          void Timer0_Init(void) // 1毫秒@12.000MHz
+  67          {
+  68   1        AUXR &= 0x7F; // 定时器时钟12T模式
+  69   1        TMOD &= 0xF0; // 设置定时器模式
+  70   1        TMOD |= 0x05;
+  71   1        TL0 = 0; // 设置定时初始值
+  72   1        TH0 = 0; // 设置定时初始值
+  73   1        TF0 = 0; // 清除TF0标志
+  74   1        TR0 = 1; // 定时器0开始计时
+  75   1        EA = 1;
+  76   1      }
+  77          
+  78          void Timer1_Init(void) // 1毫秒@12.000MHz
+  79          {
+  80   1        AUXR &= 0xBF; // 定时器时钟12T模式
+  81   1        TMOD &= 0x0F; // 设置定时器模式
+  82   1        TL1 = 0x18;   // 设置定时初始值
+  83   1        TH1 = 0xFC;   // 设置定时初始值
+  84   1        TF1 = 0;      // 清除TF1标志
+  85   1        TR1 = 1;      // 定时器1开始计时
+  86   1        ET1 = 1;      // 使能定时器1中断
+  87   1        EA = 1;
+  88   1      }
+  89          
+  90          void Timer1_Isr(void) interrupt 3
+  91          {
+  92   1        unsigned char i;
+  93   1        if (++time_all_1s == 1000)
+  94   1        {
+  95   2          time_all_1s = 0;
+  96   2          Freq = TH0 << 8 | TL0;
+  97   2          TH0 = TL0 = 0;
   98   2        }
-  99   1        if (Uart_Rx_Index > 10) Uart_Rx_Index = 0;
- 100   1      }
- 101          void Delay750ms(void)  //@12.000MHz
- 102          {
- 103   1        unsigned char data i, j, k;
- 104   1      
- 105   1        _nop_();
- 106   1        _nop_();
- 107   1        i = 35;
- 108   1        j = 51;
- 109   1        k = 182;
- 110   1        do {
- 111   2          do {
- 112   3            while (--k);
- 113   3          } while (--j);
- 114   2        } while (--i);
- 115   1      }
- 116          
-C51 COMPILER V9.60.7.0   MAIN                                                              02/07/2025 17:00:32 PAGE 3   
+  99   1        if (Uart_flag)
+ 100   1          Sys_Tick++;
+ 101   1        Seg_Pos = (++Seg_Pos) % 8;
+ 102   1        Seg_Disp(Seg_Pos, Seg_Buf[Seg_Pos], Seg_Point[Seg_Pos]);
+ 103   1        for (i = 0; i < 8; i++)
+ 104   1          Led_Disp(i, ucLed[i]);
+ 105   1      }
+ 106          void Uart1_Isr(void) interrupt 4
+ 107          {
+ 108   1        if (RI)
+ 109   1        {
+ 110   2          Uart_flag = 1;
+ 111   2          Sys_Tick = 0;
+ 112   2          Uart_Buf[Uart_Rx_Index] = SBUF;
+ 113   2          Uart_Rx_Index++;
+ 114   2          RI = 0;
+ 115   2        }
+ 116   1        if (Uart_Rx_Index > 10)
+C51 COMPILER V9.60.7.0   MAIN                                                              03/10/2025 18:03:53 PAGE 3   
 
- 117          void main() {
- 118   1        System_Init();
- 119   1        Timer0_Init();
- 120   1        Timer1_Init();
- 121   1        Set_Rtc(ucRtc);
- 122   1        rd_temperature();
- 123   1        Delay750ms();
- 124   1        while (1) {
- 125   2          Data_Proc();
- 126   2          Key_Proc();
- 127   2          Seg_Proc();
- 128   2          Uart_Proc();
- 129   2          Led_Proc();
- 130   2        }
- 131   1      }
+ 117   1          Uart_Rx_Index = 0;
+ 118   1      }
+ 119          void Delay750ms(void) //@12.000MHz
+ 120          {
+ 121   1        unsigned char data i, j, k;
+ 122   1      
+ 123   1        _nop_();
+ 124   1        _nop_();
+ 125   1        i = 35;
+ 126   1        j = 51;
+ 127   1        k = 182;
+ 128   1        do
+ 129   1        {
+ 130   2          do
+ 131   2          {
+ 132   3            while (--k)
+ 133   3              ;
+ 134   3          } while (--j);
+ 135   2        } while (--i);
+ 136   1      }
+ 137          
+ 138          void main()
+ 139          {
+ 140   1        System_Init();
+ 141   1        Timer0_Init();
+ 142   1        Uart1_Init();
+ 143   1        Timer1_Init();
+ 144   1        Set_Rtc(ucRtc);
+ 145   1        rd_temperature();
+ 146   1        Delay750ms();
+ 147   1        while (1)
+ 148   1        {
+ 149   2          Data_Proc();
+ 150   2          Key_Proc();
+ 151   2          Seg_Proc();
+ 152   2          Uart_Proc();
+ 153   2          Led_Proc();
+ 154   2        }
+ 155   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    366    ----
+   CODE SIZE        =    369    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

@@ -74,6 +74,7 @@ void Set_Rtc(unsigned char *ucRtc)
   unsigned char i;
   unsigned char temp;
   Write_Ds1302_Byte(0x8e, 0x00);
+  Write_Ds1302_Byte(0x80, 0x80);
   for (i = 0; i < 3; i++)
   {
 
